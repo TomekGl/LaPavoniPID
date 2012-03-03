@@ -41,5 +41,21 @@
 #define SW4_DDR DDRC
 #define SW4_PORT PORTC
 
+#define IN1_PIN PIND
+#define IN1 PD3
+#define IN1_DDR DDRD
+#define IN1_PORT PORTD
+
+#define OUT1 PC7
+#define OUT1_DDR DDRC
+#define OUT1_PORT PORTC
+
+#define OUT2 PC6
+#define OUT2_DDR DDRC
+#define OUT2_PORT PORTC
+
+#define OUT3 PC5
+#define OUT3_DDR DDRC
+#define OUT3_PORT PORTC
 
 #endif /*HARDWARE_H_*/

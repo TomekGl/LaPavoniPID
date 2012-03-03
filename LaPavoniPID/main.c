@@ -26,40 +26,48 @@ ISR(INT1_vect)
 
 void __attribute__ ((naked)) main(void)
 {
-    buf_init(&USART_buffer_TX);
-    buf_init(&USART_buffer_RX);
 
-    //Pullups
+	//Pullups
     SW1_PORT |= _BV(SW1);
     SW2_PORT |= _BV(SW2);
     SW3_PORT |= _BV(SW3);
     SW4_PORT |= _BV(SW4);
 
-    //uint8_t znak,i;
-    unsigned char ret;
+    PORTC |= (_BV(OUT1)|_BV(OUT2)|_BV(OUT3));
 
- 
+    PORTA |= 0xff;
+    PORTB |= 0x0f;
+
+    LCDBL_DDR |= _BV(LCDBL);
+
+    //USART
     USART_Init(51);
 
-//    i2c_init();			// initialize I2C library
-
+    //enable interrupts
     sei();
 
     USART_Puts("DUPA");
+//    USART_Puts_P(VERSION);
 
     //GLOWNA PETLA ************************************************************
     for (;;) {
-	waitms(500);
-	waitms(500);
-	if (SW1_PIN && _BV(SW1)) { USART_Puts('1'); } else { USART_Puts('.');}
-	waitms(1);
-	if (SW2_PIN && _BV(SW2)) { USART_Puts('2'); } else { USART_Puts('.');}
-	waitms(1);
-	if (SW3_PIN && _BV(SW3)) { USART_Puts('3'); } else { USART_Puts('.');}
-	waitms(1);
-	if (SW4_PIN && _BV(SW4)) { USART_Puts('4'); } else { USART_Puts('.');}
-	waitms(1);
-	USART_Puts('\n');
+	waitms(50);
+
+	if (SW1_PIN & _BV(SW1)) {
+		USART_Put('.');
+		LCDBL_PORT |= _BV(LCDBL);
+	} else {
+		USART_Put('1');
+		LCDBL_PORT &= ~_BV(LCDBL);
+	}
+	if (SW2_PIN & _BV(SW2)) { USART_Put('.'); } else { USART_Put('2');}
+	if (SW3_PIN & _BV(SW3)) { USART_Put('.'); } else { USART_Put('3');}
+	if (SW4_PIN & _BV(SW4)) { USART_Put('.'); } else { USART_Put('4');}
+//	USART_TransmitBinary(PINC);
+//	USART_TransmitBinary(PIND);
+	USART_Put('\r');
+	USART_Put('\n');
+	USART_StartSending();
 
 /*	if (buf_getcount(&USART_buffer_RX) > 0) {
 	    znak = buf_getbyte(&USART_buffer_RX);
