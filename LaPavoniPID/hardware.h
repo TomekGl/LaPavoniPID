@@ -11,11 +11,6 @@
 #define BUZZ_DDR DDRD
 #define BUZZ_PIN PIND
 
-#define LCDBL_PORT PORTD
-#define LCDBL PD7
-#define LCDBL_DDR DDRD
-#define LCDBL_PIN PIND
-
 #define SQW_PIN PIND
 #define SQW PD3
 #define SQW_DDR DDRD 

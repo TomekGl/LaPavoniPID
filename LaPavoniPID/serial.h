@@ -7,6 +7,11 @@
 #define PARITY_ERROR (1<<PE)
 #define DATA_OVERRUN (1<<DOR)
 
+/// bufor kołowy odbiorczy
+extern volatile Tcircle_buffer USART_buffer_RX;
+/// bufor kołowy nadawczy
+extern volatile Tcircle_buffer USART_buffer_TX;
+
 
 ///typ wyliczeniowy stanu nadawania
 typedef enum {

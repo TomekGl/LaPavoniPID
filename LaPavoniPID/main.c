@@ -38,28 +38,26 @@ void __attribute__ ((naked)) main(void)
     PORTA |= 0xff;
     PORTB |= 0x0f;
 
-    LCDBL_DDR |= _BV(LCDBL);
-
     //USART
-    USART_Init(51);
+    USART_Init(38400);
 
     //enable interrupts
     sei();
 
-    USART_Puts("DUPA");
-//    USART_Puts_P(VERSION);
+    USART_Puts("PID Controller ");
+    USART_Puts_P(VERSION);
+    USART_Puts("\r\nOK\r\n");
+    USART_StartSending();
+
+    //LCD
+    LCD_Init();
+    LCD_Test(0);
 
     //GLOWNA PETLA ************************************************************
     for (;;) {
 	waitms(50);
 
-	if (SW1_PIN & _BV(SW1)) {
-		USART_Put('.');
-		LCDBL_PORT |= _BV(LCDBL);
-	} else {
-		USART_Put('1');
-		LCDBL_PORT &= ~_BV(LCDBL);
-	}
+	if (SW1_PIN & _BV(SW1)) { USART_Put('.'); } else { USART_Put('1');}
 	if (SW2_PIN & _BV(SW2)) { USART_Put('.'); } else { USART_Put('2');}
 	if (SW3_PIN & _BV(SW3)) { USART_Put('.'); } else { USART_Put('3');}
 	if (SW4_PIN & _BV(SW4)) { USART_Put('.'); } else { USART_Put('4');}
@@ -69,14 +67,13 @@ void __attribute__ ((naked)) main(void)
 	USART_Put('\n');
 	USART_StartSending();
 
-/*	if (buf_getcount(&USART_buffer_RX) > 0) {
-	    znak = buf_getbyte(&USART_buffer_RX);
-	    USART_Puts(PINC);
-	    if ('1' == znak) {
-		USART_Transmit(
-	    }
+/*	if (buf_getcount(&USART_buffer_RX)) {
+	    r = buf_getbyte(&USART_buffer_RX);
+	    g = buf_getbyte(&USART_buffer_RX);
+	    b = buf_getbyte(&USART_buffer_RX);
+	    setPixel(r,g,b);
 	}
-*/
+	*/
 
     }
 

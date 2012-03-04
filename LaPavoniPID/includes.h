@@ -16,6 +16,7 @@
 #include "crc8.h"
 #include "delay.h"
 #include "globals.h"
+#include "lcd.h"
 #include "main.h"
 
 //#endif /*INCLUDES_H_*/
