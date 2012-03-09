@@ -29,14 +29,14 @@ void USART_Init(unsigned int baud) {
 	USART_state = USART_STATE_IDLE;
 
 	/* Set baud rate */
-	UBRRH = (unsigned char)((F_CPU / (baud * 8L) - 1) >> 8);
-	UBRRL = (unsigned char)(F_CPU / (baud * 8L) - 1);
+	UBRRH = 0; //(unsigned char)((F_CPU / (baud * 16L) - 1) >> 8);
+	UBRRL = 12; //(unsigned char)(F_CPU / (baud * 16L) - 1);
 	/* Enable receiver and transmitter */
 
 	UCSRB = (1 << TXEN) | (1 << RXEN) | (1 << RXCIE) | (1 << TXCIE);
 	/* Set frame format: 8data, 1stop bit */
 	UCSRC = (1 << URSEL) | (1 << UCSZ0) | (1 << UCSZ1);
-	UCSRA = (1 << U2X);
+	//UCSRA = (1 << U2X);
 }
 
 //unsigned char USART0_Receive( void )
@@ -55,23 +55,35 @@ void USART_Init(unsigned int baud) {
 /** Przerwanie odbiorcze USART */
 ISR(USART_RXC_vect)
 {
-	uint8_t status, data;
+	volatile uint8_t status, data;
 
-	status = UCSRA;
-	if ((status & _BV(RXC)) == 0) /*czy aby napewno jest co odbierac*/
-	{
+/*	while (!(UCSRA & _BV(RXC)))
+			;
+	status = UCSRA;*/
+//	if ((status & _BV(RXC)) == 0) /*czy aby napewno jest co odbierac*/
+//	{
+		//return;
+	//}
+	if (status & (FRAMING_ERROR|PARITY_ERROR|DATA_OVERRUN)) {
+		status = UDR; //discard data
 		return;
 	}
-	data = UDR;
-	if (status & (FRAMING_ERROR | PARITY_ERROR | DATA_OVERRUN)) {
-		//    USART_Transmit('e');
-		//    USART_Transmit('r');
-		//    USART_Transmit('r');
-	}
 
-	USART_prev_arrival_time = USART_arrival_time;
-	USART_arrival_time = system_clock;
-	buf_putbyte(&USART_buffer_RX, data);
+	/*if (status & (FRAMING_ERROR)) {
+		    USART_Transmit('F');
+	}
+	if (status & (PARITY_ERROR)) {
+		    USART_Transmit('P');
+	}
+	if (status & (DATA_OVERRUN)) {
+		    USART_Transmit('O');
+	}*/
+
+	//USART_prev_arrival_time = USART_arrival_time;
+	//USART_arrival_time = system_clock;
+	if (buf_isfree(&USART_buffer_RX))
+		buf_putbyte(&USART_buffer_RX, UDR);
+	//UDR=data+1;
 	//znak = data;
 	return;
 
@@ -84,8 +96,8 @@ void USART_StartSending() {
 	}
 	//pozostałe bajty z bufora będą wysłane automatycznie
 }
-void USART_TX_Byte() {
 
+void USART_TX_Byte() {
 		//sprawdzenie czy w buforze nadawczym są dane
 		if (buf_getcount(&USART_buffer_TX)) {
 			/* Wait for empty transmit buffer */
@@ -141,11 +153,19 @@ void USART_Put(char ch) {
 void USART_TransmitDecimal(uint32_t data) {
 	char str[11];
 
-	/* convert interger into string */
+	/* convert unsigned integer into string */
 	ultoa(data, str, 10);
 
 	USART_Puts(str);
+}
 
+void USART_TransmitDecimalSigned(int32_t data) {
+	char str[11];
+
+	/* convert signed integer into string */
+	ltoa(data, str, 10);
+
+	USART_Puts(str);
 }
 
 void USART_TransmitBinary(unsigned char data) {

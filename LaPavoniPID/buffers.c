@@ -20,6 +20,9 @@ Tcircle_buffer *buf_init(Tcircle_buffer *buffer)
 	buffer->read_ptr = 0;
 	buffer->count = 0;
 	buffer->size = BUF_SIZE;
+	/*for (uint8_t i=0; i<BUF_SIZE; i++) {
+		buffer->data[i]='.';
+	}*/
 	return buffer;
 }
 
@@ -58,8 +61,7 @@ uint8_t buf_putbyte(Tcircle_buffer *buffer, uint8_t byte)
 {
 	if (buffer->count < BUF_SIZE) {
 	cli();
-	buffer->data[buffer->write_ptr] = byte;
-	buffer->write_ptr++;
+	buffer->data[buffer->write_ptr++] = byte;
 	buffer->count++;
 	if(buffer->write_ptr >	(BUF_SIZE-1))
 		buffer->write_ptr =	0;

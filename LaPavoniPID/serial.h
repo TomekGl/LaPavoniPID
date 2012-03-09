@@ -28,7 +28,7 @@ typedef enum {
 
 
 /** Inicjalizacja USART z zadaną szybkością */
-void USART_Init( unsigned int baud );
+void USART_Init(unsigned int baud );
 
 /** Rozpoczęcie wysyłania z bufora */
 void USART_StartSending();
@@ -57,6 +57,8 @@ void USART_TransmitDecimal( uint32_t data );
 /** Wysłanie bajtu jako liczby binarnej w ASCII*/
 void USART_TransmitBinary( unsigned char data );
 
+/** Wysłanie liczby ze znakiem w ASCII*/
+void USART_TransmitDecimalSigned(int32_t data);
 
 /** @} */
 
