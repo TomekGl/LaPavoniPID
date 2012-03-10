@@ -5,12 +5,14 @@
  *      Author: tomek
  */
 #include "includes.h"
+//#define LCDTEXT
 
 void sendCMD(uint8_t cmd);
 void sendData(uint8_t cmd);
 void sendByte(uint8_t data);
 void shiftBits(uint8_t b);
 void setPixel(uint16_t col);
+void setPixel2(uint16_t col);
 void setPixel8(uint8_t col);
 
 #define cbi(reg, bit) (reg&=~(1<<bit))
@@ -31,7 +33,7 @@ uint8_t s1,s2; //temporary for 12BPP writing
 int8_t cursorx=0,cursory=0;
 uint8_t r,g,b;
 
-
+#ifdef LCDTEXT
 // *********************************************************************************
 //
 //			Font tables for Nokia 6610 LCD Display Driver (S1D15G00 Controller)
@@ -345,6 +347,7 @@ const unsigned char __attribute__ ((progmem)) FONT8x16[97][16] = {
 		0x00,0x00,0x3B,0x6E,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,	//	~
 		0x00,0x70,0xD8,0xD8,0x70,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};	//	DEL
 */
+#endif
 
 void lcdwaitms(int ms) {
 	int i;
@@ -616,16 +619,14 @@ void ssendData(uint8_t data) {
 	CLK0
 	SDA1                                                 //1 for param
 	CLK1
-	//asm("NOP\n");
-	CLK0
 	SPCR |= _BV(SPE) | _BV(MSTR)| _BV(SPR0); // Enable Hardware SPI
 	SPDR = data; // send data
 	while(!(SPSR & (1<<SPIF)))// wait until send complete
 
 	//CS1; // disable device CS
-	SPCR &= ~(_BV(SPE) | _BV(MSTR) | _BV(SPR0));
-	CLK0
-	SDA0
+	SPCR &= ~(_BV(SPE)); // | _BV(MSTR) | _BV(SPR1) | _BV(SPR0));
+	//CLK0
+	//SDA0
 
 }
 
@@ -701,6 +702,33 @@ void sendCMD(uint8_t data) {
 void setPixel8(uint8_t col) {
 	sendData(col);
 }
+
+void setPixel2(uint16_t col) {
+#ifdef MODE16BPP
+	sendData((uint8_t)(col>>8));
+	sendData((uint8_t)(col&0xff));
+#endif
+#ifdef MODE12BPP
+	if (n==0) {
+		s1=((uint8_t)(col>>4));
+		s2=((uint8_t)((col&0x0f)<<4));
+		n=1;
+	} else {
+		n=0;
+		asendData(s1);
+		asendData(s2|(col>>8));
+		asendData((uint8_t)(col&0xff));
+	}
+#endif
+#ifdef MODE8BPP
+	//sendData(r&224|((g&224)>>5)|b>>6);
+	sendData(r);
+#endif
+}
+
+
+
+
 //converts a 3*8Bit-RGB-Pixel to the 2-Byte-RGBRGB Format of the Display
 void setPixel(uint16_t col) {
 #ifdef MODE16BPP
@@ -749,12 +777,12 @@ void LCD_Rectangle(uint8_t x, uint8_t y, uint8_t width, uint8_t height, uint16_t
 	sendData(y + height - 1);
 	sendCMD(RAMWR);
 	for (uint16_t i=0; i<width*height; i++) {
-		setPixel(col);
+		setPixel2(col);
 	}
 	sendCMD(NOP);
 	CS1;
 }
-
+#ifdef LCDTEXT
 void LCD_PutStr(char *s, uint8_t x, uint8_t y, uint8_t Size, int fColor, int bColor) {
 	if (x!=255) cursorx=x;
 	if (y!=255) cursory=y;
@@ -875,5 +903,5 @@ void LCD_PutChar(char c, uint8_t x, uint8_t y, uint8_t size, int fColor, int bCo
 	cursory=y;
 	cursorx=x;
 }
-
+#endif
 

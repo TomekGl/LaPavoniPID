@@ -53,4 +53,8 @@
 #define OUT3_DDR DDRC
 #define OUT3_PORT PORTC
 
+#define ADC_CS PB4
+#define ADC_CSPORT PORTB
+#define ADC_CSDDR DDRB
+
 #endif /*HARDWARE_H_*/

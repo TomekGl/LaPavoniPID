@@ -125,7 +125,9 @@
 void LCD_Init();
 void LCD_Test();
 void LCD_Rectangle(uint8_t x, uint8_t y, uint8_t width, uint8_t height, uint16_t col);
+#ifdef LCDTEXT
 void LCD_PutChar(char c, uint8_t x, uint8_t y, uint8_t size, int fColor, int bColor);
 void LCD_PutStr(char *s, uint8_t x, uint8_t y, uint8_t Size, int fColor, int bColor);
 void LCD_PutStr_P(const char *s, uint8_t x, uint8_t y, uint8_t Size, int fColor, int bColor);
+#endif
 #endif /* LCD_H_ */
