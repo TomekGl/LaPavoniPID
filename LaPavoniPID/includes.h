@@ -19,4 +19,6 @@
 #include "lcd.h"
 #include "main.h"
 
+#define cbi(reg, bit) (reg&=~(1<<bit))
+#define sbi(reg, bit) (reg|= (1<<bit))
 //#endif /*INCLUDES_H_*/

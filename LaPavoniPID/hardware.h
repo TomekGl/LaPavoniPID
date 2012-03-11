@@ -57,4 +57,13 @@
 #define ADC_CSPORT PORTB
 #define ADC_CSDDR DDRB
 
+#define SPI_SCK PB7
+#define SPI_MISO PB6
+#define SPI_MOSI PB5
+#define SPI_PORT PORTB
+#define SPI_DDR DDRB
+#define SPI_PIN PINB
+
+
+
 #endif /*HARDWARE_H_*/

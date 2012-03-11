@@ -5,7 +5,7 @@
  *      Author: tomek
  */
 #include "includes.h"
-//#define LCDTEXT
+//#define LCDTEXT  //compile-in fonts and text-related functions
 
 void sendCMD(uint8_t cmd);
 void sendData(uint8_t cmd);
@@ -14,9 +14,6 @@ void shiftBits(uint8_t b);
 void setPixel(uint16_t col);
 void setPixel2(uint16_t col);
 void setPixel8(uint8_t col);
-
-#define cbi(reg, bit) (reg&=~(1<<bit))
-#define sbi(reg, bit) (reg|= (1<<bit))
 
 #define CS0 cbi(LCD_CTRPORT,LCD_CS);
 #define CS1 sbi(LCD_CTRPORT,LCD_CS);
@@ -27,11 +24,11 @@ void setPixel8(uint8_t col);
 #define RESET0 cbi(LCD_CTRPORT,LCD_RESET);
 #define RESET1 sbi(LCD_CTRPORT,LCD_RESET);
 
-#define uint8_t unsigned char
-uint8_t n=0;
+
+uint8_t n=0; //temporary for 12BPP writing
 uint8_t s1,s2; //temporary for 12BPP writing
-int8_t cursorx=0,cursory=0;
-uint8_t r,g,b;
+
+int8_t cursorx=0,cursory=0; //cursors' position for autoincrement strings print
 
 #ifdef LCDTEXT
 // *********************************************************************************
@@ -349,36 +346,29 @@ const unsigned char __attribute__ ((progmem)) FONT8x16[97][16] = {
 */
 #endif
 
-void lcdwaitms(int ms) {
-	int i;
-	for (i=0;i<ms;i++) _delay_ms(1);
-}
-
-
-
 void LCD_Init() {
 	//Configure outputs
-	LCD_SPIDDR = _BV(LCD_SDA) | _BV(LCD_SCK); //Port-Direction Setup
-	LCD_CTRDDR = _BV(LCD_CS) | _BV(LCD_RESET); //Port-Direction Setup
+	LCD_SPIDDR |= _BV(LCD_SDA) | _BV(LCD_SCK); //Data line
+	LCD_CTRDDR = _BV(LCD_CS) | _BV(LCD_RESET); //Clock line
 
-	//Backlight
+	//Backlight permanently on
 	LCD_BLDDR |= _BV(LCD_BL);
-	//LCD_BLPORT &= ~_BV(LCD_BL);
 	LCD_BLPORT |= _BV(LCD_BL);
 
+	//Post power-up procedure
 	CS0
 	SDA0
 	CLK1
 
 	RESET1
 	RESET0
-	lcdwaitms(10);
+	_delay_ms(5);
 	RESET1
 
 	CLK1
 	SDA1
 	CLK1
-	lcdwaitms(10);
+	_delay_ms(5);
 	//Software Reset
 	sendCMD(SWRESET);
 
@@ -387,7 +377,7 @@ void LCD_Init() {
 
 	//Booster ON
 	sendCMD(BSTROFF);
-	lcdwaitms(10);
+	_delay_ms(5);
 
 	//Normal display mode
 	sendCMD(NORON);
@@ -596,14 +586,10 @@ void sendData(uint8_t data) {
 
 }
 //send data
-void asendData(uint8_t data) {
+void xsendData(uint8_t data) {
 
-	// CLK0
-	// SDA1                                                 //1 for param
-	// CLK1
 	// clk starts high
 	asm("sbi %0, 7" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-
 
 	// Send the command flag bit
 	asm("cbi %0, 7" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
@@ -611,23 +597,7 @@ void asendData(uint8_t data) {
 	asm("sbrc %0, 0" : : "a" (1));
 	asm("sbi %0, 5" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
 	asm("sbi %0, 7" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-	//shiftBits(data);
 	sendByte(data);
-}
-
-void ssendData(uint8_t data) {
-	CLK0
-	SDA1                                                 //1 for param
-	CLK1
-	SPCR |= _BV(SPE) | _BV(MSTR)| _BV(SPR0); // Enable Hardware SPI
-	SPDR = data; // send data
-	while(!(SPSR & (1<<SPIF)))// wait until send complete
-
-	//CS1; // disable device CS
-	SPCR &= ~(_BV(SPE)); // | _BV(MSTR) | _BV(SPR1) | _BV(SPR0));
-	//CLK0
-	//SDA0
-
 }
 
 void sendByte(uint8_t data)
@@ -715,9 +685,9 @@ void setPixel2(uint16_t col) {
 		n=1;
 	} else {
 		n=0;
-		asendData(s1);
-		asendData(s2|(col>>8));
-		asendData((uint8_t)(col&0xff));
+		sendData(s1);
+		sendData(s2|(col>>8));
+		sendData((uint8_t)(col&0xff));
 	}
 #endif
 #ifdef MODE8BPP
@@ -726,10 +696,6 @@ void setPixel2(uint16_t col) {
 #endif
 }
 
-
-
-
-//converts a 3*8Bit-RGB-Pixel to the 2-Byte-RGBRGB Format of the Display
 void setPixel(uint16_t col) {
 #ifdef MODE16BPP
 	sendData((uint8_t)(col>>8));
@@ -740,46 +706,35 @@ void setPixel(uint16_t col) {
 		s1=((uint8_t)(col>>4));
 		s2=((uint8_t)((col&0x0f)<<4));
 		n=1;
-/*		USART_Puts("Kolor:");
-		USART_TransmitDecimal(col);
-		USART_Puts(". ");*/
 	} else {
 		n=0;
-		/*USART_Puts("Kolor:");
-		USART_TransmitDecimal(col);
-		USART_Puts(". Wyslane:");
-		USART_TransmitDecimal(s1);
-		USART_Puts(" ");*/
 		sendData(s1);
-		/*USART_TransmitDecimal(s2|(col>>8));
-		USART_Puts(" ");*/
 		sendData(s2|(col>>8));
-		/*USART_TransmitDecimal((uint8_t)(col&0xff));
-		USART_Puts(" ");*/
 		sendData((uint8_t)(col&0xff));
 	}
 #endif
 #ifdef MODE8BPP
-	//sendData(r&224|((g&224)>>5)|b>>6);
 	sendData(r);
 #endif
 }
 
 void LCD_Rectangle(uint8_t x, uint8_t y, uint8_t width, uint8_t height, uint16_t col) {
 	CS0;
-	// Row address set (command 0x2B)
+	// Page address set
 	sendCMD(PASET);
 	sendData(x);
 	sendData(x + width - 1);
-	// Column address set (command 0x2A)
+	// Column address set
 	sendCMD(CASET);
 	sendData(y);
 	sendData(y + height - 1);
+
 	sendCMD(RAMWR);
 	for (uint16_t i=0; i<width*height; i++) {
 		setPixel2(col);
 	}
 	sendCMD(NOP);
+
 	CS1;
 }
 #ifdef LCDTEXT
@@ -882,7 +837,6 @@ void LCD_PutChar(char c, uint8_t x, uint8_t y, uint8_t size, int fColor, int bCo
 			sendData((uint8_t)(Word0>>8));
 			sendData((uint8_t)(Word1&0xff));
 #endif
-			//waitms(5);
 		}
 	}
 	// terminate the Write Memory command
