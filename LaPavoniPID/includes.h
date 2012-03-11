@@ -17,6 +17,7 @@
 #include "delay.h"
 #include "globals.h"
 #include "lcd.h"
+#include "max31855.h"
 #include "main.h"
 
 #define cbi(reg, bit) (reg&=~(1<<bit))

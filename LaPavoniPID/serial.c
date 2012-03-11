@@ -168,6 +168,7 @@ void USART_TransmitDecimalSigned(int32_t data) {
 	USART_Puts(str);
 }
 
+
 void USART_TransmitBinary(unsigned char data) {
 	//ZAPIS BINARNY 0/1 Z _POMINIĘCIEM BUFORÓW_ !!!
 	/* Wait for empty transmit buffer */

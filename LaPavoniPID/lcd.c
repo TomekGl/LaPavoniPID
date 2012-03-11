@@ -5,15 +5,15 @@
  *      Author: tomek
  */
 #include "includes.h"
-//#define LCDTEXT  //compile-in fonts and text-related functions
+
 
 void sendCMD(uint8_t cmd);
 void sendData(uint8_t cmd);
-void sendByte(uint8_t data);
-void shiftBits(uint8_t b);
 void setPixel(uint16_t col);
-void setPixel2(uint16_t col);
+
+#ifdef MODE8BPP
 void setPixel8(uint8_t col);
+#endif
 
 #define CS0 cbi(LCD_CTRPORT,LCD_CS);
 #define CS1 sbi(LCD_CTRPORT,LCD_CS);
@@ -349,7 +349,7 @@ const unsigned char __attribute__ ((progmem)) FONT8x16[97][16] = {
 void LCD_Init() {
 	//Configure outputs
 	LCD_SPIDDR |= _BV(LCD_SDA) | _BV(LCD_SCK); //Data line
-	LCD_CTRDDR = _BV(LCD_CS) | _BV(LCD_RESET); //Clock line
+	LCD_CTRDDR |= _BV(LCD_CS) | _BV(LCD_RESET); //Clock line
 
 	//Backlight permanently on
 	LCD_BLDDR |= _BV(LCD_BL);
@@ -451,7 +451,7 @@ void LCD_Init() {
 
 	//Test-Picture
 	for (int i=0;i<132*132;i++) {
-		setPixel(WHITE);
+		setPixel(GREEN);
 	}
 
 	//Display On
@@ -483,25 +483,21 @@ void LCD_Test() {
 	//red bar
 	for (i=0;i<132*33;i++) {
 		setPixel(RED);
-		//setPixel8(5);
 	}
 
 	//green bar
 	for (i=0;i<132*33;i++) {
 		setPixel(GREEN);
-		//setPixel8(8);
 	}
 
 	//blue bar
 	for (i=0;i<132*33;i++) {
 		setPixel(BLUE);
-		//setPixel8(2);
 	}
 
 	//white bar
 	for (i=0;i<132*33;i++) {
 		setPixel(WHITE);
-		//setPixel8(15);
 	}
 	CS1
 }
@@ -509,192 +505,61 @@ void LCD_Blank(uint8_t mode) {
 	CS0;
 
 	//Column Adress Set
-	sendCMD(0x2A);
+	sendCMD(CASET);
 	sendData(0);
 	sendData(131);
 
 	//Page Adress Set
-	sendCMD(0x2B);
+	sendCMD(PASET);
 	sendData(0);
 	sendData(131);
 
 	//Memory Write
-	sendCMD(0x2C);
+	sendCMD(RAMWR);
 	int i;
 	//Test-Picture
 
 	//red bar
 	for (i=0;i<132*132;i++) {
 		//setPixel(mode,mode,mode);
-		setPixel8(255);
+		setPixel(WHITE);
 	}
+	sendCMD(NOP);
 	CS1
 }
 
-void ashiftBits(uint8_t b) {
-	register uint8_t i;
-	for (i=0;i<8;i++) {
-		CLK0
-		if ((b&128)!=0) SDA1 else SDA0
-		CLK1
-		b=b<<1;
-	}
-}
-
-void shiftBits(uint8_t b) {
-	CLK0
-	if ((b&128)!=0) SDA1 else SDA0
-	CLK1
-
-	CLK0
-	if ((b&64)!=0) SDA1 else SDA0
-	CLK1
-
-	CLK0
-	if ((b&32)!=0) SDA1 else SDA0
-	CLK1
-
-	CLK0
-	if ((b&16)!=0) SDA1 else SDA0
-	CLK1
-
-	CLK0
-	if ((b&8)!=0) SDA1 else SDA0
-	CLK1
-
-	CLK0
-	if ((b&4)!=0) SDA1 else SDA0
-	CLK1
-
-	CLK0
-	if ((b&2)!=0) SDA1 else SDA0
-	CLK1
-
-	CLK0
-	if ((b&1)!=0) SDA1 else SDA0
-	CLK1
-
-}
-
-//send data
-void sendData(uint8_t data) {
-
-	CLK0
-	SDA1                                                 //1 for param
-	CLK1
-	shiftBits(data);
-
-}
-//send data
-void xsendData(uint8_t data) {
-
-	// clk starts high
-	asm("sbi %0, 7" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-
-	// Send the command flag bit
-	asm("cbi %0, 7" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-	asm("cbi %0, 5" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-	asm("sbrc %0, 0" : : "a" (1));
-	asm("sbi %0, 5" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-	asm("sbi %0, 7" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-	sendByte(data);
-}
-
-void sendByte(uint8_t data)
-{
-	// Send Bit 7 of data
-	asm("cbi %0, 7" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-	asm("cbi %0, 5" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-	asm("sbrc %0, 7" : : "a" (data));
-	asm("sbi %0, 5" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-	asm("sbi %0, 7" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-
-	// Send Bit 6 of data
-	asm("cbi %0, 7" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-	asm("cbi %0, 5" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-	asm("sbrc %0, 6" : : "a" (data));
-	asm("sbi %0, 5" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-	asm("sbi %0, 7" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-
-	// Send bit 5 of data
-	asm("cbi %0, 7" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-	asm("cbi %0, 5" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-	asm("sbrc %0, 5" : : "a" (data));
-	asm("sbi %0, 5" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-	asm("sbi %0, 7" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-
-	// Send bit 4 of data
-	asm("cbi %0, 7" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-	asm("cbi %0, 5" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-	asm("sbrc %0, 4" : : "a" (data));
-	asm("sbi %0, 5" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-	asm("sbi %0, 7" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-
-	// Send bit 3 of data
-	asm("cbi %0, 7" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-	asm("cbi %0, 5" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-	asm("sbrc %0, 3" : : "a" (data));
-	asm("sbi %0, 5" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-	asm("sbi %0, 7" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-
-	// Send bit 2 of data
-	asm("cbi %0, 7" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-	asm("cbi %0, 5" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-	asm("sbrc %0, 2" : : "a" (data));
-	asm("sbi %0, 5" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-	asm("sbi %0, 7" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-
-	// Send bit 1 of data
-	asm("cbi %0, 7" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-	asm("cbi %0, 5" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-	asm("sbrc %0, 1" : : "a" (data));
-	asm("sbi %0, 7" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-	asm("sbi %0, 7" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-
-	// Send bit 0 of data
-	asm("cbi %0, 7" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-	asm("cbi %0, 5" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-	asm("sbrc %0, 0" : : "a" (data));
-	asm("sbi %0, 5" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-	asm("sbi %0, 7" : : "I" (_SFR_IO_ADDR(LCD_SPIPORT)));
-}
-
-
-//send cmd
+//send Command
 void sendCMD(uint8_t data) {
 	CLK0
-	SDA0                                                 //0 for cmd
+	SDA0 //MSB is 0 for sending command
 	CLK1
-	shiftBits(data);
-	return;
+	CLK0
+	SPCR |= _BV(SPE) | _BV(MSTR);// Enable Hardware SPI
+	SPSR |= _BV(SPI2X);
+	SPDR = data; // send data
+	while(!(SPSR & (1<<SPIF)))
+		;// wait until send complete
+	SPCR &= ~(_BV(SPE) | _BV(MSTR));// | _BV(SPR1) | _BV(SPR0));
 }
 
+//send Data
+void sendData(uint8_t data) {
+	CLK0
+	SDA1 //MSB is 1 for sending data
+	CLK1
+	CLK0
+	SPCR |= _BV(SPE) | _BV(MSTR); // Enable Hardware SPI
+	SPSR |= _BV(SPI2X);
+	SPDR = data; // send data
+	while(!(SPSR & (1<<SPIF)))
+		;// wait until send complete
+	SPCR &= ~(_BV(SPE) | _BV(MSTR));// | _BV(SPR1) | _BV(SPR0));
+}
+#ifdef MODE8BPP
 void setPixel8(uint8_t col) {
 	sendData(col);
 }
-
-void setPixel2(uint16_t col) {
-#ifdef MODE16BPP
-	sendData((uint8_t)(col>>8));
-	sendData((uint8_t)(col&0xff));
 #endif
-#ifdef MODE12BPP
-	if (n==0) {
-		s1=((uint8_t)(col>>4));
-		s2=((uint8_t)((col&0x0f)<<4));
-		n=1;
-	} else {
-		n=0;
-		sendData(s1);
-		sendData(s2|(col>>8));
-		sendData((uint8_t)(col&0xff));
-	}
-#endif
-#ifdef MODE8BPP
-	//sendData(r&224|((g&224)>>5)|b>>6);
-	sendData(r);
-#endif
-}
 
 void setPixel(uint16_t col) {
 #ifdef MODE16BPP
@@ -714,27 +579,27 @@ void setPixel(uint16_t col) {
 	}
 #endif
 #ifdef MODE8BPP
-	sendData(r);
+	sendData((uint8_t)col);
 #endif
 }
 
 void LCD_Rectangle(uint8_t x, uint8_t y, uint8_t width, uint8_t height, uint16_t col) {
 	CS0;
-	// Page address set
-	sendCMD(PASET);
-	sendData(x);
-	sendData(x + width - 1);
 	// Column address set
 	sendCMD(CASET);
+	sendData(x);
+	sendData(x + height - 1);
+
+	// Page address set
+	sendCMD(PASET);
 	sendData(y);
-	sendData(y + height - 1);
+	sendData(y + width - 1);
 
 	sendCMD(RAMWR);
 	for (uint16_t i=0; i<width*height; i++) {
-		setPixel2(col);
+		setPixel(col);
 	}
 	sendCMD(NOP);
-
 	CS1;
 }
 #ifdef LCDTEXT
@@ -857,5 +722,23 @@ void LCD_PutChar(char c, uint8_t x, uint8_t y, uint8_t size, int fColor, int bCo
 	cursory=y;
 	cursorx=x;
 }
-#endif
+
+void LCD_PutDecimal(uint32_t value, uint8_t x, uint8_t y, uint8_t size, int fColor, int bColor) {
+	unsigned char str[11];
+
+	/* convert unsigned integer into string */
+	ultoa(value, str, 10);
+
+	LCD_PutStr(str, x, y, size, fColor, bColor);
+}
+void LCD_PutDecimalSigned(int32_t value, uint8_t x, uint8_t y, uint8_t size, int fColor, int bColor) {
+	unsigned char str[11];
+
+	/* convert signed integer into string */
+	ltoa(value, str, 10);
+
+	LCD_PutStr(str, x, y, size, fColor, bColor);
+}
+
+#endif //LCDTEXT
 

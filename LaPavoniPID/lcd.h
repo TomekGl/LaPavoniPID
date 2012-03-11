@@ -9,6 +9,8 @@
 #ifndef LCD_H_
 #define LCD_H_
 
+#define LCDTEXT  //compile-in fonts and text-related functions
+
 
 /* Hardware configuration */
 #define PCF8833
@@ -58,7 +60,7 @@
 #define MADCTL		0x36 //Memory data access control
 #define COLMOD		0x3a  //Interface pixel format
 
-#define COLMOD_8BPP	0x02 //8-bit/pixel
+#define COLMOD_8BPP		0x02 //8-bit/pixel
 #define COLMOD_12BPP	0x03 //12-bit/pixel
 #define COLMOD_16BPP	0x05 //16-bit/pixel
 
@@ -120,7 +122,7 @@
 #define ORANGE  0xFA0
 #define PINK    0xF6A
 
-
+#define LCD_AUTOINCREMENT 255
 /* Functions */
 void LCD_Init();
 void LCD_Test();
@@ -129,5 +131,7 @@ void LCD_Rectangle(uint8_t x, uint8_t y, uint8_t width, uint8_t height, uint16_t
 void LCD_PutChar(char c, uint8_t x, uint8_t y, uint8_t size, int fColor, int bColor);
 void LCD_PutStr(char *s, uint8_t x, uint8_t y, uint8_t Size, int fColor, int bColor);
 void LCD_PutStr_P(const char *s, uint8_t x, uint8_t y, uint8_t Size, int fColor, int bColor);
+void LCD_PutDecimal(uint32_t, uint8_t x, uint8_t y, uint8_t size, int fColor, int bColor);
+void LCD_PutDecimalSigned(int32_t, uint8_t x, uint8_t y, uint8_t size, int fColor, int bColor);
 #endif
 #endif /* LCD_H_ */

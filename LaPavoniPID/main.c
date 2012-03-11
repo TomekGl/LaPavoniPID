@@ -3,11 +3,6 @@
 /// data i czas kompilacji
 const char VERSION[] __attribute__ ((progmem)) = __DATE__ " " __TIME__;
 
-#define ADCCS0 cbi(ADC_CSPORT,ADC_CS);
-#define ADCCS1 sbi(ADC_CSPORT,ADC_CS);
-#define CLK0 cbi(LCD_SPIPORT,LCD_SCK);
-#define CLK1 sbi(LCD_SPIPORT,LCD_SCK);
-
 void waitms(uint16_t ms)
 {
 	uint8_t j, k;
@@ -37,10 +32,11 @@ void __attribute__ ((naked)) main(void) {
 	SW4_PORT |= _BV(SW4);
 
 
-	PORTD |= _BV(0);
+//	PORTD |= _BV(0);
 
 	PORTC |= (_BV(OUT1)|_BV(OUT2)|_BV(OUT3));
 
+	//Unused connector
 	PORTA |= 0xff;
 	PORTB |= 0x0f;
 
@@ -48,13 +44,14 @@ void __attribute__ ((naked)) main(void) {
 	BUZZ_DDR |= _BV(BUZZ);
 	//BUZZ_PORT |= _BV(BUZZ);
 
-	//SS as output
-	SPI_PORT |= _BV(SPI_MISO); //pullup
-	ADC_CSDDR |= _BV(ADC_CS);
-	ADC_CSPORT |= _BV(ADC_CS); //High - inactive
+	//SPI
 	SPI_DDR |= _BV(SPI_MOSI) | _BV(SPI_SCK);
+	SPI_PORT |= _BV(SPI_MISO); //pullup on MISO
+
 
 	USART_Init(38400);
+	TC_init();
+
 	//enable interrupts
 	sei();
 
@@ -63,56 +60,72 @@ void __attribute__ ((naked)) main(void) {
 	LCD_Test();
 
 	USART_Puts_P(VERSION);
-
+_delay_ms(10);
 	uint8_t j=0, c=0;
 
+/*	int32_t iks = 1600;
+	USART_TransmitBinary(iks>>8);
+	USART_TransmitBinary(iks&0xff);
+    USART_TransmitDecimalSigned(iks); USART_Puts("\r\n");
+    _delay_ms(10);
+	iks = -250;
+	USART_TransmitBinary(iks>>8);
+	USART_TransmitBinary(iks&0xff);
+    USART_TransmitDecimalSigned(iks); USART_Puts("\r\n");
+*/
 	volatile uint8_t status;
 	//GLOWNA PETLA ************************************************************
 	uint8_t bajt;
+	int16_t deg;
+	uint16_t milideg;
+
 	for (;;) {
-    	//LCD_Rectangle(10,50,16,8, YELLOW);
-    	if (0!=buf_getcount(&USART_buffer_RX)) {
+		//clear background
+		LCD_Rectangle(100,0,10,100,RED);
+		LCD_Rectangle(5,10,5,10,BLUE);
+
+		//display Temp
+		if (0==(status=TC_performRead())) {
+			TC_getTCTemp(&deg, &milideg);
+			LCD_PutStr("TC: ", 110, 5, 0, BLACK, WHITE);
+			LCD_PutDecimalSigned(deg, 110, 35, 0, RED,WHITE);
+			LCD_PutChar('.', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED,WHITE);
+			LCD_PutDecimal(milideg, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED,WHITE);
+
+			TC_getInternalTemp(&deg, &milideg);
+			LCD_PutStr("IN: ", 100,5,0,BLACK,WHITE);
+			LCD_PutDecimalSigned(deg, 100, 35, 0, GREEN,WHITE);
+			LCD_PutChar('.', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, GREEN,WHITE);
+			LCD_PutDecimal(milideg, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, GREEN,WHITE);
+
+
+		} else {
+			LCD_PutStr("TC ERR:", 120,0,0,RED,WHITE);
+			if (!(0==(TC_READOC&status))) {
+				LCD_PutStr("Open!", LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED, WHITE);
+			}
+			if (!(0==TC_READSCG)) {
+				LCD_PutStr("Short-!", LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED, WHITE);
+			}
+			if (!(0==TC_READSCV)) {
+				LCD_PutStr("Short+!", LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED, WHITE);
+			}
+		}
+		USART_Puts("\r\n");
+
+		if (0!=buf_getcount(&USART_buffer_RX)) {
     		bajt = buf_getbyte(&USART_buffer_RX);
     		USART_Put(bajt);
-
+    		USART_StartSending();
+    		if ('B'==bajt) {
+    			TC_performRead();
+    			TC_debug();
+    		}
     		if ('A'==bajt) {
-    			SPCR |= _BV(SPE) | _BV(MSTR)| _BV(SPR0) | _BV(SPR1); // Enable Hardware SPI
-    			ADCCS0
-    			_delay_us(1);
-    			for (j=0; j<4; j++) {
-    				SPDR = 0xff; // send data
-    				while(!(SPSR & (1<<SPIF)))// wait until send complete
-    					;
-    				USART_Put(SPDR);
-    			}
-    			SPCR &= ~_BV(SPE);
-    			ADCCS1
-       		}
-    		if ('Z'==bajt) {
-//-----------
-    			CLK0
-    			ADCCS0
-    			_delay_ms(1);
-    		  for (j=0; j<16; j++) {
-    			CLK1
-    			_delay_ms(1);
-    			if (SPI_PIN & _BV(SPI_MISO))
-    				{ USART_Put('1'); }
-    			else
-    				{ USART_Put('0'); }
-    			CLK0
-    			if (SPI_PIN & _BV(SPI_MISO))
-    			    				{ USART_Put('_'); }
-    			    			else
-    			    				{ USART_Put('.'); }
-    			_delay_ms(1);
-    		    }
-    		  ADCCS1
-
-//**-----------
+    			_delay_ms(10);
 
     		}
-    		USART_StartSending();
+
     	}
     /*	if (!(SW1_PIN & _BV(SW1))) {
     		BUZZ_PORT |= _BV(BUZZ);
@@ -142,6 +155,7 @@ void __attribute__ ((naked)) main(void) {
 
     	}
     */
+	_delay_ms(500);
 	}
 
 
