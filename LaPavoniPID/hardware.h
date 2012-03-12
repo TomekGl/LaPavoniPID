@@ -64,6 +64,10 @@
 #define SPI_DDR DDRB
 #define SPI_PIN PINB
 
-
+#define I2C_SDA PC1
+#define I2C_SCK PC0
+#define I2C_PIN PINC
+#define I2C_DDR DDRC
+#define I2C_PORT PORTC
 
 #endif /*HARDWARE_H_*/

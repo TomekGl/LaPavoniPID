@@ -52,6 +52,8 @@ void __attribute__ ((naked)) main(void) {
 	USART_Init(38400);
 	TC_init();
 
+	TWI_Init();
+
 	//enable interrupts
 	sei();
 
@@ -60,7 +62,12 @@ void __attribute__ ((naked)) main(void) {
 	LCD_Test();
 
 	USART_Puts_P(VERSION);
-_delay_ms(10);
+	uint8_t data = 0;
+	TWI_Send(0,1,&data);
+	data = 0x10;
+	TWI_Send(0x07,1,&data);
+	//ds1307_start();
+
 	uint8_t j=0, c=0;
 
 /*	int32_t iks = 1600;
@@ -78,11 +85,17 @@ _delay_ms(10);
 	uint8_t bajt;
 	int16_t deg;
 	uint16_t milideg;
-
+	char screen_buf_1[17];
+	strcpy(&screen_buf_1, "###############");
+	uint8_t temp=0;
 	for (;;) {
 		//clear background
-		LCD_Rectangle(100,0,10,100,RED);
-		LCD_Rectangle(5,10,5,10,BLUE);
+//		LCD_Rectangle(100,0,10,100,RED);
+//		LCD_Rectangle(5,10,5,10,BLUE);
+		TWI_Recv(DS1307,0,&(systime.systime.sec));
+				//ds1307_read((Tsystime *)&systime);
+		LCD_PutDecimal(systime.systime.sec, 50, 0, 0, BLACK, WHITE);
+		//prepare_timeline(screen_buf_1);
 
 		//display Temp
 		if (0==(status=TC_performRead())) {
@@ -127,34 +140,30 @@ _delay_ms(10);
     		}
 
     	}
-    /*	if (!(SW1_PIN & _BV(SW1))) {
+    	if (!(SW1_PIN & _BV(SW1))) {
     		BUZZ_PORT |= _BV(BUZZ);
-    		//	LCD_Rectangle(10,10,10,10, GREEN);
+    		LCD_Rectangle(10,20,10,10, GREEN);
     	} else {
-    		BUZZ_PORT ^= ~_BV(BUZZ);
-    	}*/
-    /*	if (!(SW2_PIN & _BV(SW2))) {
-    		SPI_PORT |= _BV(SPI_SCK);
-    		USART_Put('2');USART_StartSending();
-    		//LCD_Rectangle(10,10,10,10, BLUE);
-    	} else {
-    		SPI_PORT &= ~_BV(SPI_SCK);
+    		BUZZ_PORT &= ~_BV(BUZZ);
     	}
-    	if (!(SW3_PIN & _BV(SW3))) {
-    		ADC_CSPORT |= _BV(ADC_CS);
-    		USART_Put('3');USART_StartSending();
-    		//LCD_Rectangle(10,10,10,10, BLUE);
+/*
+    	if (!(SW2_PIN & _BV(SW2))) {
+    		LCD_Rectangle(10,10,10,10, BLUE);
+    		I2C_PORT &= ~_BV(I2C_SDA);
+    		I2C_DDR  |= _BV(I2C_SDA);
     	} else {
-    		ADC_CSPORT &= ~_BV(ADC_CS);
+    		I2C_DDR  &= ~_BV(I2C_SDA);
     	}
-    	if (!(SPI_PIN & SPI_MISO)) {
-    		BUZZ_PORT |= _BV(BUZZ);
-    		USART_Put('M');USART_StartSending();
-    	} else {
-    		BUZZ_PORT ^= ~_BV(BUZZ);
 
+    	if (!(SW3_PIN & _BV(SW3))) {
+    		LCD_Rectangle(20,10,10,10, BLUE);
+    		I2C_PORT &= ~_BV(I2C_SCK);
+    		I2C_DDR  |= _BV(I2C_SCK);
+    	} else {
+    		I2C_DDR  &= ~_BV(I2C_SCK);
     	}
-    */
+*/
+
 	_delay_ms(500);
 	}
 
