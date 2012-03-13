@@ -13,8 +13,7 @@
 
 #include "buffers.h"
 #include "hardware.h"
-//#include "i2cmaster.h"
-#include "twi.h"
+#include "i2cmaster.h"
 #include "serial.h"
 #include "crc8.h"
 #include "delay.h"

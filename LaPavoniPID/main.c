@@ -1,22 +1,13 @@
 #include "includes.h"
 
 /// data i czas kompilacji
-const char VERSION[] __attribute__ ((progmem)) = __DATE__ " " __TIME__;
-
-void waitms(uint16_t ms)
-{
-	uint8_t j, k;
-	uint16_t i;
-	for (i = 0; i < ms; i++)
-		for (j = 0; j < 255; j++)
-			for (k = 0; k < 16; k++)
-				asm("nop  ");
-	return;
-}
-
+const char VERSION[] __attribute__ ((progmem)) = __DATE__ " " __TIME__ ;
 
 ISR(TIMER0_OVF_vect)
 {
+        system_clock++;
+        //tick_flag=1;
+        TCNT0 = 255-79;
 }
 
 ISR(INT1_vect)
@@ -42,17 +33,21 @@ void __attribute__ ((naked)) main(void) {
 
 	//Buzzer
 	BUZZ_DDR |= _BV(BUZZ);
-	//BUZZ_PORT |= _BV(BUZZ);
 
 	//SPI
 	SPI_DDR |= _BV(SPI_MOSI) | _BV(SPI_SCK);
 	SPI_PORT |= _BV(SPI_MISO); //pullup on MISO
 
+	// timer 0 - zegar systemowy 8e6 / 1024 / 79 ~= 100Hz
+	TCCR0 |= _BV(CS00) | _BV(CS02);
+	TIMSK |= _BV(TOIE0);
+	TCNT0 = 255-79;
+
+
 
 	USART_Init(38400);
 	TC_init();
-
-	TWI_Init();
+	DS1307_start();
 
 	//enable interrupts
 	sei();
@@ -62,40 +57,22 @@ void __attribute__ ((naked)) main(void) {
 	LCD_Test();
 
 	USART_Puts_P(VERSION);
-	uint8_t data = 0;
-	TWI_Send(0,1,&data);
-	data = 0x10;
-	TWI_Send(0x07,1,&data);
-	//ds1307_start();
 
-	uint8_t j=0, c=0;
-
-/*	int32_t iks = 1600;
-	USART_TransmitBinary(iks>>8);
-	USART_TransmitBinary(iks&0xff);
-    USART_TransmitDecimalSigned(iks); USART_Puts("\r\n");
-    _delay_ms(10);
-	iks = -250;
-	USART_TransmitBinary(iks>>8);
-	USART_TransmitBinary(iks&0xff);
-    USART_TransmitDecimalSigned(iks); USART_Puts("\r\n");
-*/
 	volatile uint8_t status;
+
 	//GLOWNA PETLA ************************************************************
 	uint8_t bajt;
 	int16_t deg;
 	uint16_t milideg;
 	char screen_buf_1[17];
 	strcpy(&screen_buf_1, "###############");
-	uint8_t temp=0;
+
 	for (;;) {
 		//clear background
-//		LCD_Rectangle(100,0,10,100,RED);
-//		LCD_Rectangle(5,10,5,10,BLUE);
-		TWI_Recv(DS1307,0,&(systime.systime.sec));
-				//ds1307_read((Tsystime *)&systime);
-		LCD_PutDecimal(systime.systime.sec, 50, 0, 0, BLACK, WHITE);
-		//prepare_timeline(screen_buf_1);
+		DS1307_read((Tsystime *)&systime);
+		prepare_timeline(screen_buf_1);
+		LCD_PutStr(screen_buf_1, 50, 0, 0, BLACK, WHITE);
+
 
 		//display Temp
 		if (0==(status=TC_performRead())) {
@@ -103,13 +80,13 @@ void __attribute__ ((naked)) main(void) {
 			LCD_PutStr("TC: ", 110, 5, 0, BLACK, WHITE);
 			LCD_PutDecimalSigned(deg, 110, 35, 0, RED,WHITE);
 			LCD_PutChar('.', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED,WHITE);
-			LCD_PutDecimal(milideg, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED,WHITE);
+			LCD_PutDecimalFixedDigits(milideg, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED,WHITE,2);
 
 			TC_getInternalTemp(&deg, &milideg);
 			LCD_PutStr("IN: ", 100,5,0,BLACK,WHITE);
 			LCD_PutDecimalSigned(deg, 100, 35, 0, GREEN,WHITE);
 			LCD_PutChar('.', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, GREEN,WHITE);
-			LCD_PutDecimal(milideg, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, GREEN,WHITE);
+			LCD_PutDecimalFixedDigits(milideg, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, GREEN,WHITE,4);
 
 
 		} else {
@@ -164,7 +141,7 @@ void __attribute__ ((naked)) main(void) {
     	}
 */
 
-	_delay_ms(500);
+	_delay_ms(250);
 	}
 
 

@@ -36,8 +36,8 @@ union Tsystime_tag {
 //typedef struct Tsystime_tag_1 Tsystime_1;
 typedef union Tsystime_tag Tsystime;
 
-uint8_t ds1307_bcd2int(uint8_t);
-uint8_t ds1307_int2bcd(uint8_t);
+uint8_t DS1307_bcd2int(uint8_t);
+uint8_t DS1307_int2bcd(uint8_t);
 
 //start clock if halted, set parameters
 void DS1307_start(void);

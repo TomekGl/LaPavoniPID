@@ -133,5 +133,6 @@ void LCD_PutStr(char *s, uint8_t x, uint8_t y, uint8_t Size, int fColor, int bCo
 void LCD_PutStr_P(const char *s, uint8_t x, uint8_t y, uint8_t Size, int fColor, int bColor);
 void LCD_PutDecimal(uint32_t, uint8_t x, uint8_t y, uint8_t size, int fColor, int bColor);
 void LCD_PutDecimalSigned(int32_t, uint8_t x, uint8_t y, uint8_t size, int fColor, int bColor);
+void LCD_PutDecimalFixedDigits(uint32_t value, uint8_t x, uint8_t y, uint8_t size, int fColor, int bColor, uint8_t digits);
 #endif
 #endif /* LCD_H_ */

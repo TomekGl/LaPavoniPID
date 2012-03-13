@@ -48,13 +48,12 @@ void TC_debug() {
 	USART_TransmitDecimal(read_data.integer);
 }
 void TC_getTCTemp(int16_t *deg, uint16_t *milideg) {
-	int16_t temp;
 	*deg = (read_data.word[1]>>4);
 	*milideg = ((read_data.word[1]>>2)&0x03)*25;
 	return;
 }
 void TC_getInternalTemp(int16_t *deg, uint16_t *milideg) {
 	*deg = (int16_t)read_data.byte[1]; //12bit internal temp
-	*milideg = read_data.byte[0]>>4*625;
+	*milideg = (uint8_t)(read_data.byte[0]>>4)*625;
 	return;
 }

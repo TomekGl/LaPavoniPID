@@ -641,13 +641,6 @@ void LCD_PutChar(char c, uint8_t x, uint8_t y, uint8_t size, int fColor, int bCo
 	unsigned char *FontTable[] = {/*(unsigned char *)FONT6x8 ,*/ (unsigned char *)FONT8x8, /*(unsigned char *)FONT8x16*/ };
 
 	CS0;
-	/*USART_Puts("Ch:");
-	USART_TransmitDecimal(c);
-	USART_Puts(" X:");
-	USART_TransmitDecimal(x);
-	USART_Puts(" Y:");
-	USART_TransmitDecimal(y);
-	USART_Puts("\r\n");*/
 
 	// get pointer to the beginning of the selected font table
 	pFont = (unsigned char *)FontTable[size];
@@ -724,15 +717,36 @@ void LCD_PutChar(char c, uint8_t x, uint8_t y, uint8_t size, int fColor, int bCo
 }
 
 void LCD_PutDecimal(uint32_t value, uint8_t x, uint8_t y, uint8_t size, int fColor, int bColor) {
-	unsigned char str[11];
+	char str[11];
 
 	/* convert unsigned integer into string */
 	ultoa(value, str, 10);
 
 	LCD_PutStr(str, x, y, size, fColor, bColor);
 }
+
+void LCD_PutDecimalFixedDigits(uint32_t value, uint8_t x, uint8_t y, uint8_t size, int fColor, int bColor, uint8_t digits) {
+	char str[11];
+
+	/* convert unsigned integer into string */
+	ultoa(value, str, 10);
+	uint8_t n=0;
+	//count number of digits
+	while (0 != str[++n])
+		;
+	//fill preceding digits
+	if (digits>n) {
+		LCD_PutChar('0',x,y,size,fColor,bColor);
+		for (n=digits-n;n>1;n--) {
+			LCD_PutChar('0',LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, size,fColor,bColor);
+		}
+		LCD_PutStr(str, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, size, fColor, bColor);
+	} else {
+		LCD_PutStr(str, x, y, size, fColor, bColor);
+	}
+}
 void LCD_PutDecimalSigned(int32_t value, uint8_t x, uint8_t y, uint8_t size, int fColor, int bColor) {
-	unsigned char str[11];
+	char str[11];
 
 	/* convert signed integer into string */
 	ltoa(value, str, 10);
