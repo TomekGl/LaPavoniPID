@@ -39,6 +39,11 @@ typedef union Tsystime_tag Tsystime;
 uint8_t DS1307_bcd2int(uint8_t);
 uint8_t DS1307_int2bcd(uint8_t);
 
+
+void DS1307_Init(void);
+void DS1307_Reset(void);
+void DS1307_Read(void);
+void DS1307_Process(void);
 //start clock if halted, set parameters
 void DS1307_start(void);
 

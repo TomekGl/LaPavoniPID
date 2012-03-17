@@ -3,6 +3,21 @@
  * LCD based on PCF8833
   *  Created on: 04-03-2012
  *      Author: tomek
+ * 131,0                131,131
+ *  X *--------------------*
+ *    |                    |
+ *    |                    |
+ *  P |                    |
+ *  a |                    |
+ *  g |                    |
+ *  e |                    |
+ *  s |                    |
+ *    |                    |
+ *    |                    |
+ *    |                    |
+ *    *--------------------* Y
+ *   0,0     Cols        0,131
+ *
  *
  */
 
@@ -66,7 +81,7 @@
 
 #define MAD_RGB		3 //BGR
 #define MAD_LAO		4 //line address order (bottom to top)
-#define MAD_V		5 //Vertical
+#define MAD_V		5 //Vertical (rotated, 90deg)
 #define MAD_MX		6 //Mirror X
 #define MAD_MY		7 //Mirror Y
 

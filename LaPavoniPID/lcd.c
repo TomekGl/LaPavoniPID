@@ -362,13 +362,13 @@ void LCD_Init() {
 
 	RESET1
 	RESET0
-	_delay_ms(5);
+	_delay_ms(10);
 	RESET1
 
 	CLK1
 	SDA1
 	CLK1
-	_delay_ms(5);
+	_delay_ms(1);
 	//Software Reset
 	sendCMD(SWRESET);
 
@@ -390,7 +390,7 @@ void LCD_Init() {
 
 	//Memory data access control
 	sendCMD(MADCTL);
-	sendData(_BV(MAD_V)); //|_BV(MAD_MX)|_BV(MAD_MY));
+	sendData(_BV(MAD_V)|_BV(MAD_MX)|_BV(MAD_MY));
 
 
 #ifdef MODE16BPP
@@ -451,7 +451,7 @@ void LCD_Init() {
 
 	//Test-Picture
 	for (int i=0;i<132*132;i++) {
-		setPixel(GREEN);
+		setPixel(WHITE);
 	}
 
 	//Display On
