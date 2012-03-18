@@ -540,6 +540,7 @@ void sendCMD(uint8_t data) {
 	while(!(SPSR & (1<<SPIF)))
 		;// wait until send complete
 	SPCR &= ~(_BV(SPE) | _BV(MSTR));// | _BV(SPR1) | _BV(SPR0));
+
 }
 
 //send Data
@@ -553,7 +554,8 @@ void sendData(uint8_t data) {
 	SPDR = data; // send data
 	while(!(SPSR & (1<<SPIF)))
 		;// wait until send complete
-	SPCR &= ~(_BV(SPE) | _BV(MSTR));// | _BV(SPR1) | _BV(SPR0));
+	SPCR &= ~(_BV(SPE) | _BV(MSTR)); // | _BV(SPR1) | _BV(SPR0));
+
 }
 #ifdef MODE8BPP
 void setPixel8(uint8_t col) {
@@ -586,12 +588,12 @@ void setPixel(uint16_t col) {
 void LCD_Rectangle(uint8_t x, uint8_t y, uint8_t width, uint8_t height, uint16_t col) {
 	CS0;
 	// Column address set
-	sendCMD(CASET);
+	sendCMD(PASET);
 	sendData(x);
 	sendData(x + height - 1);
 
 	// Page address set
-	sendCMD(PASET);
+	sendCMD(CASET);
 	sendData(y);
 	sendData(y + width - 1);
 

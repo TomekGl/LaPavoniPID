@@ -1,20 +1,21 @@
 #include "includes.h"
 #define LINE_WIDTH 16
 
-
+/*
 #define TWI_GEN_CALL         0x00  // The General Call address is 0
 
 // Sample TWI transmission states, used in the main application.
 #define SEND_DATA             0x01
 #define REQUEST_DATA          0x02
-#define READ_DATA_FROM_BUFFER 0x03
+#define READ_DATA_FROM_BUFFER 0x03*/
 
 const char DAYSOFWEEK[][3]  = { "Pn", "Wt", "Sr", "Cz", "Pt", "So", "Ni" };
 uint8_t messageBuf[8]; //sizeof(Tsystime)];
-uint8_t myCounter=0;
-uint8_t TWI_operation = 0;
-uint8_t TWI_targetSlaveAddress   = 0xd0>>1;
+//uint8_t myCounter=0;
+//uint8_t TWI_operation = 0;
+/*uint8_t TWI_targetSlaveAddress   = 0xd0>>1;*/
 
+/*
 uint8_t TWI_Act_On_Failure_In_Last_Transmission ( uint8_t TWIerrorMsg )
 {
                     // A failure has occurred, use TWIerrorMsg to determine the nature of the failure
@@ -30,12 +31,12 @@ uint8_t TWI_Act_On_Failure_In_Last_Transmission ( uint8_t TWIerrorMsg )
   //USART_TransmitDecimal(TWIerrorMsg);
   //USART_Puts("\n");
   return TWIerrorMsg;
-}
+}*/
 
-void DS1307_Init() {
+/*void DS1307_Init() {
 	TWI_statusReg = 1;
 	TWI_Master_Initialise();
-/*	messageBuf[0] = (TWI_targetSlaveAddress<<TWI_ADR_BITS) | (FALSE<<TWI_READ_BIT); // The first byte must always consit of General Call code or the TWI slave address.
+	messageBuf[0] = (TWI_targetSlaveAddress<<TWI_ADR_BITS) | (FALSE<<TWI_READ_BIT); // The first byte must always consit of General Call code or the TWI slave address.
 	messageBuf[1] = 0x0;             // Offset
 	messageBuf[2] = 0x0;             // Seconds in BCD
 	messageBuf[3] = 0x23;             // Seconds in BCD
@@ -44,14 +45,17 @@ void DS1307_Init() {
 	messageBuf[6] = 0x01;
 	messageBuf[7] = 0x99;
 	TWI_Start_Transceiver_With_Data( messageBuf, 3 );
-	*/
-}
 
+}*/
+
+/*
 void DS1307_Reset() {
 	messageBuf[0] = TWI_GEN_CALL;     // The first byte must always consit of General Call code or the TWI slave address.
 	messageBuf[1] = 0xAA;             // The command or data to be included in the general call.
 	TWI_Start_Transceiver_With_Data( messageBuf, 2 );
 }
+*/
+/*
 void DS1307_Read() {
 	// Send the request-for-data command to the Slave
 	messageBuf[0] = (TWI_targetSlaveAddress<<TWI_ADR_BITS) | (FALSE<<TWI_READ_BIT); // The first byte must always consit of General Call code or the TWI slave address.
@@ -65,7 +69,9 @@ void DS1307_Read() {
 			// Get status from Transceiver and put it on PORTB
 	USART_TransmitDecimal(TWI_Get_State_Info());
 }
+*/
 
+/*
 void DS1307_SquareEnable() {
 	//square out, 1Hz
 	messageBuf[0] = (TWI_targetSlaveAddress<<TWI_ADR_BITS) | (FALSE<<TWI_READ_BIT); // The first byte must always consit of General Call code or the TWI slave address.
@@ -73,7 +79,9 @@ void DS1307_SquareEnable() {
 	messageBuf[2] = 0x10;                        // The second byte is used for the data.
 	TWI_Start_Transceiver_With_Data( messageBuf, 3 );
 }
+*/
 
+/*
 void DS1307_Process() {
 	if ( ! TWI_Transceiver_Busy() )
 	{
@@ -113,15 +121,15 @@ void DS1307_Process() {
 		}
 	}
 }
+*/
 
-/*
-void DS1307_start(void)
+void DS1307_Init(void)
 {
 	uint8_t ret;
 	ret = i2c_start(DS1307 + I2C_WRITE);	// set device address and write mode
 	if (ret) {
 		i2c_stop();
-		//return;
+		return;
 	} else {
 		i2c_write(0x00);	//adres sekund
 		i2c_rep_start(DS1307 + I2C_READ);
@@ -129,18 +137,10 @@ void DS1307_start(void)
 		i2c_stop();
 	}
 
-	//if ((ret & 128)) {
+	if ((ret & 128)) {
 		//enable clock
 		i2c_start(DS1307 + I2C_WRITE);	// set device address and write mode
 		i2c_write(0);
-		i2c_write(0x05);  //i2c_write(ret&127);
-
-//		i2c_write(0x47);
-//		i2c_write(0x20);
-//		i2c_write(0x3);
-//		i2c_write(0x15);
-//		i2c_write(0x07);
-//		i2c_write(0x12);
 		i2c_stop();
 
 		//enable square out
@@ -150,12 +150,11 @@ void DS1307_start(void)
 		i2c_stop();
 		USART_Puts("DS1307 set ");
 
-	//}
+	}
 	return;
 }
 
-
-void DS1307_read(Tsystime *time)
+void DS1307_Read()
 {
 	uint8_t i;
 
@@ -165,9 +164,9 @@ void DS1307_read(Tsystime *time)
 
 	for (i = 0; i < 6; )
 	{
-		time->chars[i++] = i2c_readAck();
+		systime.chars[i++] = i2c_readAck();
 	}
-	time->chars[i] = i2c_readNak();
+	systime.chars[i] = i2c_readNak();
 	i2c_stop();
 }
 
@@ -227,7 +226,7 @@ uint8_t DS1307_int2bcd(uint8_t val)
 	return (((val/10)<<4) + (val%10));
 }
 
-*/
+
 void prepare_timeline(char * str) {
 	// "__:__:__ __/__/__ ";
 

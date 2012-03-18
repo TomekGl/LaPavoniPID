@@ -22,8 +22,8 @@ volatile TUSART_state USART_state;
 
 
 void USART_Init(unsigned int baud) {
-	buf_init(&USART_buffer_TX);
-	buf_init(&USART_buffer_RX);
+	buf_init((Tcircle_buffer *)&USART_buffer_TX);
+	buf_init((Tcircle_buffer *)&USART_buffer_RX);
 	USART_arrival_time = 0;
 	USART_prev_arrival_time = 0;
 	USART_state = USART_STATE_IDLE;
@@ -55,7 +55,7 @@ void USART_Init(unsigned int baud) {
 /** Przerwanie odbiorcze USART */
 ISR(USART_RXC_vect)
 {
-	volatile uint8_t status, data;
+	volatile uint8_t status; //, data;
 
 /*	while (!(UCSRA & _BV(RXC)))
 			;
@@ -81,8 +81,8 @@ ISR(USART_RXC_vect)
 
 	//USART_prev_arrival_time = USART_arrival_time;
 	//USART_arrival_time = system_clock;
-	if (buf_isfree(&USART_buffer_RX))
-		buf_putbyte(&USART_buffer_RX, UDR);
+	if (buf_isfree((Tcircle_buffer *)&USART_buffer_RX))
+		buf_putbyte((Tcircle_buffer *)&USART_buffer_RX, UDR);
 	//UDR=data+1;
 	//znak = data;
 	return;
@@ -99,14 +99,14 @@ void USART_StartSending() {
 
 void USART_TX_Byte() {
 		//sprawdzenie czy w buforze nadawczym są dane
-		if (buf_getcount(&USART_buffer_TX)) {
+		if (buf_getcount((Tcircle_buffer *)&USART_buffer_TX)) {
 			/* Wait for empty transmit buffer */
 			while (!(UCSRA & (1 << UDRE)))
 				;
 
 			//wysłanie pierwszego znaku
 			USART_state = USART_STATE_INTHEMIDDLE;
-			UDR = (buf_getbyte(&USART_buffer_TX));
+			UDR = (buf_getbyte((Tcircle_buffer *)&USART_buffer_TX));
 		} else
 			USART_state = USART_STATE_IDLE;
 	//pozostałe bajty z bufora będą wysłane automatycznie
@@ -126,7 +126,7 @@ void USART_Puts(const char *s) {
 	register char c;
 
 	while ((c = *s++)) {
-		buf_putbyte(&USART_buffer_TX, c);
+		buf_putbyte((Tcircle_buffer *)&USART_buffer_TX, c);
 	}
 	if (USART_STATE_INTHEMIDDLE!=USART_state)
 	{
@@ -138,7 +138,7 @@ void USART_Puts_P(const char *s) {
 	register char c;
 
 	while ((c = pgm_read_byte(s++))) {
-		buf_putbyte(&USART_buffer_TX, c);
+		buf_putbyte((Tcircle_buffer *)&USART_buffer_TX, c);
 	}
 	if (USART_STATE_INTHEMIDDLE!=USART_state)
 	{
@@ -147,7 +147,7 @@ void USART_Puts_P(const char *s) {
 }
 
 void USART_Put(char ch) {
-	buf_putbyte(&USART_buffer_TX, ch);
+	buf_putbyte((Tcircle_buffer *)&USART_buffer_TX, ch);
 }
 
 void USART_TransmitDecimal(uint32_t data) {

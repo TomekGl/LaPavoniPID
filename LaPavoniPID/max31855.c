@@ -27,10 +27,12 @@ void TC_init()
 
 uint8_t TC_performRead() {
 	SPCR |= _BV(SPE) | _BV(MSTR); // Enable Hardware SPI
+
+	LCD_CTRPORT |= _BV(LCD_CS);
 	ADCCS0
 	_delay_us(1);
 	for (uint8_t j=3; j<4; j--) {
-		SPDR = 0xff; // send data
+		SPDR = 0xff; // send some data
 		while(!(SPSR & (1<<SPIF)))// wait until send complete
 			;
 		read_data.byte[j]=SPDR;

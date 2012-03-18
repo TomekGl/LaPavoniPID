@@ -7,9 +7,9 @@ const char VERSION[] __attribute__ ((progmem)) = __DATE__ " " __TIME__ ;
 
 ISR(TIMER0_OVF_vect)
 {
-        system_clock++;
-        //tick_flag=1;
-        TCNT0 = 255-79;
+	system_clock++;
+	//tick_flag=1;
+	TCNT0 = 255-79;
 }
 
 ISR(INT1_vect)
@@ -25,7 +25,7 @@ void __attribute__ ((naked)) main(void) {
 	SW4_PORT |= _BV(SW4);
 
 
-//	PORTD |= _BV(0);
+	//	PORTD |= _BV(0);
 
 	PORTC |= (_BV(OUT1)|_BV(OUT2)|_BV(OUT3));
 
@@ -45,50 +45,95 @@ void __attribute__ ((naked)) main(void) {
 	TIMSK |= _BV(TOIE0);
 	TCNT0 = 255-79;
 
-
-
-	USART_Init(38400);
-	//TC_init();
-
-	sei();
-	//DS1307_start();
-	//DS1307_Reset();
-	_delay_ms(100);
-	DS1307_Init();
-
 	//enable interrupts
-
-
+	sei();
 	//LCD
 	LCD_Init();
-
-
-
-	LCD_Test();
+	//USART
+	USART_Init(38400);
+	//Thermocouple
+	TC_init();
+	//RTC
+	DS1307_Init();
 
 	USART_Puts_P(VERSION);
 
-	volatile uint8_t status;
-
-	//GLOWNA PETLA ************************************************************
+	uint8_t status;
 	uint8_t bajt;
 	int16_t deg;
 	uint16_t milideg;
+	uint8_t switch_status = 0xff, prev_switch_status = 0xff;
 	char screen_buf_1[17] = "################";
-	//strcpy(&screen_buf_1, "###############");
+	int16_t pv=0, output=0;
+	menu_Init();
+	PID_Init();
+	//GLOWNA PETLA ************************************************************
+
 
 	for (;;) {
+
+
 		if (0==(system_clock%100)) {
-			//USART_Puts("TIK\r\n");
 			DS1307_Read();
-			prepare_timeline(&screen_buf_1);
-			LCD_PutStr(&screen_buf_1, 30,10,0,BLACK,GREEN);
-			USART_Puts(&screen_buf_1);
-			USART_Put('_');
-			USART_TransmitDecimal(system_clock);
-			USART_Puts("\n");
+			prepare_timeline((char *)&screen_buf_1);
+			LCD_PutStr((char *)&screen_buf_1, 122,5,0,BLACK,WHITE);
 
 		}
+		if (15==(system_clock%100)) {
+			DS1307_Read();
+			prepare_timeline((char *)&screen_buf_1);
+			if (0==(status=TC_performRead())) {
+				TC_getInternalTemp(&deg, &milideg);
+				LCD_PutStr("IN: ", 100,5,0,BLACK,WHITE);
+				LCD_PutDecimalSigned(deg, 100, 35, 0, GREEN,WHITE);
+				LCD_PutChar('.', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, GREEN,WHITE);
+				LCD_PutDecimal(milideg, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, GREEN,WHITE);
+
+				TC_getTCTemp(&deg, &milideg);
+				LCD_PutStr("PV: ", 110, 5, 0, BLACK, WHITE);
+				LCD_PutDecimalSigned(deg, 110, 35, 0, RED,WHITE);
+				LCD_PutChar('.', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED,WHITE);
+				LCD_PutDecimal(milideg, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED,WHITE);
+				pv=deg*10+(milideg/10);
+
+				USART_TransmitDecimal(milideg);
+				USART_Put('\n');
+			} else {
+				LCD_PutStr("TC ERR:", 110,5,0,RED,WHITE);
+				if (!(0==(TC_READOC&status))) {
+					LCD_PutStr("Open!", LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED, WHITE);
+				}
+				if (!(0==(TC_READSCG&status))) {
+					LCD_PutStr("Short-!", LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED, WHITE);
+				}
+				if (!(0==(TC_READSCV&status))) {
+					LCD_PutStr("Short+!", LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED, WHITE);
+				}
+			}
+
+		}
+		if (50==(system_clock%100)) {
+			//process PID controller
+			output = PID_Process(pv);
+			LCD_PutStr("PV:", 90,5,0,BLUE,WHITE);
+			LCD_PutDecimalSigned(controller.PV, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
+			LCD_PutStr(",SV:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
+			LCD_PutDecimalSigned(controller.SV, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
+			LCD_PutStr(",E:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
+			LCD_PutDecimalSigned(controller.e, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
+		}
+
+		switch_status = ( SW1_PIN & (_BV(SW1)|_BV(SW3)|_BV(SW4))) | ( SW2_PIN & _BV(SW2));
+
+		if (switch_status != prev_switch_status) {
+			BUZZ_PORT |= _BV(BUZZ);
+			_delay_ms(100);
+			MenuProcess();
+			BUZZ_PORT &= ~_BV(BUZZ);
+		}
+		prev_switch_status = switch_status;
+
+
 		if (system_clock==1007) {
 			_delay_ms(10);
 			for(uint8_t i=0; i<sizeof(Tsystime); i++) {
@@ -96,45 +141,40 @@ void __attribute__ ((naked)) main(void) {
 			}
 			USART_StartSending();
 		}
-		DS1307_Process();
-		//********************
 
 		//clear background
-		//DS1307_read((Tsystime *)&systime);
-		//prepare_timeline(screen_buf_1);
 
 
-		if (0!=buf_getcount(&USART_buffer_RX)) {
-			bajt = buf_getbyte(&USART_buffer_RX);
+		if (0!=buf_getcount((Tcircle_buffer *)&USART_buffer_RX)) {
+			bajt = buf_getbyte((Tcircle_buffer *)&USART_buffer_RX);
 			USART_Put(bajt);
 			USART_StartSending();
-
 
 
 			switch ( bajt)
 			{
 			// Send a Generall Call
 			case ('a'):
-		    //rst
-			break;
+		    		//rst
+					break;
 
 
 
 			// Send a Address Call, sending a command and data to the Slave
 			case ('B'):
-		        		  //start
-			break;
+		        				  //start
+					break;
 			case ('S'):
-			   //square
-			break;
+					   //square
+					break;
 			// Send a Address Call, sending a request, followed by a resceive
 			case ('c'):
-		      //read
-			break;
+		    		  //read
+					break;
 
 			}
 		}
 
-		_delay_ms(10);
+		//_delay_ms(1);
 	}
 }				/* main() */
