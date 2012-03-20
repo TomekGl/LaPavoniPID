@@ -125,7 +125,7 @@ void __attribute__ ((naked)) main(void) {
 
 		switch_status = ( SW1_PIN & (_BV(SW1)|_BV(SW3)|_BV(SW4))) | ( SW2_PIN & _BV(SW2));
 
-		if (switch_status != prev_switch_status) {
+		if (switch_status < prev_switch_status) {
 			BUZZ_PORT |= _BV(BUZZ);
 			_delay_ms(100);
 			MenuProcess();
