@@ -65,7 +65,7 @@
 						</tool>
 					</fileInfo>
 					<sourceEntries>
-						<entry excluding="TWI_Master.c|delay.c|crc8.c|spi.c|testTWI.c|twi.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="ds1307.c|i2cmaster.S|TWI_Master.c|delay.c|crc8.c|spi.c|testTWI.c|twi.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -118,7 +118,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="TWI_Master.c|delay.c|crc8.c|spi.c|testTWI.c|twi.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="ds1307.c|i2cmaster.S|TWI_Master.c|delay.c|crc8.c|spi.c|testTWI.c|twi.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

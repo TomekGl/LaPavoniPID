@@ -1,0 +1,21 @@
+
+
+KAWA
+STOPER
+NASTAWY PID
+USTAWIENIA
+STATUS
+
+USTAWIENIA:
+ SWITCH on/off
+ INTEGER 0-255
+ SWITCH on/off
+ FUNKCJA *
+ POWROT *
+
+nawigacja:
+L- powrot
+R- edycja/next
+U- +
+D- -
+

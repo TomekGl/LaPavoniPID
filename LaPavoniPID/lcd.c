@@ -241,7 +241,8 @@ const unsigned char __attribute__ ((progmem)) FONT8x8[97][8] = {
 		0x0C,0x0C,0x0C,0x00,0x0C,0x0C,0x0C,0x00,	//	|
 		0x70,0x18,0x18,0x0E,0x18,0x18,0x70,0x00,	//	}
 		0x3B,0x6E,0x00,0x00,0x00,0x00,0x00,0x00,	//	~
-		0x1C,0x36,0x36,0x1C,0x00,0x00,0x00,0x00};	//	DEL
+		0x1C,0x36,0x36,0x1C,0x00,0x00,0x00,0x00		//	DEL
+	} ;
 
 
 /*
@@ -589,13 +590,13 @@ void LCD_Rectangle(uint8_t x, uint8_t y, uint8_t width, uint8_t height, uint16_t
 	CS0;
 	// Column address set
 	sendCMD(PASET);
-	sendData(x);
-	sendData(x + height - 1);
+	sendData(y);
+	sendData(y + height - 1);
 
 	// Page address set
 	sendCMD(CASET);
-	sendData(y);
-	sendData(y + width - 1);
+	sendData(x);
+	sendData(x + width - 1);
 
 	sendCMD(RAMWR);
 	for (uint16_t i=0; i<width*height; i++) {
@@ -604,6 +605,7 @@ void LCD_Rectangle(uint8_t x, uint8_t y, uint8_t width, uint8_t height, uint16_t
 	sendCMD(NOP);
 	CS1;
 }
+
 #ifdef LCDTEXT
 void LCD_PutStr(char *s, uint8_t x, uint8_t y, uint8_t Size, int fColor, int bColor) {
 	if (x!=255) cursorx=x;
@@ -621,7 +623,7 @@ void LCD_PutStr_P(const char *s, uint8_t x, uint8_t y, uint8_t Size, int fColor,
 	if (y!=255) cursory=y;
 
 	// loop until null-terminator is seen
-	while ((c = pgm_read_byte(s++))) {
+	while (0 != (c = pgm_read_byte(s++))) {
 		// draw the character
 		LCD_PutChar(c, cursorx, cursory, Size, fColor, bColor);
 	}
