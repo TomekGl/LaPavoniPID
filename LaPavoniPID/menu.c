@@ -15,24 +15,16 @@
 
 #include "includes.h"
 
-
-const char DUPA[] __attribute__ ((progmem)) = "ABCDEF\0";
-const char *pointer = &DUPA[1];
-
+//Start menu at row:
 #define X_POS 62
-#define UP 0
-#define DOWN 3
-#define LEFT 1
-#define RIGHT 2
-#define LED_R 5
-#define LED_G 4
-#define LED_B 3
+
+//Max menu rows
+#define MENU_ROWS 4
+
 #define NOT_SELECTED 255
 
 typedef void (*FuncPtr)(uint8_t keys, uint8_t * value );
-void setInteger(uint8_t keys, uint8_t * value);
-void setSignedInteger16(uint8_t keys, int16_t * value);
-void setBoolean(uint8_t keys, uint8_t * value);
+
 //function pointer
 FuncPtr FPtr;
 
@@ -95,6 +87,11 @@ void setInteger(uint8_t keys, uint8_t * value) {
 		break;
 
 	}
+	LCD_PutDecimal(*value, LCD_AUTOINCREMENT,LCD_AUTOINCREMENT, 0, RED, (keys==0)?BLACK:BLUE);
+	return;
+}
+
+void getIntegerReadOnly(uint8_t keys, uint8_t * value) {
 	LCD_PutDecimal(*value, LCD_AUTOINCREMENT,LCD_AUTOINCREMENT, 0, RED, (keys==0)?BLACK:BLUE);
 	return;
 }
@@ -196,7 +193,8 @@ void MenuProcess(TKey key) {
 	}
 
 	//redraw menu
-	LCD_Rectangle(0,X_POS-40,132,48,BLACK);
+	LCD_Rectangle(0,X_POS-8*MENU_ROWS,132,48,BLACK);
+	uint8_t n = 0;
 	if (NOT_SELECTED == menu_position.second_level) {
 		//dispay first level menulist
 		for (uint8_t i = 0; i<(sizeof(menu_first_level)/sizeof(menu_first_level[0])); i++) {
@@ -206,6 +204,10 @@ void MenuProcess(TKey key) {
 	} else {
 		// submenu
 		LCD_PutStr_P((char *)pgm_read_word(&(menu_first_level[menu_position.first_level])), X_POS, 2, 0, ORANGE, BLACK);
+//		n = submenu_index[menu_position.first_level]);
+//		if (n > MENU_ROWS) {
+//			n = MENU_ROWS;
+//		}
 		for (uint8_t i = 0; i<submenu_index[menu_position.first_level]; i++) {
 			//LCD_PutDecimal(resolve_index(menu_position.first_level, i+1), 92-i*8,0,0, RED,BLACK);
 			LCD_PutStr_P((char *)pgm_read_word(&(menu_second_level[resolve_index(menu_position.first_level, i+1)])), X_POS-8-i*8, 10, 0, WHITE, (i==menu_position.second_level-1)?BLUE:BLACK);

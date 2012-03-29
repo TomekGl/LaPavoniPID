@@ -1,5 +1,5 @@
-#Sun Mar 04 12:39:42 CET 2012
-avrtarget/ClockFrequency=8000000
+#Thu Mar 29 17:13:42 CEST 2012
+avrtarget/ClockFrequency=7372800
 avrtarget/ExtRAMSize=0
 avrtarget/ExtendedRAM=false
 avrtarget/MCUType=atmega32

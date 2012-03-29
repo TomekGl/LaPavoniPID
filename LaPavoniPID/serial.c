@@ -8,6 +8,9 @@
 //	return &(buffer.data[0]);
 //}
 
+/// liczniki błędów
+volatile TUSART_errors USART_errors;
+
 /// bufor kołowy odbiorczy
 volatile Tcircle_buffer USART_buffer_RX;
 /// bufor kołowy nadawczy
@@ -24,70 +27,55 @@ volatile TUSART_state USART_state;
 void USART_Init(unsigned int baud) {
 	buf_init((Tcircle_buffer *)&USART_buffer_TX);
 	buf_init((Tcircle_buffer *)&USART_buffer_RX);
-	USART_arrival_time = 0;
-	USART_prev_arrival_time = 0;
+	//USART_arrival_time = 0;
+	//USART_prev_arrival_time = 0;
+
 	USART_state = USART_STATE_IDLE;
 
 	/* Set baud rate */
-	UBRRH = 0; //(unsigned char)((F_CPU / (baud * 16L) - 1) >> 8);
-	UBRRL = 12; //(unsigned char)(F_CPU / (baud * 16L) - 1);
-	/* Enable receiver and transmitter */
+	UBRRL = 3;//(unsigned char)(F_CPU / (baud * 16L) - 1);
+	UBRRH = 0;//(unsigned char)((F_CPU / (baud * 16L) - 1) >> 8);
 
+	/* Enable receiver and transmitter, with interrupts */
 	UCSRB = (1 << TXEN) | (1 << RXEN) | (1 << RXCIE) | (1 << TXCIE);
-	/* Set frame format: 8data, 1stop bit */
-	UCSRC = (1 << URSEL) | (1 << UCSZ0) | (1 << UCSZ1);
+
+	/* Set frame format: 8data, 1stop bit, no parity -- this is default*/
+	//UCSRC = (1 << URSEL) | (1 << UCSZ0) | (1 << UCSZ1);
+
 	//UCSRA = (1 << U2X);
 }
-
-//unsigned char USART0_Receive( void )
-//{
-//  /* Wait for data to be received */
-////    uint8_t status;
-////    status=UCSR0A;
-//	uint8_t temp;
-//    while ( !(UCSR0A & (1<<RXC0)) )
-//            ;
-//      /* Get and return received data from buffer */
-//    temp = UDR0;
-//    return temp;
-//}
 
 /** Przerwanie odbiorcze USART */
 ISR(USART_RXC_vect)
 {
-	volatile uint8_t status; //, data;
+	volatile uint8_t status;
 
-/*	while (!(UCSRA & _BV(RXC)))
-			;
-	status = UCSRA;*/
-//	if ((status & _BV(RXC)) == 0) /*czy aby napewno jest co odbierac*/
-//	{
-		//return;
-	//}
+	//while (!(UCSRA & _BV(RXC)))
+	//	;
+	status = UCSRA;
+
 	if (status & (FRAMING_ERROR|PARITY_ERROR|DATA_OVERRUN)) {
+		if (status & (FRAMING_ERROR)) {
+			USART_errors.framing++;
+		}
+		if (status & (PARITY_ERROR)) {
+			USART_errors.parity++;
+		}
+		if (status & (DATA_OVERRUN)) {
+			USART_errors.overrun++;
+		}
 		status = UDR; //discard data
 		return;
 	}
 
-	/*if (status & (FRAMING_ERROR)) {
-		    USART_Transmit('F');
-	}
-	if (status & (PARITY_ERROR)) {
-		    USART_Transmit('P');
-	}
-	if (status & (DATA_OVERRUN)) {
-		    USART_Transmit('O');
-	}*/
-
 	//USART_prev_arrival_time = USART_arrival_time;
 	//USART_arrival_time = system_clock;
-	if (buf_isfree((Tcircle_buffer *)&USART_buffer_RX))
-		buf_putbyte((Tcircle_buffer *)&USART_buffer_RX, UDR);
-	//UDR=data+1;
-	//znak = data;
+	//if (buf_isfree((Tcircle_buffer *)&USART_buffer_RX))
+	buf_putbyte((Tcircle_buffer *)&USART_buffer_RX, UDR);
 	return;
 
 }
+
 void USART_StartSending() {
 
 	if (USART_STATE_INTHEMIDDLE!=USART_state)

@@ -4,6 +4,8 @@
 
 /// data i czas kompilacji
 const char VERSION[] __attribute__ ((progmem)) = __DATE__ " " __TIME__ ;
+const char Hello[] __attribute__ ((progmem)) = "Coffee PID controller v0.1\n";
+const char STR_PV[]  __attribute__ ((progmem)) = "PV:";
 
 ISR(TIMER0_OVF_vect)
 {
@@ -15,11 +17,9 @@ ISR(TIMER0_OVF_vect)
 ISR(INT1_vect)
 {
 	tmp_in++;
-	UDR='x';
 }
 
 void __attribute__ ((naked)) main(void) {
-
 	//Pullups
 	SW1_PORT |= _BV(SW1);
 	SW2_PORT |= _BV(SW2);
@@ -57,12 +57,13 @@ void __attribute__ ((naked)) main(void) {
 	//LCD
 	LCD_Init();
 	//USART
-	USART_Init(38400);
+	USART_Init(115200);
 	//Thermocouple
 	TC_init();
 	//RTC
 	//	DS1307_Init();
 
+	USART_Puts_P(Hello);
 	USART_Puts_P(VERSION);
 
 	uint8_t status;
@@ -74,12 +75,30 @@ void __attribute__ ((naked)) main(void) {
 
 	PID_Init();
 	//GLOWNA PETLA ************************************************************
-	//LCD_PutStr_P(VERSION, 115,5,0,RED,WHITE);
+	LCD_PutStr_P(VERSION, 115,5,0,RED,WHITE);
 
 	menu_Init();
 	MenuProcess(0);
 
+/*
 	for (;;) {
+
+
+	}
+*/
+	while (1) {
+
+		//LCD_PutDecimal(buf_getcount((Tcircle_buffer *)&USART_buffer_RX), 8,90, 0, RED, BLACK);
+		//LCD_PutDecimal(buf_getcount((Tcircle_buffer *)&USART_buffer_TX), 8,40, 0, RED, BLACK);
+		if (0!=buf_getcount((Tcircle_buffer *)&USART_buffer_RX)) {
+		    		bajt = buf_getbyte((Tcircle_buffer *)&USART_buffer_RX);
+		    		//LCD_PutChar(bajt,0,LCD_AUTOINCREMENT,0,BLACK,WHITE);
+		    		USART_Put(bajt);
+		    		USART_StartSending();
+		    		//if ('A'==bajt) {
+		}
+
+
 		if (tmp_buzz) {
 			BUZZ_PORT |= _BV(BUZZ);
 		} else {
@@ -118,6 +137,7 @@ void __attribute__ ((naked)) main(void) {
 							pv=deg*10+(milideg/10);
 
 							//USART_TransmitDecimal(milideg);
+							//USART_Puts_P(VERSION);
 							//USART_Put('\n');
 						} else {
 							LCD_PutStr("TC ERR:", 110,5,0,RED,WHITE);
@@ -136,7 +156,7 @@ void __attribute__ ((naked)) main(void) {
 		if (50==(system_clock%100)) {
 					//process PID controller
 					output = PID_Process(pv);
-					LCD_PutStr("PV:", 90,5,0,BLUE,WHITE);
+					LCD_PutStr_P(STR_PV, 90,5,0,BLUE,WHITE);
 					LCD_PutDecimalSigned(controller.PV, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
 					LCD_PutStr(",SV:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
 					LCD_PutDecimalSigned(controller.SV, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);

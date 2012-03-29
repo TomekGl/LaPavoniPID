@@ -7,8 +7,19 @@
 #define PARITY_ERROR (1<<PE)
 #define DATA_OVERRUN (1<<DOR)
 
+struct TUSART_errors_tag {
+	uint8_t framing;
+	uint8_t parity;
+	uint8_t overrun;
+} ;
+typedef struct TUSART_errors_tag TUSART_errors;
+
+/// liczniki błędów
+extern volatile TUSART_errors USART_errors;
+
 /// bufor kołowy odbiorczy
 extern volatile Tcircle_buffer USART_buffer_RX;
+
 /// bufor kołowy nadawczy
 extern volatile Tcircle_buffer USART_buffer_TX;
 
