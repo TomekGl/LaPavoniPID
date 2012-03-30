@@ -73,19 +73,16 @@ void __attribute__ ((naked)) main(void) {
 	uint8_t switch_status = 0xff, prev_switch_status = 0xff;
 	int16_t pv=0, output=0;
 
+    //Initialize runtime variables
 	PID_Init();
+
 	//GLOWNA PETLA ************************************************************
 	LCD_PutStr_P(VERSION, 115,5,0,RED,WHITE);
 
 	menu_Init();
 	MenuProcess(0);
 
-/*
-	for (;;) {
 
-
-	}
-*/
 	while (1) {
 
 		//LCD_PutDecimal(buf_getcount((Tcircle_buffer *)&USART_buffer_RX), 8,90, 0, RED, BLACK);

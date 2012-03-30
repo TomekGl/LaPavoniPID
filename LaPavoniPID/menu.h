@@ -29,6 +29,6 @@ void setInteger(uint8_t keys, uint8_t * value);
 void setIntegerReadOnly(uint8_t keys, uint8_t * value);
 void setSignedInteger16(uint8_t keys, int16_t * value);
 void setBoolean(uint8_t keys, uint8_t * value);
-
+void callAfterConfirm(uint8_t keys, uint8_t * value);
 
 #endif /* MENU_H_ */

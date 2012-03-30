@@ -43,7 +43,7 @@ const char menu_entry_1_2[] __attribute__ ((progmem)) = "Output2: " ;
 const char menu_entry_1_3[] __attribute__ ((progmem)) = "Output3: " ;
 const char menu_entry_1_4[] __attribute__ ((progmem)) = "Input: " ;
 const char menu_entry_2[] __attribute__ ((progmem)) = "Status " ;
-const char menu_entry_2_0[] __attribute__ ((progmem)) = "parametry " ;
+const char menu_entry_2_0[] __attribute__ ((progmem)) = "Zapisz parametry " ;
 
 const char *menu_first_level[] __attribute__ ((progmem)) = {
 		menu_entry_0,
@@ -60,7 +60,7 @@ const char  *menu_second_level[] __attribute__ ((progmem)) =  {
 const FuncPtr functions[] __attribute__ ((progmem)) = {
 		(void*)&setSignedInteger16, (void*)&setSignedInteger16, (void*)&setSignedInteger16, (void*)&setSignedInteger16, (void*)&setSignedInteger16,
 		(void*)&setBoolean, (void*)&setBoolean, (void*)&setBoolean, (void*)&setBoolean, (void*)&setInteger,
-		0
+		(void*)&callAfterConfirm
 };
 
 const uint8_t submenu_index[] = { 5,5,1 };
@@ -69,11 +69,30 @@ uint8_t zmienna = 0, zmienna2 = 25;
 void * variables[] = {
 		(void *)&(controller.SV), (void *)&(controller.k_r), (void *)&(controller.T_d), (void *)&(controller.T_i),(void *)&(controller.integral),
 		(void *)&tmp_buzz, (void *)&tmp_out1,(void *)&tmp_out2, (void *)&tmp_out3,(void *)&tmp_in,
-		0
+		(void*)&PID_SaveSettings
 };
 
 
 struct Tmenu_position menu_position;
+
+void callAfterConfirm(uint8_t keys, uint8_t * value) {
+	USART_Puts("conf:");
+	USART_TransmitDecimal(keys);
+	switch (keys) {
+	case KEY_UP:
+		PID_SaveSettings();
+		LCD_PutStr("Zapisano!", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT, 0, RED, (keys==0)?BLACK:BLUE );
+		break;
+	case KEY_DOWN:
+	case KEY_RIGHT: //option selected
+		LCD_PutStr("Wcisnij \0x5f", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT, 0, RED, (keys==0)?BLACK:BLUE);
+		break;
+	default:
+		break;
+	}
+	return;
+
+}
 
 void setInteger(uint8_t keys, uint8_t * value) {
 	switch (keys) {

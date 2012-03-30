@@ -10,14 +10,34 @@
 volatile Tcontroller controller;
 
 void PID_Init(void) {
+	//Load saved parameters
+	eeprom_read_block((void*)&controller, 0 , 8*2);
+
+	controller.PV = 0;
+	controller.e = 0;
+	controller.integral = 0;
+	controller.derivative = 0;
+	controller.previous = 0;
+	controller.first = 1;
+	controller.t_prev = 0;
+}
+
+void PID_Reset(void) {
 	controller.SV = 370;
 	controller.windup = 1000;
 	controller.k_r = 3;
 	controller.T_d = 1;
 	controller.T_i  = 2;
 	controller.first = 1;
+	controller.windup = 1000;
+	controller.dead = 10;
 	controller.limit_bottom = 0;
 	controller.limit_top = 9999;
+}
+
+void PID_SaveSettings(void) {
+	eeprom_update_block((const void*)&controller, 0, 8*2);
+	eeprom_busy_wait();
 }
 
 int16_t PID_Process(int16_t presentValue) {
