@@ -15,7 +15,7 @@ struct Tcontroller_tag {
 	int16_t k_r; //Proportional gain
     int16_t T_i; //Integral time
     int16_t T_d; //Derivative time
-    int16_t dead; //Dead zone
+    int16_t dead; //Dead band
     int16_t windup; //Integral anti-windup limit
     int16_t limit_bottom; //negative output limit
     int16_t limit_top; //positive output limit
@@ -23,6 +23,7 @@ struct Tcontroller_tag {
   /* run-time variables */
 	int16_t PV; //Process value
 	int16_t e;  //Error
+	int16_t control; //Output
     int16_t integral, derivative;
     int16_t previous;
     int16_t t_prev;

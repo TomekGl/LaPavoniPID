@@ -1,25 +1,61 @@
 #include "includes.h"
 
-
+#define FLAG_1S 1
+#define FLAG_100MS 2
+#define FLAG_10MS 2
 
 /// data i czas kompilacji
-const char VERSION[] __attribute__ ((progmem)) = __DATE__ " " __TIME__ ;
-const char Hello[] __attribute__ ((progmem)) = "Coffee PID controller v0.1\n";
+const char VERSION[] __attribute__ ((progmem)) = "#" __DATE__ " " __TIME__ ;
+const char Hello[] __attribute__ ((progmem)) = "#Coffee PID controller v0.1\n";
 const char STR_PV[]  __attribute__ ((progmem)) = "PV:";
+volatile uint8_t flag;
+int16_t temp[8];
+int32_t suma;
+uint8_t n;
 
 ISR(TIMER0_OVF_vect)
 {
 	system_clock++;
 	//tick_flag=1;
-	TCNT0 = 255-79;
+	TCNT0 = timer0;
+	OUT2_PORT ^= _BV(OUT2);
+	if (system_clock%100==0) {
+		flag = _BV(FLAG_1S) | _BV(FLAG_100MS);
+		return;
+	}
+	if (system_clock%10==0) {
+			flag = _BV(FLAG_100MS);
+			return;
+	}
+	return;
+}
+
+ISR(TIMER2_OVF_vect) {
+	TCNT2 = 255-30;
+	pwm++;
+	if (0 == output) {
+		OUT3_PORT |= _BV(OUT3);//disable
+		BUZZ_PORT &= ~_BV(BUZZ);
+	} else {
+		if (pwm<output) {
+			OUT3_PORT &= ~_BV(OUT3);
+			BUZZ_PORT |= _BV(BUZZ);
+		} else {
+			OUT3_PORT |= _BV(OUT3);
+			BUZZ_PORT &= ~_BV(BUZZ);
+		}
+	}
+	return;
 }
 
 ISR(INT1_vect)
 {
 	tmp_in++;
+	return;
 }
 
 void __attribute__ ((naked)) main(void) {
+	timer0=178;
 	//Pullups
 	SW1_PORT |= _BV(SW1);
 	SW2_PORT |= _BV(SW2);
@@ -47,10 +83,15 @@ void __attribute__ ((naked)) main(void) {
 	SPI_PORT |= _BV(SPI_MISO); //pullup on MISO
 
 
-	// timer 0 - zegar systemowy 8e6 / 1024 / 79 ~= 100Hz
+	// timer 0 - zegar systemowy 8e6 / 1024 / 79 ~= 100Hz     7372800/
 	TCCR0 |= _BV(CS00) | _BV(CS02);
 	TIMSK |= _BV(TOIE0);
-	TCNT0 = 255-79;
+	TCNT0 = timer0; //255-72;
+
+	// timer 2 - output  T=~ 1s
+	TCCR2 |= _BV(CS20) | _BV(CS21) | _BV(CS22);
+	TIMSK |= _BV(TOIE2);
+	TCNT2 = 255-29; //255-72;
 
 	//enable interrupts
 	sei();
@@ -71,37 +112,34 @@ void __attribute__ ((naked)) main(void) {
 	int16_t deg;
 	uint16_t milideg;
 	uint8_t switch_status = 0xff, prev_switch_status = 0xff;
-	int16_t pv=0, output=0;
+	int16_t pv=0; //, output=0;
 
-    //Initialize runtime variables
+	//Initialize runtime variables
 	PID_Init();
 
 	//GLOWNA PETLA ************************************************************
-	LCD_PutStr_P(VERSION, 115,5,0,RED,WHITE);
+	//LCD_PutStr_P(VERSION, 115,5,0,RED,WHITE);
 
 	menu_Init();
 	MenuProcess(0);
 
 
 	while (1) {
-
-		//LCD_PutDecimal(buf_getcount((Tcircle_buffer *)&USART_buffer_RX), 8,90, 0, RED, BLACK);
-		//LCD_PutDecimal(buf_getcount((Tcircle_buffer *)&USART_buffer_TX), 8,40, 0, RED, BLACK);
 		if (0!=buf_getcount((Tcircle_buffer *)&USART_buffer_RX)) {
-		    		bajt = buf_getbyte((Tcircle_buffer *)&USART_buffer_RX);
-		    		//LCD_PutChar(bajt,0,LCD_AUTOINCREMENT,0,BLACK,WHITE);
-		    		USART_Put(bajt);
-		    		USART_StartSending();
-		    		//if ('A'==bajt) {
+			bajt = buf_getbyte((Tcircle_buffer *)&USART_buffer_RX);
+			//LCD_PutChar(bajt,0,LCD_AUTOINCREMENT,0,BLACK,WHITE);
+			USART_Put(bajt);
+			USART_StartSending();
+			//if ('A'==bajt) {
 		}
 
 
-		if (tmp_buzz) {
+		/*	if (tmp_buzz) {
 			BUZZ_PORT |= _BV(BUZZ);
 		} else {
 			BUZZ_PORT &= ~_BV(BUZZ);
 		}
-
+		 */
 		if (tmp_out1) {
 			OUT1_PORT |= _BV(OUT1);
 		} else {
@@ -112,72 +150,94 @@ void __attribute__ ((naked)) main(void) {
 		} else {
 			OUT2_PORT &= ~_BV(OUT2);
 		}
+/*
 		if (tmp_out3) {
 			OUT3_PORT |= _BV(OUT3);
 		} else {
 			OUT3_PORT &= ~_BV(OUT3);
 		}
-
-		if (system_clock%100==0) {
+*/
+		if (flag & _BV(FLAG_1S)) {
+			flag &= ~_BV(FLAG_1S);
 			if (0==(status=TC_performRead())) {
-							TC_getInternalTemp(&deg, &milideg);
-							LCD_PutStr("IN: ", 100,5,0,BLACK,WHITE);
-							LCD_PutDecimalSigned(deg, 100, 35, 0, GREEN,WHITE);
-							LCD_PutChar('.', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, GREEN,WHITE);
-							LCD_PutDecimal(milideg, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, GREEN,WHITE);
+				TC_getInternalTemp(&deg, &milideg);
+				LCD_PutStr("IN: ", 112,5,0,BLACK,WHITE);
+				LCD_PutDecimalSigned(deg, 112, 35, 0, GREEN,WHITE);
+				LCD_PutChar('.', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, GREEN,WHITE);
+				LCD_PutDecimal(milideg, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, GREEN,WHITE);
 
-							TC_getTCTemp(&deg, &milideg);
-							LCD_PutStr("PV: ", 110, 5, 0, BLACK, WHITE);
-							LCD_PutDecimalSigned(deg, 110, 35, 0, RED,WHITE);
-							LCD_PutChar('.', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED,WHITE);
-							LCD_PutDecimal(milideg, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED,WHITE);
-							pv=deg*10+(milideg/10);
+				TC_getTCTemp(&deg, &milideg);
+				LCD_PutStr("PV: ", 120, 5, 0, BLACK, WHITE);
+				LCD_PutDecimalSigned(deg, 120, 35, 0, RED,WHITE);
+				LCD_PutChar('.', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED,WHITE);
+				LCD_PutDecimal(milideg, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED,WHITE);
+				pv=deg*10+(milideg/10);
 
-							//USART_TransmitDecimal(milideg);
-							//USART_Puts_P(VERSION);
-							//USART_Put('\n');
-						} else {
-							LCD_PutStr("TC ERR:", 110,5,0,RED,WHITE);
-							if (!(0==(TC_READOC&status))) {
-								LCD_PutStr("Open!", LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED, WHITE);
-							}
-							if (!(0==(TC_READSCG&status))) {
-								LCD_PutStr("Short-!", LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED, WHITE);
-							}
-							if (!(0==(TC_READSCV&status))) {
-								LCD_PutStr("Short+!", LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED, WHITE);
-							}
-						}
+				//USART_TransmitDecimal(milideg);
+				//USART_Puts_P(VERSION);
+				//USART_Put('\n');
 
-			}
-		if (50==(system_clock%100)) {
-					//process PID controller
-					output = PID_Process(pv);
-					LCD_PutStr_P(STR_PV, 90,5,0,BLUE,WHITE);
-					LCD_PutDecimalSigned(controller.PV, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
-					LCD_PutStr(",SV:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
-					LCD_PutDecimalSigned(controller.SV, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
-					LCD_PutStr(",E:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
-					LCD_PutDecimalSigned(controller.e, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
-					LCD_PutStr(",OUT:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
-					LCD_PutDecimalSigned(output, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
-					LCD_PutStr(",INT:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
-					LCD_PutDecimalSigned(controller.integral, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
-					LCD_PutStr(",DVDT:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
-					LCD_PutDecimalSigned(controller.derivative, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
+				//process PID controller
+				output = (uint8_t)PID_Process(pv);
+				LCD_PutStr_P(STR_PV, 90,5,0,BLUE,WHITE);
+				LCD_PutDecimalSigned(controller.PV, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
+				LCD_PutStr(",SV:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
+				LCD_PutDecimalSigned(controller.SV, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
+				LCD_PutStr(",E:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
+				LCD_PutDecimalSigned(controller.e, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
+				LCD_PutStr(",OUT:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,RED,WHITE);
+				LCD_PutDecimalSigned(output, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED,WHITE);
+				LCD_PutStr(",INT:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
+				LCD_PutDecimalSigned(controller.integral, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
+				LCD_PutStr(",DVDT:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
+				LCD_PutDecimalSigned(controller.derivative, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
+				LCD_PutStr(" ", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
 
-					LCD_PutStr("  ", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
 
+				LCD_PutDecimal(system_clock, 0,0,0,BLACK,WHITE);
+				LCD_PutChar(' ', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, 0, WHITE);
+				//LCD_PutDecimal(output, 0,100,0,BLACK,WHITE);
+				//LCD_PutChar(' ', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, 0, WHITE);
+
+			} else {
+				output = 0;
+				LCD_PutStr("TC ERR:", 110,5,0,RED,WHITE);
+				if (!(0==(TC_READOC&status))) {
+					LCD_PutStr("Open!", LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED, WHITE);
 				}
+				if (!(0==(TC_READSCG&status))) {
+					LCD_PutStr("Short-!", LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED, WHITE);
+				}
+				if (!(0==(TC_READSCV&status))) {
+					LCD_PutStr("Short+!", LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED, WHITE);
+				}
+			}
 
+		USART_Put('\n');
+		USART_TransmitDecimal(system_clock);
+		USART_Put(',');
+		USART_TransmitDecimalSigned(controller.PV);
+		USART_Put(',');
+		USART_TransmitDecimalSigned(controller.SV);
+		USART_Put(',');
+		USART_TransmitDecimalSigned(output);
+		USART_Put(',');
+		USART_TransmitDecimalSigned(controller.integral);
+		USART_Put(',');
+		USART_TransmitDecimalSigned(controller.derivative);
 
+		} // end of flagged 1S section
+	/*	if (flag && _BV(FLAG_100MS)) {
+			flag &= ~_BV(FLAG_100MS);
+
+		}*/
 		switch_status = ( SW1_PIN & (_BV(SW1)|_BV(SW3)|_BV(SW4))) | ( SW2_PIN & _BV(SW2));
 		if (switch_status != prev_switch_status) {
 			_delay_ms(10);
 			switch_status = ( SW1_PIN & (_BV(SW1)|_BV(SW3)|_BV(SW4))) | ( SW2_PIN & _BV(SW2));
 
 			if (bit_is_clear(switch_status, SW1) && bit_is_set(prev_switch_status, SW1)) {
-				USART_Put('U');
+				//USART_Put('U');
 				MenuProcess(KEY_UP);
 #ifdef BEEPER
 				BUZZ_PORT |= _BV(BUZZ);
@@ -187,7 +247,7 @@ void __attribute__ ((naked)) main(void) {
 #endif
 			}
 			if (bit_is_clear(switch_status, SW2) && bit_is_set(prev_switch_status, SW2)) {
-				USART_Put('D');
+				//USART_Put('D');
 				MenuProcess(KEY_DOWN);
 #ifdef BEEPER
 				BUZZ_PORT |= _BV(BUZZ);
@@ -196,7 +256,7 @@ void __attribute__ ((naked)) main(void) {
 #endif
 			}
 			if (bit_is_clear(switch_status, SW3) && bit_is_set(prev_switch_status, SW3)) {
-				USART_Put('L');
+				//USART_Put('L');
 				MenuProcess(KEY_LEFT);
 #ifdef BEEPER
 				BUZZ_PORT |= _BV(BUZZ);
@@ -205,7 +265,7 @@ void __attribute__ ((naked)) main(void) {
 #endif
 			}
 			if (bit_is_clear(switch_status, SW4)&& bit_is_set(prev_switch_status, SW4)) {
-				USART_Put('R');
+				//USART_Put('R');
 				MenuProcess(KEY_RIGHT);
 #ifdef BEEPER
 				BUZZ_PORT |= _BV(BUZZ);
@@ -213,8 +273,6 @@ void __attribute__ ((naked)) main(void) {
 				BUZZ_PORT &= ~_BV(BUZZ);
 #endif
 			}
-			USART_StartSending();
-
 		}
 		prev_switch_status = switch_status;
 	}

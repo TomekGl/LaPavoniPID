@@ -44,6 +44,7 @@ const char menu_entry_1_3[] __attribute__ ((progmem)) = "Output3: " ;
 const char menu_entry_1_4[] __attribute__ ((progmem)) = "Input: " ;
 const char menu_entry_2[] __attribute__ ((progmem)) = "Status " ;
 const char menu_entry_2_0[] __attribute__ ((progmem)) = "Zapisz parametry " ;
+const char menu_entry_2_1[] __attribute__ ((progmem)) = "TIM0: " ;
 
 const char *menu_first_level[] __attribute__ ((progmem)) = {
 		menu_entry_0,
@@ -54,30 +55,30 @@ const char *menu_first_level[] __attribute__ ((progmem)) = {
 const char  *menu_second_level[] __attribute__ ((progmem)) =  {
 		menu_entry_0_0, menu_entry_0_1, menu_entry_0_2, menu_entry_0_3, menu_entry_0_4,
 		menu_entry_1_0, menu_entry_1_1,menu_entry_1_2, menu_entry_1_3,menu_entry_1_4,
-		menu_entry_2_0
+		menu_entry_2_0, menu_entry_2_1
 };
 
 const FuncPtr functions[] __attribute__ ((progmem)) = {
 		(void*)&setSignedInteger16, (void*)&setSignedInteger16, (void*)&setSignedInteger16, (void*)&setSignedInteger16, (void*)&setSignedInteger16,
 		(void*)&setBoolean, (void*)&setBoolean, (void*)&setBoolean, (void*)&setBoolean, (void*)&setInteger,
-		(void*)&callAfterConfirm
+		(void*)&callAfterConfirm, (void*)&setInteger
 };
 
-const uint8_t submenu_index[] = { 5,5,1 };
+const uint8_t submenu_index[] = { 5,5,2 };
 
 uint8_t zmienna = 0, zmienna2 = 25;
 void * variables[] = {
 		(void *)&(controller.SV), (void *)&(controller.k_r), (void *)&(controller.T_d), (void *)&(controller.T_i),(void *)&(controller.integral),
-		(void *)&tmp_buzz, (void *)&tmp_out1,(void *)&tmp_out2, (void *)&tmp_out3,(void *)&tmp_in,
-		(void*)&PID_SaveSettings
+		(void *)&tmp_buzz, (void *)&tmp_out1,(void *)&tmp_out2, (void *)&tmp_out3,/*(void *)&tmp_in,*/ (void *)&output,
+		(void*)&PID_SaveSettings, (void *)&timer0
 };
 
 
 struct Tmenu_position menu_position;
 
 void callAfterConfirm(uint8_t keys, uint8_t * value) {
-	USART_Puts("conf:");
-	USART_TransmitDecimal(keys);
+	//USART_Puts("conf:");
+	//USART_TransmitDecimal(keys);
 	switch (keys) {
 	case KEY_UP:
 		PID_SaveSettings();
@@ -118,10 +119,10 @@ void getIntegerReadOnly(uint8_t keys, uint8_t * value) {
 void setSignedInteger16(uint8_t keys, int16_t * value) {
 	switch (keys) {
 	case KEY_UP:
-		(*value)+=20;
+		(*value)+=1;
 		break;
 	case KEY_DOWN:
-		(*value)-=20;
+		(*value)-=1;
 		break;
 	default:
 		break;
@@ -211,8 +212,8 @@ void MenuProcess(TKey key) {
 
 	}
 
-	//redraw menu
-	LCD_Rectangle(0,X_POS-8*MENU_ROWS,132,48,BLACK);
+	//redraw menu//48
+	LCD_Rectangle(0,X_POS-16-8*MENU_ROWS,132,56,BLACK);
 	uint8_t n = 0;
 	if (NOT_SELECTED == menu_position.second_level) {
 		//dispay first level menulist

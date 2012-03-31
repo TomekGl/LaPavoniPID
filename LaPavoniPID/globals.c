@@ -14,3 +14,5 @@ uint8_t tmp_out1;
 uint8_t tmp_out2;
 uint8_t tmp_out3;
 uint8_t tmp_in;
+uint8_t timer0;
+volatile uint8_t output=0, pwm=0;
