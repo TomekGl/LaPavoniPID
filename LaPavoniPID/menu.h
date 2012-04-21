@@ -8,13 +8,16 @@
 #ifndef MENU_H_
 #define MENU_H_
 
+#define REPEATED_FLAG 1<<7
+#define REPEATED_2X_FLAG 1<<6
+
 ///keys
 typedef enum {
-	IDLE,
-	KEY_UP,
-	KEY_DOWN,
-	KEY_LEFT,
-	KEY_RIGHT
+	IDLE = 0,
+	KEY_UP = 1,
+	KEY_DOWN = 2,
+	KEY_LEFT = 4,
+	KEY_RIGHT = 8
 } TKey;
 
 struct Tmenu_position {

@@ -19,4 +19,5 @@ extern uint8_t tmp_in;
 extern uint8_t timer0;
 extern volatile uint8_t output;
 extern volatile uint8_t pwm;
+
 #endif				/*GLOBALS_H_ */

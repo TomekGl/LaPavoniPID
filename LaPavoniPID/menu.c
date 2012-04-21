@@ -43,8 +43,9 @@ const char menu_entry_1_2[] __attribute__ ((progmem)) = "Output2: " ;
 const char menu_entry_1_3[] __attribute__ ((progmem)) = "Output3: " ;
 const char menu_entry_1_4[] __attribute__ ((progmem)) = "Input: " ;
 const char menu_entry_2[] __attribute__ ((progmem)) = "Status " ;
-const char menu_entry_2_0[] __attribute__ ((progmem)) = "Zapisz parametry " ;
-const char menu_entry_2_1[] __attribute__ ((progmem)) = "TIM0: " ;
+const char menu_entry_2_0[] __attribute__ ((progmem)) = "TIM0: " ;
+const char menu_entry_2_1[] __attribute__ ((progmem)) = "Zapisz parametry " ;
+
 
 const char *menu_first_level[] __attribute__ ((progmem)) = {
 		menu_entry_0,
@@ -61,24 +62,20 @@ const char  *menu_second_level[] __attribute__ ((progmem)) =  {
 const FuncPtr functions[] __attribute__ ((progmem)) = {
 		(void*)&setSignedInteger16, (void*)&setSignedInteger16, (void*)&setSignedInteger16, (void*)&setSignedInteger16, (void*)&setSignedInteger16,
 		(void*)&setBoolean, (void*)&setBoolean, (void*)&setBoolean, (void*)&setBoolean, (void*)&setInteger,
-		(void*)&callAfterConfirm, (void*)&setInteger
+		(void*)&setInteger, (void*)&callAfterConfirm
+};
+
+const void * variables[] = {
+		(void *)&(controller_param.SV), (void *)&(controller_param.k_r), (void *)&(controller_param.T_d), (void *)&(controller_param.T_i),(void *)&(controller.y),
+		(void *)&tmp_buzz, (void *)&tmp_out1,(void *)&tmp_out2, (void *)&tmp_out3,/*(void *)&tmp_in,*/ (void *)&output,
+		(void *)&timer0, (void*)&PID_SaveSettings
 };
 
 const uint8_t submenu_index[] = { 5,5,2 };
 
-uint8_t zmienna = 0, zmienna2 = 25;
-void * variables[] = {
-		(void *)&(controller.SV), (void *)&(controller.k_r), (void *)&(controller.T_d), (void *)&(controller.T_i),(void *)&(controller.integral),
-		(void *)&tmp_buzz, (void *)&tmp_out1,(void *)&tmp_out2, (void *)&tmp_out3,/*(void *)&tmp_in,*/ (void *)&output,
-		(void*)&PID_SaveSettings, (void *)&timer0
-};
-
-
 struct Tmenu_position menu_position;
 
 void callAfterConfirm(uint8_t keys, uint8_t * value) {
-	//USART_Puts("conf:");
-	//USART_TransmitDecimal(keys);
 	switch (keys) {
 	case KEY_UP:
 		PID_SaveSettings();
@@ -96,16 +93,19 @@ void callAfterConfirm(uint8_t keys, uint8_t * value) {
 }
 
 void setInteger(uint8_t keys, uint8_t * value) {
-	switch (keys) {
-	case KEY_UP:
-		(*value)++;
-		break;
-	case KEY_DOWN:
-		(*value)--;
-		break;
-	default:
-		break;
-
+	if (keys & KEY_UP) {
+		if (keys & REPEATED_FLAG) {
+			(*value)+=10;
+		} else {
+			(*value)+=1;
+		}
+	}
+	if (keys & KEY_DOWN) {
+		if (keys & REPEATED_FLAG) {
+			(*value)-=10;
+		} else {
+			(*value)-=1;
+		}
 	}
 	LCD_PutDecimal(*value, LCD_AUTOINCREMENT,LCD_AUTOINCREMENT, 0, RED, (keys==0)?BLACK:BLUE);
 	return;
@@ -117,16 +117,23 @@ void getIntegerReadOnly(uint8_t keys, uint8_t * value) {
 }
 
 void setSignedInteger16(uint8_t keys, int16_t * value) {
-	switch (keys) {
-	case KEY_UP:
-		(*value)+=1;
-		break;
-	case KEY_DOWN:
-		(*value)-=1;
-		break;
-	default:
-		break;
-
+	if (keys & KEY_UP) {
+		if (keys & REPEATED_2X_FLAG) {
+			(*value)+=100;
+		} else if (keys & REPEATED_FLAG) {
+			(*value)+=10;
+		} else {
+			(*value)+=1;
+		}
+	}
+	if (keys & KEY_DOWN) {
+		if (keys & REPEATED_2X_FLAG) {
+			(*value)-=100;
+		} else if (keys & REPEATED_FLAG) {
+			(*value)-=10;
+		} else {
+			(*value)-=1;
+		}
 	}
 	LCD_PutDecimalSigned(*value, LCD_AUTOINCREMENT,LCD_AUTOINCREMENT, 0, RED, (keys==0)?BLACK:BLUE);
 	return;
@@ -161,9 +168,8 @@ void menu_Init(void) {
 }
 
 void MenuProcess(TKey key) {
-	switch (key) {
-	case KEY_DOWN:
-		if (NOT_SELECTED == menu_position.second_level) {
+	if (key & KEY_DOWN) {
+		if (NOT_SELECTED == menu_position.second_level) { //MAIN MENU
 			if (menu_position.first_level<(sizeof(menu_first_level)/sizeof(menu_first_level[0])-1)) {
 				menu_position.first_level++;
 			} else {
@@ -176,8 +182,8 @@ void MenuProcess(TKey key) {
 				menu_position.second_level = 1;
 			}
 		}
-		break;
-	case KEY_UP:
+	}
+	if (key & KEY_UP) {
 		if (NOT_SELECTED == menu_position.second_level) {
 			if (menu_position.first_level>0) {
 				menu_position.first_level--;
@@ -191,30 +197,25 @@ void MenuProcess(TKey key) {
 				menu_position.second_level = submenu_index[menu_position.first_level];
 			}
 		}
-		break;
-	case KEY_RIGHT:
+	}
+	if (key & KEY_RIGHT) {
 		if (NOT_SELECTED == menu_position.second_level) {
 			menu_position.second_level = 1;
 		} else {
 			menu_position.entry_selected = 1;
 		}
-		break;
-	case KEY_LEFT:
+	}
+	if (key & KEY_LEFT) {
 		if (NOT_SELECTED != menu_position.second_level && 0 == menu_position.entry_selected) {
 			menu_position.second_level = NOT_SELECTED;
 		} else {
 			menu_position.entry_selected = 0;
 		}
-		break;
-	case 0:
-	default:
-		break;
-
 	}
 
 	//redraw menu//48
 	LCD_Rectangle(0,X_POS-16-8*MENU_ROWS,132,56,BLACK);
-	uint8_t n = 0;
+
 	if (NOT_SELECTED == menu_position.second_level) {
 		//dispay first level menulist
 		for (uint8_t i = 0; i<(sizeof(menu_first_level)/sizeof(menu_first_level[0])); i++) {
