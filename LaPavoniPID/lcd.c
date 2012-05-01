@@ -586,17 +586,25 @@ void setPixel(uint16_t col) {
 #endif
 }
 
-void LCD_Rectangle(uint8_t x, uint8_t y, uint8_t width, uint8_t height, uint16_t col) {
+void LCD_Rectangle(uint8_t x, uint8_t y, uint8_t height, uint8_t width, uint16_t col) {
 	CS0;
 	// Column address set
 	sendCMD(PASET);
-	sendData(y);
-	sendData(y + height - 1);
+	sendData(x);
+	if (x+height-1<132) {
+		sendData(x + height - 1);
+	} else {
+		sendData(131);
+	}
 
 	// Page address set
 	sendCMD(CASET);
-	sendData(x);
-	sendData(x + width - 1);
+	sendData(y);
+	if (y+width-1<132) {
+		sendData(y + width - 1);
+	} else {
+		sendData(131);
+	}
 
 	sendCMD(RAMWR);
 	for (uint16_t i=0; i<width*height; i++) {

@@ -214,7 +214,7 @@ void MenuProcess(TKey key) {
 	}
 
 	//redraw menu//48
-	LCD_Rectangle(0,X_POS-16-8*MENU_ROWS,132,56,BLACK);
+	LCD_Rectangle(X_POS-16-8*MENU_ROWS,0,56,132,BLACK);
 
 	if (NOT_SELECTED == menu_position.second_level) {
 		//dispay first level menulist

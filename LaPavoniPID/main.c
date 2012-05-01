@@ -115,7 +115,7 @@ void __attribute__ ((naked)) main(void) {
 	USART_Puts_P(Hello);
 	USART_Puts_P(VERSION);
 
-	uint8_t status;
+	uint8_t status,prevstatus;
 	uint8_t bajt;
 	int16_t deg;
 	uint16_t milideg;
@@ -132,6 +132,11 @@ void __attribute__ ((naked)) main(void) {
 	menu_Init();
 	MenuProcess(0);
 
+	BUZZ_ON;
+	_delay_ms(200);
+	BUZZ_OFF;
+
+	wdt_enable(WDTO_2S);
 
 	while (1) {
 		if (0!=buf_getcount((Tcircle_buffer *)&USART_buffer_RX)) {
@@ -169,17 +174,24 @@ void __attribute__ ((naked)) main(void) {
 		if (flag & _BV(FLAG_1S)) {
 			flag &= ~_BV(FLAG_1S);
 			if (0==(status=TC_performRead())) {
+				if (0 != prevstatus) {
+					LCD_Rectangle(110,0,8,132,WHITE);
+					BUZZ_ON;
+					_delay_ms(10);
+					BUZZ_OFF;
+				}
 				TC_getInternalTemp(&deg, &milideg);
-				/*LCD_PutStr("IN: ", 104,5,0,BLACK,WHITE);
-				LCD_PutDecimalSigned(deg, 104, 35, 0, GREEN,WHITE);
+				LCD_PutStr("IN: ", 102,5,0,BLACK,WHITE);
+				LCD_PutDecimalSigned(deg, 102, 35, 0, GREEN,WHITE);
 				LCD_PutChar('.', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, GREEN,WHITE);
 				LCD_PutDecimal(milideg, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, GREEN,WHITE);
-*/
+
 				TC_getTCTemp(&deg, &milideg);
-				LCD_PutStr("PV: ", 125, 5, 1, BLACK, YELLOW);
-				LCD_PutDecimalSigned(deg, 125, 35, 1, RED,YELLOW);
-				LCD_PutChar('.', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, RED,YELLOW);
-				LCD_PutDecimal(milideg, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, RED,YELLOW);
+				LCD_PutStr("PV: ", 112, 5, 1, BLACK, WHITE);
+				LCD_PutDecimalSigned(deg, 112, 35, 1, RED,WHITE);
+				LCD_PutChar('.', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, RED,WHITE);
+				LCD_PutDecimal(milideg, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, RED,WHITE);
+				LCD_PutStr(" oC", LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, RED,WHITE);
 				pv=deg*10+(milideg/10);
 
 				//USART_TransmitDecimal(milideg);
@@ -197,7 +209,7 @@ void __attribute__ ((naked)) main(void) {
 
 				LCD_PutStr_P(STR_PV, 90,5,0,BLUE,WHITE);
 				LCD_PutDecimalSigned(controller.PV, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
-				LCD_PutStr(",SV:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
+				LCD_PutStr(",SP:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
 				LCD_PutDecimalSigned(controller_param.SV, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
 				LCD_PutStr(",E:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
 				LCD_PutDecimalSigned(controller.e, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
@@ -210,13 +222,17 @@ void __attribute__ ((naked)) main(void) {
 				LCD_PutStr(" ", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
 
 
-				LCD_PutDecimal(system_clock, 0,0,0,BLACK,WHITE);
-				LCD_PutChar(' ', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, 0, WHITE);
-				//LCD_PutDecimal(output, 0,100,0,BLACK,WHITE);
-				//LCD_PutChar(' ', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, 0, WHITE);
+
 
 			} else {
 				output = 0;
+				if (0 == prevstatus) {
+					LCD_Rectangle(102,5,25,100,WHITE);
+					BUZZ_ON;
+					_delay_ms(100);
+					BUZZ_OFF;
+				}
+
 				LCD_PutStr("TC ERR:", 110,5,0,RED,WHITE);
 				if (!(0==(TC_READOC&status))) {
 					LCD_PutStr("Open!", LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED, WHITE);
@@ -228,6 +244,7 @@ void __attribute__ ((naked)) main(void) {
 					LCD_PutStr("Short+!", LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED, WHITE);
 				}
 			}
+			prevstatus = status;
 
 		/*	USART_Put('\n');
 			USART_TransmitDecimal(system_clock);
@@ -247,6 +264,11 @@ void __attribute__ ((naked)) main(void) {
 		if (flag & _BV(FLAG_100MS)) {
 			flag &= ~_BV(FLAG_100MS);
 
+
+			LCD_PutDecimal(system_clock, 0,0,0,BLACK,WHITE);
+			LCD_PutChar(' ', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, 0, WHITE);
+			//LCD_PutDecimal(output, 0,100,0,BLACK,WHITE);
+			//LCD_PutChar(' ', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, 0, WHITE);
 
 			//MOVING AVERAGE
 			status = TC_performRead();
@@ -334,6 +356,6 @@ void __attribute__ ((naked)) main(void) {
 
 		}
 		//shutdown
-
-	}
+		wdt_reset();
+	} //main loop
 }				/* main() */

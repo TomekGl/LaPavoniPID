@@ -10,6 +10,7 @@
 #include <avr/eeprom.h>
 #include <string.h>
 #include <util/twi.h>
+#include <avr/wdt.h>
 
 #include "buffers.h"
 #include "hardware.h"
