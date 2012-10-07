@@ -46,7 +46,6 @@ const char menu_entry_2[] __attribute__ ((progmem)) = "Status " ;
 const char menu_entry_2_0[] __attribute__ ((progmem)) = "TIM0: " ;
 const char menu_entry_2_1[] __attribute__ ((progmem)) = "Zapisz parametry " ;
 
-
 const char *menu_first_level[] __attribute__ ((progmem)) = {
 		menu_entry_0,
 		menu_entry_1,
@@ -55,7 +54,7 @@ const char *menu_first_level[] __attribute__ ((progmem)) = {
 
 const char  *menu_second_level[] __attribute__ ((progmem)) =  {
 		menu_entry_0_0, menu_entry_0_1, menu_entry_0_2, menu_entry_0_3, menu_entry_0_4,
-		menu_entry_1_0, menu_entry_1_1,menu_entry_1_2, menu_entry_1_3,menu_entry_1_4,
+		menu_entry_1_0, menu_entry_1_1, menu_entry_1_2, menu_entry_1_3,menu_entry_1_4,
 		menu_entry_2_0, menu_entry_2_1
 };
 

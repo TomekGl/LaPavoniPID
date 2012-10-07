@@ -25,7 +25,7 @@ void TC_init()
 	ADC_CSPORT |= _BV(ADC_CS); //High - inactive
 }
 
-uint8_t TC_performRead() {
+enum TC_read_status TC_performRead() {
 	SPCR |= _BV(SPE) | _BV(MSTR); // Enable Hardware SPI
 
 	LCD_CTRPORT |= _BV(LCD_CS);

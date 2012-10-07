@@ -31,6 +31,7 @@ ISR(TIMER0_OVF_vect)
 	return;
 }
 
+/// Timer 2 support - AC output 3
 ISR(TIMER2_OVF_vect) {
 	TCNT2 = 255-30;
 	pwm++;
@@ -38,7 +39,7 @@ ISR(TIMER2_OVF_vect) {
 		OUT3_PORT |= _BV(OUT3);//disable
 		//BUZZ_PORT &= ~_BV(BUZZ);
 	} else {
-		if (pwm <= output) {
+		if (pwm <= output)  {
 			OUT3_PORT &= ~_BV(OUT3);
 			//BUZZ_PORT |= _BV(BUZZ);
 		} else {
@@ -49,9 +50,14 @@ ISR(TIMER2_OVF_vect) {
 	return;
 }
 
+/// External interrupt - AC input 1
 ISR(INT1_vect)
 {
+	if (tmp_in != 255) {
 	tmp_in++;
+	}
+
+	in_flag = 4;
 	return;
 }
 
@@ -133,7 +139,7 @@ void __attribute__ ((naked)) main(void) {
 	MenuProcess(0);
 
 	BUZZ_ON;
-	_delay_ms(200);
+	_delay_ms(100);
 	BUZZ_OFF;
 
 	wdt_enable(WDTO_2S);
@@ -180,12 +186,16 @@ void __attribute__ ((naked)) main(void) {
 					_delay_ms(10);
 					BUZZ_OFF;
 				}
+				LCD_PutStr("PUMP: ", 98,5,1,BLACK,WHITE);
+				LCD_PutDecimal(pump_timer/10, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT,1, GREEN,WHITE);
+				LCD_PutChar('s', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, 0, WHITE);
+
 				TC_getInternalTemp(&deg, &milideg);
-				LCD_PutStr("IN: ", 102,5,0,BLACK,WHITE);
+/*				LCD_PutStr("IN: ", 102,5,0,BLACK,WHITE);
 				LCD_PutDecimalSigned(deg, 102, 35, 0, GREEN,WHITE);
 				LCD_PutChar('.', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, GREEN,WHITE);
 				LCD_PutDecimal(milideg, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, GREEN,WHITE);
-
+*/
 				TC_getTCTemp(&deg, &milideg);
 				LCD_PutStr("PV: ", 112, 5, 1, BLACK, WHITE);
 				LCD_PutDecimalSigned(deg, 112, 35, 1, RED,WHITE);
@@ -207,7 +217,7 @@ void __attribute__ ((naked)) main(void) {
 					output = 0;
 				}
 
-				LCD_PutStr_P(STR_PV, 90,5,0,BLUE,WHITE);
+				LCD_PutStr_P(STR_PV, 87,5,0,BLUE,WHITE);
 				LCD_PutDecimalSigned(controller.PV, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
 				LCD_PutStr(",SP:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
 				LCD_PutDecimalSigned(controller_param.SV, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
@@ -264,6 +274,17 @@ void __attribute__ ((naked)) main(void) {
 		if (flag & _BV(FLAG_100MS)) {
 			flag &= ~_BV(FLAG_100MS);
 
+			if (0 != in_flag) {
+				in_flag--;
+				pump_timer++;
+				pump_timer_reset_timeout = 50;
+			} else {
+				if (0 != pump_timer_reset_timeout) {
+					pump_timer_reset_timeout--;
+				} else {
+					pump_timer = 0;
+				}
+			}
 
 			LCD_PutDecimal(system_clock, 0,0,0,BLACK,WHITE);
 			LCD_PutChar(' ', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, 0, WHITE);

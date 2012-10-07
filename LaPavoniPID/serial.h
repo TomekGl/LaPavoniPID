@@ -14,17 +14,17 @@ struct TUSART_errors_tag {
 } ;
 typedef struct TUSART_errors_tag TUSART_errors;
 
-/// liczniki błędów
+/// errors counters
 extern volatile TUSART_errors USART_errors;
 
-/// bufor kołowy odbiorczy
+/// circular buffer for received data
 extern volatile Tcircle_buffer USART_buffer_RX;
 
-/// bufor kołowy nadawczy
+/// circular buffer for transmited data
 extern volatile Tcircle_buffer USART_buffer_TX;
 
 
-///typ wyliczeniowy stanu nadawania
+///transmiter state
 typedef enum {
 	USART_STATE_IDLE, //nadajnik wolny
 	USART_STATE_INTHEMIDDLE, //w trakcie nadawania
@@ -32,37 +32,37 @@ typedef enum {
 } TUSART_state;
 
 
-/** dostępne prędkości portu */
+/** predefined common USART speeds */
 //typedef enum TSpeed_tag TSpeed
 //enum TSpeed_tag { S2400, S4800, S9600, S19200, S38400, S57600, S76800, S115200 }
 #define GETUBRR(rate) ((F_CPU/(8*rate))-1)
 
 
-/** Inicjalizacja USART z zadaną szybkością */
+/** Initialize USART and set baud speed */
 void USART_Init(unsigned int baud );
 
-/** Rozpoczęcie wysyłania z bufora */
+/** Start sending data from transmit buffer*/
 void USART_StartSending();
 
-/** Nadanie kolejnego znaku z bufora */
+/** Send following byte from buffer*/
 void USART_TX_Byte();
 
 
-/** Wysłanie znaku przez USART*/
+/** Send byte via USART */
 void USART_Transmit( unsigned char data );
 
 //unsigned char USART_Receive( void );
 
-/** Wysłanie ciągu znaków przez USART*/
+/** Send null-terminated string via USART */
 void USART_Puts(const char *s);
 
-/** Wysłanie pojedynczego znaku przez USART */
+/** Send single char via USART */
 void USART_Put(char ch);
 
-/** Wysłanie ciągu znaków z pamięci programu przez USART*/
+/** Send null-terminated string from flash via USART */
 void USART_Puts_P(const char *s);
 
-/** Wysłanie liczby w ASCII*/
+/** Send unsigned integer as a string via USART */
 void USART_TransmitDecimal( uint32_t data );
 
 /** Wysłanie bajtu jako liczby binarnej w ASCII*/
@@ -74,6 +74,6 @@ void USART_TransmitDecimalSigned(int32_t data);
 /** @} */
 
 /*! \file serial.h
-    \brief Plik nagłówkowy dla modułu obsługi portu szeregowego
+    \brief Serial port support header file
 */
 #endif /*SERIAL_H_*/

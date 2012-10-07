@@ -1,6 +1,6 @@
 #include "includes.h"
 
-/** \defgroup serial Moduł obsługi portu szeregowego
+/** \defgroup serial USART support module
  @{ */
 
 //inline uint8_t *buf_getptr(Tcircle_buffer *buffer)
@@ -8,19 +8,19 @@
 //	return &(buffer.data[0]);
 //}
 
-/// liczniki błędów
+/// errors counters
 volatile TUSART_errors USART_errors;
 
-/// bufor kołowy odbiorczy
+/// RX circular buffer
 volatile Tcircle_buffer USART_buffer_RX;
-/// bufor kołowy nadawczy
+/// TX circular buffer
 volatile Tcircle_buffer USART_buffer_TX;
-/// czas nadejścia ostatniego bajtu
+/// receive time of last byte
 volatile uint32_t USART_arrival_time;
-/// czas nadejścia poprzedniego bajtu
+/// receive time of previous byte
 volatile uint32_t USART_prev_arrival_time;
 
-/// stan nadawania z buforaserial
+/// receiver state
 volatile TUSART_state USART_state;
 
 
@@ -45,7 +45,7 @@ void USART_Init(unsigned int baud) {
 	//UCSRA = (1 << U2X);
 }
 
-/** Przerwanie odbiorcze USART */
+/** USART Receive Interrupt*/
 ISR(USART_RXC_vect)
 {
 	volatile uint8_t status;
@@ -82,7 +82,7 @@ void USART_StartSending() {
 	{
 		USART_TX_Byte();
 	}
-	//pozostałe bajty z bufora będą wysłane automatycznie
+	//remaining bytes will be sent automatically
 }
 
 void USART_TX_Byte() {
@@ -92,7 +92,7 @@ void USART_TX_Byte() {
 			while (!(UCSRA & (1 << UDRE)))
 				;
 
-			//wysłanie pierwszego znaku
+			//sending of first character
 			USART_state = USART_STATE_INTHEMIDDLE;
 			UDR = (buf_getbyte((Tcircle_buffer *)&USART_buffer_TX));
 		} else
