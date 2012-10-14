@@ -13,7 +13,7 @@ volatile Tcontroller_param controller_param;
 void PID_Init(void) {
 	USART_Put(eeprom_read_byte(0));
 	if (0xff==eeprom_read_byte(0)) {
-		USART_Puts("Przywracam domyslne\n");
+		USART_Puts("Defaults restored\n");
 		//Load defaults
 		PID_Reset();
 	} else {

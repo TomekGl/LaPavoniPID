@@ -616,8 +616,8 @@ void LCD_Rectangle(uint8_t x, uint8_t y, uint8_t height, uint8_t width, uint16_t
 
 #ifdef LCDTEXT
 void LCD_PutStr(char *s, uint8_t x, uint8_t y, uint8_t Size, int fColor, int bColor) {
-	if (x!=255) cursorx=x;
-	if (y!=255) cursory=y;
+	if (x!=LCD_AUTOINCREMENT) cursorx=x;
+	if (y!=LCD_AUTOINCREMENT) cursory=y;
 	// loop until null-terminator is seen
 	while (0 != *s) {
 		// draw the character
@@ -627,8 +627,8 @@ void LCD_PutStr(char *s, uint8_t x, uint8_t y, uint8_t Size, int fColor, int bCo
 void LCD_PutStr_P(const char *s, uint8_t x, uint8_t y, uint8_t Size, int fColor, int bColor) {
 	register char c;
 
-	if (x!=255) cursorx=x;
-	if (y!=255) cursory=y;
+	if (x!=LCD_AUTOINCREMENT) cursorx=x;
+	if (y!=LCD_AUTOINCREMENT) cursory=y;
 
 	// loop until null-terminator is seen
 	while (0 != (c = pgm_read_byte(s++))) {
@@ -639,8 +639,8 @@ void LCD_PutStr_P(const char *s, uint8_t x, uint8_t y, uint8_t Size, int fColor,
 
 void LCD_PutChar(char c, uint8_t x, uint8_t y, uint8_t size, int fColor, int bColor) {
 	//autoincrement previous position if coordinates are not set
-	if (x==255) {x=cursorx;}
-	if (y==255) {y=cursory;}
+	if (x==LCD_AUTOINCREMENT) {x=cursorx;}
+	if (y==LCD_AUTOINCREMENT) {y=cursory;}
 
 	//extern const unsigned char FONT6x8[97][8];
 	extern const unsigned char FONT8x8[97][8];
@@ -652,7 +652,6 @@ void LCD_PutChar(char c, uint8_t x, uint8_t y, uint8_t size, int fColor, int bCo
 	unsigned char *pFont, *pChar;
 	unsigned char *FontTable[] = {/*(unsigned char *)FONT6x8 ,*/ (unsigned char *)FONT8x8, (unsigned char *)FONT8x16 };
 
-	CS0;
 
 	// get pointer to the beginning of the selected font table
 	pFont = (unsigned char *)FontTable[size];
@@ -662,6 +661,14 @@ void LCD_PutChar(char c, uint8_t x, uint8_t y, uint8_t size, int fColor, int bCo
 	nBytes = pgm_read_byte(pFont + 2);
 	// get pointer to the last byte of the desired character
 	pChar = pFont + (nBytes * (c - 0x1F)) + nBytes - 1;
+
+	if (c == '\n') {
+		y = 140; //out of screen
+		goto MOVECURSOR;
+	}
+
+	CS0;
+
 	// Row address set
 	sendCMD(PASET);
 	sendData(x);
@@ -713,6 +720,7 @@ void LCD_PutChar(char c, uint8_t x, uint8_t y, uint8_t size, int fColor, int bCo
 	sendCMD(NOP);
 	CS1;
 
+MOVECURSOR:
 	// advance the y position
 	if (size == 0) //SMALL
 		y = y + 8;

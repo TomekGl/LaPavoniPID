@@ -4,18 +4,12 @@
  *  Created on: 11-03-2012
  *      Author: tomek
  */
-
+#include <util/twi.h>
 #include "includes.h"
 #define ADCCS0 cbi(ADC_CSPORT,ADC_CS);
 #define ADCCS1 sbi(ADC_CSPORT,ADC_CS);
 #define CLK0 cbi(LCD_SPIPORT,LCD_SCK);
 #define CLK1 sbi(LCD_SPIPORT,LCD_SCK);
-
-union MAX31855Data {
-	uint32_t integer;
-	int16_t word[2];
-	uint8_t byte[4];
-};
 
 union MAX31855Data read_data;
 
@@ -25,7 +19,7 @@ void TC_init()
 	ADC_CSPORT |= _BV(ADC_CS); //High - inactive
 }
 
-enum TC_read_status TC_performRead() {
+TTC_read_status  TC_performRead() {
 	SPCR |= _BV(SPE) | _BV(MSTR); // Enable Hardware SPI
 
 	LCD_CTRPORT |= _BV(LCD_CS);

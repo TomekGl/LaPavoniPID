@@ -12,4 +12,7 @@
 /// czas wygaszania podswietlenia [sek]
 #define LCD_TIMEOUT 2
 
+/// pump timer is set to 0 after n ticks
+#define PUMP_TIMER_RESET_TIMEOUT 50
+
 #endif				/*MAIN_H_ */

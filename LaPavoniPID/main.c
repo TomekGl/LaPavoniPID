@@ -4,10 +4,20 @@
 #define FLAG_100MS 2
 #define FLAG_10MS 4
 
-/// data i czas kompilacji
-const char VERSION[] __attribute__ ((progmem)) = "#" __DATE__ " " __TIME__ ;
-const char Hello[] __attribute__ ((progmem)) = "#Coffee PID controller v0.1\n";
-const char STR_PV[]  __attribute__ ((progmem)) = "PV:";
+//enable beeper
+#define BEEPER
+
+/// time of build
+const char TXT_VERSION[] __attribute__ ((progmem)) = "Build:" __DATE__ " " __TIME__;
+const char TXT_Hello[] __attribute__ ((progmem)) = "Coffee PID controller v0.2\n tomaszgluch.pl 2012\n";
+const char TXT_SerialInit[] __attribute__ ((progmem)) = "USART initialization...";
+const char TXT_PumpTimer[] __attribute__ ((progmem)) = "PUMP TIMER: ";
+const char TXT_PV[]  __attribute__ ((progmem)) = "PV:";
+const char TXT_OK[]  __attribute__ ((progmem)) = "OK.";
+const char TXT_TCError[] __attribute__ ((progmem)) = "TC ERR:";
+const char TXT_TCErrorOpen[] __attribute__ ((progmem)) = "Open!";
+const char TXT_TCErrorShortPlus[] __attribute__ ((progmem)) = "Short+!";
+const char TXT_TCErrorShortMinus[] __attribute__ ((progmem)) = "Short-!";
 volatile uint8_t flag;
 
 
@@ -15,11 +25,13 @@ volatile uint8_t flag;
 #define AVG_WIN_SIZE 8
 
 
-
+/// System clock control routine
 ISR(TIMER0_OVF_vect)
 {
+	// load
 	TCNT0 = timer0;
 	system_clock++;
+
 	if (system_clock%100 == 0) {
 		flag = _BV(FLAG_1S) | _BV(FLAG_100MS);
 		return;
@@ -66,6 +78,13 @@ void __attribute__ ((naked)) main(void) {
 	int16_t average;
 	uint8_t window_index = 0;
 	int32_t avg_tmp_sum;
+	uint8_t status,prevstatus;
+	uint8_t bajt;
+	int16_t deg;
+	uint16_t milideg;
+	uint8_t switch_status = 0xff, prev_switch_status = 0xff;
+	uint8_t repeat, repeated_flag;
+	int16_t pv=100; //, output=0;
 
 
 
@@ -109,32 +128,32 @@ void __attribute__ ((naked)) main(void) {
 
 	//enable interrupts
 	sei();
+
 	//LCD
 	LCD_Init();
+	LCD_PutStr_P(TXT_Hello, 112, 5, 0, BLACK, WHITE);
+	LCD_PutStr_P(TXT_VERSION, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLACK, WHITE);
+
 	//USART
 	USART_Init((unsigned int)115200);
+
 	//Thermocouple
 	TC_init();
+
 	//RTC
 	//	DS1307_Init();
 
-	USART_Puts_P(Hello);
-	USART_Puts_P(VERSION);
-
-	uint8_t status,prevstatus;
-	uint8_t bajt;
-	int16_t deg;
-	uint16_t milideg;
-	uint8_t switch_status = 0xff, prev_switch_status = 0xff;
-	uint8_t repeat, repeated_flag;
-	int16_t pv=100; //, output=0;
+	USART_Puts_P(TXT_Hello);
+	USART_Puts_P(TXT_VERSION);
 
 	//Initialize runtime variables
 	PID_Init();
 
-	//GLOWNA PETLA ************************************************************
-	//LCD_PutStr_P(VERSION, 115,5,0,RED,WHITE);
 
+	for (uint8_t i=0; i<20; i++) {
+		_delay_ms(100);
+	}
+	LCD_Blank(0);
 	menu_Init();
 	MenuProcess(0);
 
@@ -144,7 +163,10 @@ void __attribute__ ((naked)) main(void) {
 
 	wdt_enable(WDTO_2S);
 
+	//GLOWNA PETLA ************************************************************
+
 	while (1) {
+		//process received data on serial port
 		if (0!=buf_getcount((Tcircle_buffer *)&USART_buffer_RX)) {
 			bajt = buf_getbyte((Tcircle_buffer *)&USART_buffer_RX);
 			//LCD_PutChar(bajt,0,LCD_AUTOINCREMENT,0,BLACK,WHITE);
@@ -179,6 +201,8 @@ void __attribute__ ((naked)) main(void) {
 		 */
 		if (flag & _BV(FLAG_1S)) {
 			flag &= ~_BV(FLAG_1S);
+
+			// if no error from termocouple converter
 			if (0==(status=TC_performRead())) {
 				if (0 != prevstatus) {
 					LCD_Rectangle(110,0,8,132,WHITE);
@@ -186,23 +210,28 @@ void __attribute__ ((naked)) main(void) {
 					_delay_ms(10);
 					BUZZ_OFF;
 				}
-				LCD_PutStr("PUMP: ", 98,5,1,BLACK,WHITE);
+
+				TC_getTCTemp(&deg, &milideg);
+				pv=deg*10+(milideg/10);
+
+				/*  Display process value */
+				LCD_PutStr_P(TXT_PV, 112, 5, 1, BLACK, WHITE);
+				LCD_PutDecimalSigned(deg, 112, 35, 1, RED,WHITE);
+				LCD_PutChar('.', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, RED,WHITE);
+				LCD_PutDecimal(milideg, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, RED,WHITE);
+				LCD_PutStr(" oC ", LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, RED,WHITE);
+
+				LCD_PutStr_P(TXT_PumpTimer, 98,5,1,BLACK,WHITE);
 				LCD_PutDecimal(pump_timer/10, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT,1, GREEN,WHITE);
 				LCD_PutChar('s', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, 0, WHITE);
+				LCD_PutChar(' ', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, 0, WHITE);
 
-				TC_getInternalTemp(&deg, &milideg);
+//				TC_getInternalTemp(&deg, &milideg);
 /*				LCD_PutStr("IN: ", 102,5,0,BLACK,WHITE);
 				LCD_PutDecimalSigned(deg, 102, 35, 0, GREEN,WHITE);
 				LCD_PutChar('.', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, GREEN,WHITE);
 				LCD_PutDecimal(milideg, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, GREEN,WHITE);
 */
-				TC_getTCTemp(&deg, &milideg);
-				LCD_PutStr("PV: ", 112, 5, 1, BLACK, WHITE);
-				LCD_PutDecimalSigned(deg, 112, 35, 1, RED,WHITE);
-				LCD_PutChar('.', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, RED,WHITE);
-				LCD_PutDecimal(milideg, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, RED,WHITE);
-				LCD_PutStr(" oC", LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, RED,WHITE);
-				pv=deg*10+(milideg/10);
 
 				//USART_TransmitDecimal(milideg);
 				//USART_Puts_P(VERSION);
@@ -217,41 +246,40 @@ void __attribute__ ((naked)) main(void) {
 					output = 0;
 				}
 
-				LCD_PutStr_P(STR_PV, 87,5,0,BLUE,WHITE);
+				LCD_PutStr("PV:", 87,5,0,BLUE,WHITE);
 				LCD_PutDecimalSigned(controller.PV, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
 				LCD_PutStr(",SP:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
 				LCD_PutDecimalSigned(controller_param.SV, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
 				LCD_PutStr(",E:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
 				LCD_PutDecimalSigned(controller.e, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
-				LCD_PutStr(",OUT:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,RED,WHITE);
-				LCD_PutDecimalSigned(output, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED,WHITE);
+//				LCD_PutStr(",OUT:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,RED,WHITE);
+				//LCD_PutDecimalSigned(output, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED,WHITE);
 				LCD_PutStr(",INT:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
 				LCD_PutDecimalSigned(controller.integral, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
 				LCD_PutStr(",DVDT:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
 				LCD_PutDecimalSigned(controller.derivative, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
 				LCD_PutStr(" ", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
-
-
-
-
+			//correct TC read END
 			} else {
+				// some error while TC reading has occured
 				output = 0;
-				if (0 == prevstatus) {
-					LCD_Rectangle(102,5,25,100,WHITE);
+				if (0 == prevstatus) { //only on transition to erroneous state
+					//clear controller section on LCD
+					LCD_Rectangle(96, 0, (132-96), 132, WHITE);
 					BUZZ_ON;
 					_delay_ms(100);
 					BUZZ_OFF;
 				}
 
-				LCD_PutStr("TC ERR:", 110,5,0,RED,WHITE);
+				LCD_PutStr_P(TXT_TCError, 110,5,0,RED,WHITE);
 				if (!(0==(TC_READOC&status))) {
-					LCD_PutStr("Open!", LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED, WHITE);
+					LCD_PutStr_P(TXT_TCErrorOpen, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED, WHITE);
 				}
 				if (!(0==(TC_READSCG&status))) {
-					LCD_PutStr("Short-!", LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED, WHITE);
+					LCD_PutStr_P(TXT_TCErrorShortMinus, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED, WHITE);
 				}
 				if (!(0==(TC_READSCV&status))) {
-					LCD_PutStr("Short+!", LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED, WHITE);
+					LCD_PutStr_P(TXT_TCErrorShortPlus, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED, WHITE);
 				}
 			}
 			prevstatus = status;
@@ -274,10 +302,11 @@ void __attribute__ ((naked)) main(void) {
 		if (flag & _BV(FLAG_100MS)) {
 			flag &= ~_BV(FLAG_100MS);
 
+			// reset timer automatically after switching pump off
 			if (0 != in_flag) {
 				in_flag--;
 				pump_timer++;
-				pump_timer_reset_timeout = 50;
+				pump_timer_reset_timeout = PUMP_TIMER_RESET_TIMEOUT;
 			} else {
 				if (0 != pump_timer_reset_timeout) {
 					pump_timer_reset_timeout--;
@@ -294,7 +323,7 @@ void __attribute__ ((naked)) main(void) {
 			//MOVING AVERAGE
 			status = TC_performRead();
 			TC_getTCTemp(&deg, &milideg);
-			USART_Put('\n');
+			USART_Put('\r');USART_Put('\n');
 			USART_TransmitDecimal(system_clock);
 			USART_Put(',');
 			USART_TransmitDecimalSigned(deg*100+milideg);

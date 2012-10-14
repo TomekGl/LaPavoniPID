@@ -11,7 +11,7 @@
  @{ */
 
 /// Last reading status
-enum TC_read_status {
+typedef enum {
 	/// reading correct
 	TC_READOK = 0,
 	/// reading incorrect - thermocouple connector open
@@ -20,7 +20,15 @@ enum TC_read_status {
 	TC_READSCG = 2,
 	/// reading incorrect - thermocouple short to VCC
 	TC_READSCV = 4
-}
+} TTC_read_status;
+
+/// Converter RAW data structure
+union MAX31855Data {
+	uint32_t integer;
+	int16_t word[2];
+	uint8_t byte[4];
+};
+
 
 /**
  * Initialize communication with converter connected via SPI
@@ -31,7 +39,7 @@ void TC_init();
  * Acquire data from thermocouple converter
  * @return Converter status
  */
-enum TC_read_status TC_performRead();
+TTC_read_status TC_performRead();
 
 /**
  * Convert previously acquired data of TC temperature to Celsius degrees

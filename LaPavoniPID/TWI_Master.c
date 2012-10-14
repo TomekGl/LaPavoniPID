@@ -213,5 +213,6 @@ ISR(TWI_vect)
              (0<<TWIE)|(0<<TWINT)|                      // Disable Interupt
              (0<<TWEA)|(0<<TWSTA)|(0<<TWSTO)|           // No Signal requests
              (0<<TWWC);                                 //
+      break;
   }
 }

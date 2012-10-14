@@ -29,7 +29,7 @@ typedef void (*FuncPtr)(uint8_t keys, uint8_t * value );
 FuncPtr FPtr;
 
 /// menu strings
-const char menu_entry_0[] __attribute__ ((progmem)) = "Ustawienia PID" ;
+const char menu_entry_0[] __attribute__ ((progmem)) = "PID Settings" ;
 const char menu_entry_0_0[] __attribute__ ((progmem)) = "SV: " ;
 const char menu_entry_0_1[] __attribute__ ((progmem)) = "K_p: " ;
 const char menu_entry_0_2[] __attribute__ ((progmem)) = "T_d: " ;
@@ -44,7 +44,7 @@ const char menu_entry_1_3[] __attribute__ ((progmem)) = "Output3: " ;
 const char menu_entry_1_4[] __attribute__ ((progmem)) = "Input: " ;
 const char menu_entry_2[] __attribute__ ((progmem)) = "Status " ;
 const char menu_entry_2_0[] __attribute__ ((progmem)) = "TIM0: " ;
-const char menu_entry_2_1[] __attribute__ ((progmem)) = "Zapisz parametry " ;
+const char menu_entry_2_1[] __attribute__ ((progmem)) = "Save settings " ;
 
 const char *menu_first_level[] __attribute__ ((progmem)) = {
 		menu_entry_0,
@@ -78,11 +78,11 @@ void callAfterConfirm(uint8_t keys, uint8_t * value) {
 	switch (keys) {
 	case KEY_UP:
 		PID_SaveSettings();
-		LCD_PutStr("Zapisano!", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT, 0, RED, (keys==0)?BLACK:BLUE );
+		LCD_PutStr("Saved!", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT, 0, RED, (keys==0)?BLACK:BLUE );
 		break;
 	case KEY_DOWN:
 	case KEY_RIGHT: //option selected
-		LCD_PutStr("Wcisnij \0x5f", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT, 0, RED, (keys==0)?BLACK:BLUE);
+		LCD_PutStr("Press \0x5f", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT, 0, RED, (keys==0)?BLACK:BLUE);
 		break;
 	default:
 		break;
