@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "includes.h"
 
+/// System clock
 extern volatile uint32_t system_clock;
 
 //extern volatile Tcircle_buffer USART_buffer_RX;

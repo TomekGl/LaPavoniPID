@@ -6,7 +6,7 @@
 
 //enable beeper
 #define BEEPER
-
+#define BUZZER_TIME 15
 /// time of build
 const char TXT_VERSION[] __attribute__ ((progmem)) = "Build:" __DATE__ " " __TIME__;
 const char TXT_Hello[] __attribute__ ((progmem)) = "Coffee PID controller v0.2\n tomaszgluch.pl 2012\n";
@@ -20,6 +20,7 @@ const char TXT_TCErrorShortPlus[] __attribute__ ((progmem)) = "Short+!";
 const char TXT_TCErrorShortMinus[] __attribute__ ((progmem)) = "Short-!";
 volatile uint8_t flag;
 
+volatile uint8_t buzzer_timeout;
 
 //Moving average window size
 #define AVG_WIN_SIZE 8
@@ -31,6 +32,15 @@ ISR(TIMER0_OVF_vect)
 	// load
 	TCNT0 = timer0;
 	system_clock++;
+
+#ifdef BEEPER
+	if (buzzer_timeout>0) {
+		if (buzzer_timeout == 1) {
+			BUZZ_PORT &= ~_BV(BUZZ);
+		}
+		buzzer_timeout--;
+	}
+#endif
 
 	if (system_clock%100 == 0) {
 		flag = _BV(FLAG_1S) | _BV(FLAG_100MS);
@@ -73,22 +83,30 @@ ISR(INT1_vect)
 	return;
 }
 
+/// Non-blocking buzzer support
+void BuzzerStart(uint8_t time) {
+#ifdef BEEPER
+	BUZZ_PORT |= _BV(BUZZ);
+	buzzer_timeout = time;
+#endif
+	return;
+}
+
+
 void __attribute__ ((naked)) main(void) {
-	int16_t averaging_window[AVG_WIN_SIZE];
-	int16_t average;
-	uint8_t window_index = 0;
-	int32_t avg_tmp_sum;
+	// TC ADC read status
 	uint8_t status,prevstatus;
-	uint8_t bajt;
 	int16_t deg;
 	uint16_t milideg;
+
+
+	uint8_t bajt;
 	uint8_t switch_status = 0xff, prev_switch_status = 0xff;
 	uint8_t repeat, repeated_flag;
 	int16_t pv=100; //, output=0;
 
-
-
 	timer0=178;
+
 	//Pullups
 	SW1_PORT |= _BV(SW1);
 	SW2_PORT |= _BV(SW2);
@@ -157,16 +175,25 @@ void __attribute__ ((naked)) main(void) {
 	menu_Init();
 	MenuProcess(0);
 
-	BUZZ_ON;
-	_delay_ms(100);
-	BUZZ_OFF;
+	BuzzerStart(50);
 
 	wdt_enable(WDTO_2S);
 
-	//GLOWNA PETLA ************************************************************
+	/*double myfloat1 = 40.245224;
+	double myfloat2 = 0.87343;
 
-	while (1) {
-		//process received data on serial port
+	USART_TransmitDouble(myfloat1);
+	USART_Put(' ');
+	USART_TransmitDouble(myfloat2);
+	USART_Put(' ');
+	USART_TransmitDouble(myfloat2*myfloat1);
+	USART_Put('\r');
+	USART_Put('\n');
+	*/
+	/* ****** MAIN LOOP ******* */
+	double floatpv;
+while (1) {
+		//process data received on serial port
 		if (0!=buf_getcount((Tcircle_buffer *)&USART_buffer_RX)) {
 			bajt = buf_getbyte((Tcircle_buffer *)&USART_buffer_RX);
 			//LCD_PutChar(bajt,0,LCD_AUTOINCREMENT,0,BLACK,WHITE);
@@ -175,12 +202,19 @@ void __attribute__ ((naked)) main(void) {
 			//if ('A'==bajt) {
 		}
 
+		if (system_clock%1000 < 10) {
+			LCD_Reset();
+			BuzzerStart(5);
+			USART_Put('X');
+			USART_StartSending();
+		}
 
 		/*	if (tmp_buzz) {
 			BUZZ_PORT |= _BV(BUZZ);
 		} else {
 			BUZZ_PORT &= ~_BV(BUZZ);
 		}
+
 		 */
 		if (tmp_out1) {
 			OUT1_PORT |= _BV(OUT1);
@@ -192,13 +226,16 @@ void __attribute__ ((naked)) main(void) {
 		} else {
 			OUT2_PORT &= ~_BV(OUT2);
 		}
-		/*
+		/* PORT 3 CONTROLLED BY PWM
 		if (tmp_out3) {
 			OUT3_PORT |= _BV(OUT3);
 		} else {
 			OUT3_PORT &= ~_BV(OUT3);
 		}
 		 */
+
+
+		/* ***** Every-1s tasks are here ***** */
 		if (flag & _BV(FLAG_1S)) {
 			flag &= ~_BV(FLAG_1S);
 
@@ -206,13 +243,20 @@ void __attribute__ ((naked)) main(void) {
 			if (0==(status=TC_performRead())) {
 				if (0 != prevstatus) {
 					LCD_Rectangle(110,0,8,132,WHITE);
-					BUZZ_ON;
-					_delay_ms(10);
-					BUZZ_OFF;
+					BuzzerStart(10);
 				}
 
 				TC_getTCTemp(&deg, &milideg);
 				pv=deg*10+(milideg/10);
+				floatpv = deg+milideg/100.0;
+				USART_TransmitDouble(floatpv);
+				USART_Put(' ');
+				USART_TransmitDecimal(pv);
+				USART_Put(' ');
+				USART_TransmitDecimal(controller.PV);
+				USART_Put('\r');
+				USART_Put('\n');
+
 
 				/*  Display process value */
 				LCD_PutStr_P(TXT_PV, 112, 5, 1, BLACK, WHITE);
@@ -221,6 +265,7 @@ void __attribute__ ((naked)) main(void) {
 				LCD_PutDecimal(milideg, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, RED,WHITE);
 				LCD_PutStr(" oC ", LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, RED,WHITE);
 
+				/*  Display pump timer */
 				LCD_PutStr_P(TXT_PumpTimer, 98,5,1,BLACK,WHITE);
 				LCD_PutDecimal(pump_timer/10, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT,1, GREEN,WHITE);
 				LCD_PutChar('s', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, 0, WHITE);
@@ -239,20 +284,20 @@ void __attribute__ ((naked)) main(void) {
 
 				if (controller_param.k_r>0) {
 				//process PID controller
-				output = (uint8_t)(PID_Process(pv));
+				output = (uint8_t)(PID_Process_3(pv));
 				} else if (-1 == controller_param.k_r) {
 					output = (uint8_t)controller.y;
 				} else {
 					output = 0;
 				}
 
-				LCD_PutStr("PV:", 87,5,0,BLUE,WHITE);
+				LCD_PutStr("PV:", 89,5,0,BLUE,WHITE);
 				LCD_PutDecimalSigned(controller.PV, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
 				LCD_PutStr(",SP:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
 				LCD_PutDecimalSigned(controller_param.SV, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
 				LCD_PutStr(",E:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
 				LCD_PutDecimalSigned(controller.e, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
-//				LCD_PutStr(",OUT:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,RED,WHITE);
+				//LCD_PutStr(",OUT:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,RED,WHITE);
 				//LCD_PutDecimalSigned(output, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED,WHITE);
 				LCD_PutStr(",INT:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
 				LCD_PutDecimalSigned(controller.integral, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
@@ -266,9 +311,7 @@ void __attribute__ ((naked)) main(void) {
 				if (0 == prevstatus) { //only on transition to erroneous state
 					//clear controller section on LCD
 					LCD_Rectangle(96, 0, (132-96), 132, WHITE);
-					BUZZ_ON;
-					_delay_ms(100);
-					BUZZ_OFF;
+					BuzzerStart(100);
 				}
 
 				LCD_PutStr_P(TXT_TCError, 110,5,0,RED,WHITE);
@@ -298,11 +341,11 @@ void __attribute__ ((naked)) main(void) {
 			USART_TransmitDecimalSigned(controller.derivative);
 */
 		} // end of flagged 1S section
-
+		/* ***** Every 0.1s tasks here ****** */
 		if (flag & _BV(FLAG_100MS)) {
-			flag &= ~_BV(FLAG_100MS);
+			flag &= ~_BV(FLAG_100MS); //reset flag
 
-			// reset timer automatically after switching pump off
+			// reset timer automatically after few seconds after switching pump off
 			if (0 != in_flag) {
 				in_flag--;
 				pump_timer++;
@@ -315,41 +358,29 @@ void __attribute__ ((naked)) main(void) {
 				}
 			}
 
-			LCD_PutDecimal(system_clock, 0,0,0,BLACK,WHITE);
+			//Display system clock in lower left corner:
+			LCD_PutDecimal(system_clock, 0, 0, 0, BLACK, WHITE);
 			LCD_PutChar(' ', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, 0, WHITE);
-			//LCD_PutDecimal(output, 0,100,0,BLACK,WHITE);
-			//LCD_PutChar(' ', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, 0, WHITE);
 
-			//MOVING AVERAGE
-			status = TC_performRead();
-			TC_getTCTemp(&deg, &milideg);
-			USART_Put('\r');USART_Put('\n');
-			USART_TransmitDecimal(system_clock);
-			USART_Put(',');
-			USART_TransmitDecimalSigned(deg*100+milideg);
-			USART_Put(',');
-			USART_TransmitDecimalSigned(output);
-			USART_Put(',');
-			USART_TransmitDecimal(status);
-		//	USART_Puts(",0,0,0");
+			// status bar - inputs, outputs
+			LCD_PutChar('1', 0, 96, 1, WHITE, tmp_out1?RED:GREEN);
+			LCD_PutChar('2', 0, 105, 1, WHITE, tmp_out2?RED:GREEN);
+			LCD_PutChar('3', 0, 114, 1, WHITE, bit_is_clear(OUT3_PORT,OUT3)?RED:GREEN);
+			LCD_PutChar('I', 0, 123, 1, WHITE, bit_is_clear(IN1_PIN,IN1)?RED:GREEN);
 
-/*			averaging_window[window_index++] = deg*10 + milideg/10;
-			if (AVG_WIN_SIZE-1 > window_index) window_index = 0;
-			avg_tmp_sum = 0;
-			for (uint8_t i=0; i<AVG_WIN_SIZE; i++) {
-				avg_tmp_sum += averaging_window[i];
-			}
-			pv = avg_tmp_sum / AVG_WIN_SIZE;
-*/
+			LCD_Rectangle(0,64+16, 16,16, WHITE); //clear last 2 chars
+			LCD_PutDecimal((output*100)/255, 0, 64, 1, BLACK, WHITE);
+			LCD_PutChar('%', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, BLACK, WHITE);
+
 
 			//BUTTONS
 			switch_status = ( SW1_PIN & (_BV(SW1)|_BV(SW3)|_BV(SW4))) | ( SW2_PIN & _BV(SW2));
 			if (switch_status != (_BV(SW1)| _BV(SW3) | _BV(SW4) | _BV(SW2))) { //some button is pressed
 				if (switch_status != prev_switch_status) { // key pressed
-					_delay_ms(10);
+					_delay_ms(10); //debouncing - slightly blocking :)
 					switch_status = ( SW1_PIN & (_BV(SW1)|_BV(SW3)|_BV(SW4))) | ( SW2_PIN & _BV(SW2)); //TODO
 
-				} else { //end if status changed
+				} else { //end if key status changed
 					repeat++;
 					if (repeat<10) goto SKIP;
 					repeated_flag = REPEATED_FLAG;  //button pressed for 1s
@@ -358,45 +389,25 @@ void __attribute__ ((naked)) main(void) {
 						repeat--; //do not increment to avoid overflow
 					}
 				}
+				/* button ->  task mapping */
 				if (bit_is_clear(switch_status, SW1)) { // && bit_is_set(prev_switch_status, SW1)) {
-					//USART_Put('U');
 					MenuProcess(KEY_UP|repeated_flag);
-#ifdef BEEPER
-					BUZZ_PORT |= _BV(BUZZ);
-					_delay_ms(25);
-					//LCD_PutStr("AA", 100,0,0,BLACK,WHITE);
-					BUZZ_PORT &= ~_BV(BUZZ);
-#endif
+					BuzzerStart(BUZZER_TIME);
 				}
 				if (bit_is_clear(switch_status, SW2)) { // && bit_is_set(prev_switch_status, SW2)) {
-					//USART_Put('D');
 					MenuProcess(KEY_DOWN|repeated_flag);
-#ifdef BEEPER
-					BUZZ_PORT |= _BV(BUZZ);
-					_delay_ms(25);
-					BUZZ_PORT &= ~_BV(BUZZ);
-#endif
+					BuzzerStart(BUZZER_TIME);
 				}
 				if (bit_is_clear(switch_status, SW3) && bit_is_set(prev_switch_status, SW3)) {
-					//USART_Put('L');
 					MenuProcess(KEY_LEFT);
-#ifdef BEEPER
-					BUZZ_PORT |= _BV(BUZZ);
-					_delay_ms(25);
-					BUZZ_PORT &= ~_BV(BUZZ);
-#endif
+					BuzzerStart(BUZZER_TIME);
 				}
 				if (bit_is_clear(switch_status, SW4)&& bit_is_set(prev_switch_status, SW4)) {
-					//USART_Put('R');
 					MenuProcess(KEY_RIGHT);
-#ifdef BEEPER
-					BUZZ_PORT |= _BV(BUZZ);
-					_delay_ms(25);
-					BUZZ_PORT &= ~_BV(BUZZ);
-#endif
+					BuzzerStart(BUZZER_TIME);
 				}
 
-			} //end if pressed
+			} //buttons pressed - end
 			else {
 				repeat = 0;
 				repeated_flag = 0;
@@ -405,7 +416,8 @@ void __attribute__ ((naked)) main(void) {
 			prev_switch_status = switch_status;
 
 		}
-		//shutdown
+
+		//refresh watchdog timer
 		wdt_reset();
 	} //main loop
 }				/* main() */

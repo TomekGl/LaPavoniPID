@@ -101,7 +101,7 @@ void USART_TX_Byte() {
 }
 
 
-/** Przerwanie od zakończenia nadawania */
+/** Transmition completed interrupt */
 ISR(USART_TXC_vect)
 { ///TODO USART_UDRE_vect
 	//wysłanie następnego znaku jeżeli bufor zawiera dane
@@ -158,7 +158,7 @@ void USART_TransmitDecimalSigned(int32_t data) {
 
 
 void USART_TransmitBinary(unsigned char data) {
-	//ZAPIS BINARNY 0/1 Z _POMINIĘCIEM BUFORÓW_ !!!
+	///This function do not use TX buffers !!!
 	/* Wait for empty transmit buffer */
 	uint8_t i;
 	for (i = 0; i < 8; i++) {
@@ -182,10 +182,19 @@ void USART_Transmit(unsigned char data) {
 	UDR = data;
 }
 
+/** Send double as decimal string representation */
+void USART_TransmitDouble(double data) {
+	char str[12];
+
+	/* convert signed integer into string */
+	dtostre(data, str, 4, 0);
+
+	USART_Puts(str);
+	}
 
 /** @} */
 
 /*! \file serial.c
- \brief Moduł obsługi portu szeregowego
+ \brief Serial port support
  */
 

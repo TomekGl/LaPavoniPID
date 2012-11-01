@@ -1,27 +1,19 @@
-//*****************************************************************************
-//
-// File Name	: 'menu.c'
-// Title		: Two level menu demo
-// Author		: Scienceprog.com - Copyright (C) 2007
-// Created		: 2007-03-23
-// Revised		: 2007-03-23
-// Version		: 1.0
-// Target MCU	: Atmel AVR series
-//
-// This code is distributed under the GNU Public License
-//		which can be found at http://www.gnu.org/licenses/gpl.txt
-//
-//*****************************************************************************
-
 #include "includes.h"
 
 //Start menu at row:
-#define X_POS 62
+#define X_POS 64
 
 //Max menu rows
 #define MENU_ROWS 4
 
 #define NOT_SELECTED 255
+
+/// Colors of menu elements
+#define MENUCOLOR_CURSOR BLUE
+#define MENUCOLOR_BACKGROUND BLACK
+#define MENUCOLOR_TEXT WHITE
+#define MENUCOLOR_VALUE RED
+#define MENUCOLOR_HEADER ORANGE
 
 typedef void (*FuncPtr)(uint8_t keys, uint8_t * value );
 
@@ -78,11 +70,11 @@ void callAfterConfirm(uint8_t keys, uint8_t * value) {
 	switch (keys) {
 	case KEY_UP:
 		PID_SaveSettings();
-		LCD_PutStr("Saved!", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT, 0, RED, (keys==0)?BLACK:BLUE );
+		LCD_PutStr("Saved!", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT, 0, MENUCOLOR_VALUE, (keys==0)?MENUCOLOR_BACKGROUND:MENUCOLOR_CURSOR );
 		break;
 	case KEY_DOWN:
 	case KEY_RIGHT: //option selected
-		LCD_PutStr("Press \0x5f", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT, 0, RED, (keys==0)?BLACK:BLUE);
+		LCD_PutStr("Press \0x5f", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT, 0, MENUCOLOR_VALUE, (keys==0)?MENUCOLOR_BACKGROUND:MENUCOLOR_CURSOR);
 		break;
 	default:
 		break;
@@ -106,12 +98,12 @@ void setInteger(uint8_t keys, uint8_t * value) {
 			(*value)-=1;
 		}
 	}
-	LCD_PutDecimal(*value, LCD_AUTOINCREMENT,LCD_AUTOINCREMENT, 0, RED, (keys==0)?BLACK:BLUE);
+	LCD_PutDecimal(*value, LCD_AUTOINCREMENT,LCD_AUTOINCREMENT, 0, MENUCOLOR_VALUE, (keys==0)?MENUCOLOR_BACKGROUND:MENUCOLOR_CURSOR);
 	return;
 }
 
 void getIntegerReadOnly(uint8_t keys, uint8_t * value) {
-	LCD_PutDecimal(*value, LCD_AUTOINCREMENT,LCD_AUTOINCREMENT, 0, RED, (keys==0)?BLACK:BLUE);
+	LCD_PutDecimal(*value, LCD_AUTOINCREMENT,LCD_AUTOINCREMENT, 0, MENUCOLOR_VALUE, (keys==0)?MENUCOLOR_BACKGROUND:MENUCOLOR_CURSOR);
 	return;
 }
 
@@ -134,7 +126,7 @@ void setSignedInteger16(uint8_t keys, int16_t * value) {
 			(*value)-=1;
 		}
 	}
-	LCD_PutDecimalSigned(*value, LCD_AUTOINCREMENT,LCD_AUTOINCREMENT, 0, RED, (keys==0)?BLACK:BLUE);
+	LCD_PutDecimalSigned(*value, LCD_AUTOINCREMENT,LCD_AUTOINCREMENT, 0, MENUCOLOR_VALUE, (keys==0)?MENUCOLOR_BACKGROUND:MENUCOLOR_CURSOR);
 	return;
 }
 
@@ -147,7 +139,7 @@ void setBoolean(uint8_t keys, uint8_t * value) {
 	default:
 		break;
 	}
-	LCD_PutStr((*value==0)?"Off":"On ", LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED, BLACK);
+	LCD_PutStr((*value==0)?"Off":"On ", LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, MENUCOLOR_VALUE, (keys==0)?MENUCOLOR_BACKGROUND:MENUCOLOR_CURSOR);
 	return;
 }
 
@@ -213,24 +205,24 @@ void MenuProcess(TKey key) {
 	}
 
 	//redraw menu//48
-	LCD_Rectangle(X_POS-16-8*MENU_ROWS,0,56,132,BLACK);
+	LCD_Rectangle(X_POS-16-8*MENU_ROWS,0,56,132,MENUCOLOR_BACKGROUND);
 
 	if (NOT_SELECTED == menu_position.second_level) {
 		//dispay first level menulist
 		for (uint8_t i = 0; i<(sizeof(menu_first_level)/sizeof(menu_first_level[0])); i++) {
-			LCD_PutStr_P((char *)pgm_read_word(&(menu_first_level[i])), X_POS-i*8, 2, 0, WHITE, (i==menu_position.first_level)?BLUE:BLACK);
+			LCD_PutStr_P((char *)pgm_read_word(&(menu_first_level[i])), X_POS-i*8, 2, 0, MENUCOLOR_TEXT, (i==menu_position.first_level)?MENUCOLOR_CURSOR:MENUCOLOR_BACKGROUND);
 		}
 
 	} else {
 		// submenu
-		LCD_PutStr_P((char *)pgm_read_word(&(menu_first_level[menu_position.first_level])), X_POS, 2, 0, ORANGE, BLACK);
+		LCD_PutStr_P((char *)pgm_read_word(&(menu_first_level[menu_position.first_level])), X_POS, 2, 0, MENUCOLOR_HEADER, MENUCOLOR_BACKGROUND);
 //		n = submenu_index[menu_position.first_level]);
 //		if (n > MENU_ROWS) {
 //			n = MENU_ROWS;
 //		}
 		for (uint8_t i = 0; i<submenu_index[menu_position.first_level]; i++) {
-			//LCD_PutDecimal(resolve_index(menu_position.first_level, i+1), 92-i*8,0,0, RED,BLACK);
-			LCD_PutStr_P((char *)pgm_read_word(&(menu_second_level[resolve_index(menu_position.first_level, i+1)])), X_POS-8-i*8, 10, 0, WHITE, (i==menu_position.second_level-1)?BLUE:BLACK);
+			//LCD_PutDecimal(resolve_index(menu_position.first_level, i+1), 92-i*8,0,0, MENUCOLOR_VALUE,BLACK);
+			LCD_PutStr_P((char *)pgm_read_word(&(menu_second_level[resolve_index(menu_position.first_level, i+1)])), X_POS-8-i*8, 10, 0, MENUCOLOR_TEXT, (i==menu_position.second_level-1)?MENUCOLOR_CURSOR:MENUCOLOR_BACKGROUND);
 
 			FPtr=(FuncPtr)pgm_read_word(&functions[resolve_index(menu_position.first_level, i+1)]);
 			if (FPtr!=0) {

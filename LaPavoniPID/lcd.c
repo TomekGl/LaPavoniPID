@@ -463,6 +463,116 @@ void LCD_Init() {
 
 }
 
+void LCD_Reset() {
+	//Post power-up procedure
+	CS0
+	SDA0
+	CLK1
+
+	RESET1
+	RESET0
+	_delay_ms(10);
+	RESET1
+
+	CLK1
+	SDA1
+	CLK1
+	_delay_ms(1);
+
+	//Software Reset
+	sendCMD(SWRESET);
+
+	//Sleep Out
+	sendCMD(SLEEP_OUT);
+
+	//Booster ON
+	sendCMD(BSTROFF);
+	_delay_ms(5);
+
+	//Normal display mode
+	sendCMD(NORON);
+
+	//Display inversion off
+	sendCMD(INVOFF);
+
+	//Data order
+	sendCMD(DOR);
+
+	//Memory data access control
+	sendCMD(MADCTL);
+	sendData(_BV(MAD_V)|_BV(MAD_MX)|_BV(MAD_MY));
+
+
+#ifdef MODE16BPP
+	sendCMD(COLMOD);
+	sendData(COLMOD_16BPP);   //16-Bit per Pixel
+#endif
+#ifdef MODE12BPP
+	sendCMD(COLMOD);
+	sendData(COLMOD_12BPP);   //12-Bit per Pixel (default)
+#endif
+#ifdef MODE8BPP
+	sendCMD(COLMOD);
+	sendData(COLMOD_8BPP);
+#endif
+
+#ifdef MODE8BPP
+	/* if 256-color mode, bytes represent RRRGGGBB; the following
+    maps to 4-bit color for each value in range (0-7 R/G, 0-3 B) */
+    sendCMD(RGBSET);      // 256-color position set
+    sendData( 0x00);        // 000 RED
+    sendData( 0x02);        // 001
+    sendData( 0x04);        // 010
+    sendData( 0x06);        // 011
+    sendData( 0x08);        // 100
+    sendData( 0x0a);        // 101
+    sendData( 0x0c);        // 110
+    sendData( 0x0f);        // 111
+    sendData( 0x00);        // 000 GREEN
+    sendData( 0x02);        // 001
+    sendData( 0x04);        // 010
+    sendData( 0x06);        // 011
+    sendData( 0x08);        // 100
+    sendData( 0x0a);        // 101
+    sendData( 0x0c);        // 110
+    sendData( 0x0f);        // 111
+    sendData( 0x00);        //  00 BLUE
+    sendData( 0x06);        //  01
+    sendData( 0x09);        //  10
+    sendData( 0x0f);        //  11
+#endif
+
+	//Set Constrast
+	sendCMD(SETCON);
+	sendData(63);
+
+/*	//Column Adress Set
+	sendCMD(CASET);
+	sendData(0);
+	sendData(131);
+
+	//Page Adress Set
+	sendCMD(PASET);
+	sendData(0);
+	sendData(131);
+
+	//Memory Write
+	sendCMD(RAMWR);
+
+	//Test-Picture
+	for (int i=0;i<132*132;i++) {
+		setPixel(WHITE);
+	}
+*/
+	//Display On
+	sendCMD(DISPON);
+	sendCMD(NOP); //NOP
+
+	CS1;
+
+}
+
+
 void LCD_Test() {
 	CS0;
 

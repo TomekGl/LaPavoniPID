@@ -1,12 +1,16 @@
 #ifndef SERIAL_H_
 #define SERIAL_H_
-/** \defgroup serial Moduł obsługi portu szeregowego
+/** \defgroup serial Serial port support
  @{ */
 
+/// Framing error flag
 #define FRAMING_ERROR (1<<FE)
+/// Parity error flag
 #define PARITY_ERROR (1<<PE)
+/// Data overrun flag
 #define DATA_OVERRUN (1<<DOR)
 
+/// USART errors structure
 struct TUSART_errors_tag {
 	uint8_t framing;
 	uint8_t parity;
@@ -26,8 +30,8 @@ extern volatile Tcircle_buffer USART_buffer_TX;
 
 ///transmiter state
 typedef enum {
-	USART_STATE_IDLE, //nadajnik wolny
-	USART_STATE_INTHEMIDDLE, //w trakcie nadawania
+	USART_STATE_IDLE, //transmitter idle
+	USART_STATE_INTHEMIDDLE, //data are being sent
 	USART_STATE_FINISHED //zakonczono
 } TUSART_state;
 
@@ -65,11 +69,14 @@ void USART_Puts_P(const char *s);
 /** Send unsigned integer as a string via USART */
 void USART_TransmitDecimal( uint32_t data );
 
-/** Wysłanie bajtu jako liczby binarnej w ASCII*/
+/** Send byte value as binary string representation */
 void USART_TransmitBinary( unsigned char data );
 
-/** Wysłanie liczby ze znakiem w ASCII*/
+/** Send signed integer as decimal string representation */
 void USART_TransmitDecimalSigned(int32_t data);
+
+/** Send double as decimal string representation */
+void USART_TransmitDouble(double data);
 
 /** @} */
 

@@ -1,9 +1,23 @@
+/*! \file lcd.h
+ *  \brief Support of LCD displays base on PCF8833 controller
+ *   This module provides support to LCD display with PCF8833 controller.
+ *
+*/
+
 /*
  * lcd.h
  * LCD based on PCF8833
   *  Created on: 04-03-2012
  *      Author: tomek
- * 131,0                131,131
+ *
+ *
+ */
+
+#ifndef LCD_H_
+#define LCD_H_
+/** \defgroup lcd Support of LCD displays base on PCF8833 controller
+ *
+ *    * 131,0                131,131
  *  X *--------------------*
  *    |                    |
  *    |                    |
@@ -17,18 +31,18 @@
  *    |                    |
  *    *--------------------* Y
  *   0,0     Cols        0,131
- *
- *
- */
 
-#ifndef LCD_H_
-#define LCD_H_
+ @{ */
+
 
 #define LCDTEXT  //compile-in fonts and text-related functions
 
 
 /* Hardware configuration */
 #define PCF8833
+
+/** This value passed as a coordinate parameter means to increase position from previous one */
+#define LCD_AUTOINCREMENT 255
 
 //#define MODE16BPP
 #define MODE12BPP
@@ -50,7 +64,12 @@
 #define LCD_BLPIN PIND
 
 /* Const */
+
 #ifdef PCF8833
+/**
+ * \defgroup lcd_pcf_functions LCD controller functions list for Philips PCF8833
+ * @{
+ */
 #define NOP			0x00 //No operation
 #define SWRESET		0x01 //Software reset
 #define BSTROFF		0x02 //Booster voltage off
@@ -84,10 +103,14 @@
 #define MAD_V		5 //Vertical (rotated, 90deg)
 #define MAD_MX		6 //Mirror X
 #define MAD_MY		7 //Mirror Y
-
+/**@}*/
 #endif
 
 #ifdef EPSON
+/**
+ * \defgroup lcd_epson_functions LCD controller functions for Epson
+ * @{
+ */
 #define DISON       0xaf
 #define DISOFF      0xae
 #define DISNOR      0xa6
@@ -122,9 +145,13 @@
 #define EPSRRD1     0x7c
 #define EPSRRD2     0x7d
 #define NOP         0x25
+/**@}*/
 #endif
 
-
+/**
+ * \defgroup lcd_colors Predefined colors
+ * @{
+ */
 #define WHITE   0xFFF
 #define BLACK   0x000
 #define RED     0xF00
@@ -136,12 +163,15 @@
 #define BROWN   0xB22
 #define ORANGE  0xFA0
 #define PINK    0xF6A
+/**@}*/
 
-#define LCD_AUTOINCREMENT 255
+
 /* Functions */
 void LCD_Init();
+void LCD_Reset();
 void LCD_Test();
 void LCD_Rectangle(uint8_t x, uint8_t y, uint8_t width, uint8_t height, uint16_t col);
+
 #ifdef LCDTEXT
 void LCD_PutChar(char c, uint8_t x, uint8_t y, uint8_t size, int fColor, int bColor);
 void LCD_PutStr(char *s, uint8_t x, uint8_t y, uint8_t Size, int fColor, int bColor);
@@ -150,4 +180,7 @@ void LCD_PutDecimal(uint32_t, uint8_t x, uint8_t y, uint8_t size, int fColor, in
 void LCD_PutDecimalSigned(int32_t, uint8_t x, uint8_t y, uint8_t size, int fColor, int bColor);
 void LCD_PutDecimalFixedDigits(uint32_t value, uint8_t x, uint8_t y, uint8_t size, int fColor, int bColor, uint8_t digits);
 #endif
+
+/** @} */
+
 #endif /* LCD_H_ */

@@ -1,4 +1,12 @@
+/*! \file max31855.h
+    \brief MAX31855 Cold-Junction Compensated Thermocouple-to-Digital Converter driver header file
+
+    This module provides support for MAX31855 Cold-Junction Compensated Thermocouple-to-Digital Converter. It uses hardware SPI to make readings.
+*/
+
 /*
+
+
  * max31855.h
  *
  *  Created on: 11-03-2012
@@ -37,7 +45,7 @@ void TC_init();
 
 /**
  * Acquire data from thermocouple converter
- * @return Converter status
+ * @return TTC_read_status structure with RAW values and error flags
  */
 TTC_read_status TC_performRead();
 
@@ -57,9 +65,5 @@ void TC_getInternalTemp(int16_t *deg, uint16_t *milideg);
 
 /** @} */
 
-/*! \file max31855.h
-    \brief MAX31855 Cold-Junction Compensated Thermocouple-to-Digital Converter driver header file
 
-    This module provides support for MAX31855 Cold-Junction Compensated Thermocouple-to-Digital Converter. It uses hardware SPI to make readings.
-*/
 #endif /* MAX31855_H_ */
