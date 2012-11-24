@@ -19,9 +19,13 @@
 ///location of saved settings in EEPROM
 #define PID_EEPROM_ADDRESS 0
 
+///current version of data structure
+#define PID_EEPROM_VERSION 6
+
 ///parameters of controller
 struct Tcontroller_param_tag {
  /* controller parameters */
+	int8_t version; ///< Header
 	int16_t SV; ///< Set point
 	int16_t k_r; ///< Regulator's gain
 	int16_t k_p; ///< Proportional gain
@@ -32,7 +36,7 @@ struct Tcontroller_param_tag {
     int16_t windup; ///< Integral anti-windup limit
     int16_t limit_bottom; ///< negative output limit
     int16_t limit_top; ///< positive output limit
-    int8_t  alpha ///< Filter coefficient 0 < alpha < 128
+    int8_t  alpha; ///< Filter coefficient 0 < alpha < 128
 };
 
 ///internal runtime values of controller

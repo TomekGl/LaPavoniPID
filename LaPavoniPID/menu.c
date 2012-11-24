@@ -37,6 +37,8 @@ const char menu_entry_1_4[] __attribute__ ((progmem)) = "Input: " ;
 const char menu_entry_2[] __attribute__ ((progmem)) = "Status " ;
 const char menu_entry_2_0[] __attribute__ ((progmem)) = "TIM0: " ;
 const char menu_entry_2_1[] __attribute__ ((progmem)) = "Save settings " ;
+const char menu_entry_2_2[] __attribute__ ((progmem)) = "Backlight " ;
+
 
 const char *menu_first_level[] __attribute__ ((progmem)) = {
 		menu_entry_0,
@@ -47,22 +49,22 @@ const char *menu_first_level[] __attribute__ ((progmem)) = {
 const char  *menu_second_level[] __attribute__ ((progmem)) =  {
 		menu_entry_0_0, menu_entry_0_1, menu_entry_0_2, menu_entry_0_3, menu_entry_0_4,
 		menu_entry_1_0, menu_entry_1_1, menu_entry_1_2, menu_entry_1_3,menu_entry_1_4,
-		menu_entry_2_0, menu_entry_2_1
+		menu_entry_2_0, menu_entry_2_1, menu_entry_2_2
 };
 
 const FuncPtr functions[] __attribute__ ((progmem)) = {
 		(void*)&setSignedInteger16, (void*)&setSignedInteger16, (void*)&setSignedInteger16, (void*)&setSignedInteger16, (void*)&setSignedInteger16,
 		(void*)&setBoolean, (void*)&setBoolean, (void*)&setBoolean, (void*)&setBoolean, (void*)&setInteger,
-		(void*)&setInteger, (void*)&callAfterConfirm
+		(void*)&setInteger, (void*)&callAfterConfirm, (void*)&setInteger
 };
 
 const void * variables[] = {
 		(void *)&(controller_param.SV), (void *)&(controller_param.k_r), (void *)&(controller_param.T_d), (void *)&(controller_param.T_i),(void *)&(controller.y),
 		(void *)&tmp_buzz, (void *)&tmp_out1,(void *)&tmp_out2, (void *)&tmp_out3,/*(void *)&tmp_in,*/ (void *)&output,
-		(void *)&timer0, (void*)&PID_SaveSettings
+		(void *)&timer0, (void*)&PID_SaveSettings, (void *)&OCR2
 };
 
-const uint8_t submenu_index[] = { 5,5,2 };
+const uint8_t submenu_index[] = { 5,5,3 };
 
 struct Tmenu_position menu_position;
 

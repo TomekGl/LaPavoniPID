@@ -53,9 +53,10 @@ ISR(TIMER0_OVF_vect)
 	return;
 }
 
-/// Timer 2 support - AC output 3
-ISR(TIMER2_OVF_vect) {
-	TCNT2 = 255-30;
+/// Timer 1 (16bit) support - AC output 3
+ISR(TIMER1_OVF_vect) {
+	TCNT1 = 65535-30;
+
 	pwm++;
 	if (0 == output) {
 		OUT3_PORT |= _BV(OUT3);//disable
@@ -69,7 +70,13 @@ ISR(TIMER2_OVF_vect) {
 			//BUZZ_PORT &= ~_BV(BUZZ);
 		}
 	}
+
 	return;
+}
+
+ISR(TIMER2_OVF_vect) {
+//	TCNT2 = 255-30;
+//	return;
 }
 
 /// External interrupt - AC input 1
@@ -134,15 +141,21 @@ void __attribute__ ((naked)) main(void) {
 	SPI_PORT |= _BV(SPI_MISO); //pullup on MISO
 
 
-	// timer 0 - zegar systemowy 8e6 / 1024 / 79 ~= 100Hz     7372800/
+	// timer 0 - system ticks generation      8e6 / 1024 / 79 ~= 100Hz     7372800/
 	TCCR0 |= _BV(CS00) | _BV(CS02);
 	TIMSK |= _BV(TOIE0);
 	TCNT0 = timer0; //255-72;
 
-	// timer 2 - output  T=~ 1s
-	TCCR2 |= _BV(CS20) | _BV(CS21) | _BV(CS22);
-	TIMSK |= _BV(TOIE2);
-	TCNT2 = 255-29; //255-72;
+	// timer 1 - output  T=~ 1s
+	TCCR1B = _BV(CS10)| _BV(CS12)  /*| _BV(CS21)*/ ;
+	TIMSK |= _BV(TOIE1);
+	TCNT1 = 65535-29; //255-72;
+
+	// PWM for LCD backlight
+	TCCR2 |= _BV(CS20)|/* _BV(CS21) |*/ _BV(CS22) //Prescaler /128
+			| _BV(WGM21) | _BV(WGM20) //Fast PWM
+			| _BV(COM21); //Clear OC2 on compare match, set OC2 at BOTTOM,
+	OCR2 = 160;
 
 	//enable interrupts
 	sei();
@@ -191,7 +204,8 @@ void __attribute__ ((naked)) main(void) {
 	USART_Put('\n');
 	*/
 	/* ****** MAIN LOOP ******* */
-	double floatpv;
+	double floatpv = 0;
+
 while (1) {
 		//process data received on serial port
 		if (0!=buf_getcount((Tcircle_buffer *)&USART_buffer_RX)) {
@@ -199,15 +213,21 @@ while (1) {
 			//LCD_PutChar(bajt,0,LCD_AUTOINCREMENT,0,BLACK,WHITE);
 			USART_Put(bajt);
 			USART_StartSending();
-			//if ('A'==bajt) {
+			if ('a'==bajt) {
+				USART_TransmitDecimal(TCNT1);
+			}
+			if ('s'==bajt) {
+				USART_TransmitDecimal(TCNT2);
+			}
 		}
 
-		if (system_clock%1000 < 10) {
+/*		if (system_clock%1000 < 10) {
 			LCD_Reset();
 			BuzzerStart(5);
 			USART_Put('X');
 			USART_StartSending();
 		}
+*/
 
 		/*	if (tmp_buzz) {
 			BUZZ_PORT |= _BV(BUZZ);
@@ -240,24 +260,7 @@ while (1) {
 			flag &= ~_BV(FLAG_1S);
 
 			// if no error from termocouple converter
-			if (0==(status=TC_performRead())) {
-				if (0 != prevstatus) {
-					LCD_Rectangle(110,0,8,132,WHITE);
-					BuzzerStart(10);
-				}
-
-				TC_getTCTemp(&deg, &milideg);
-				pv=deg*10+(milideg/10);
-				floatpv = deg+milideg/100.0;
-				USART_TransmitDouble(floatpv);
-				USART_Put(' ');
-				USART_TransmitDecimal(pv);
-				USART_Put(' ');
-				USART_TransmitDecimal(controller.PV);
-				USART_Put('\r');
-				USART_Put('\n');
-
-
+			if (0 == status) {
 				/*  Display process value */
 				LCD_PutStr_P(TXT_PV, 112, 5, 1, BLACK, WHITE);
 				LCD_PutDecimalSigned(deg, 112, 35, 1, RED,WHITE);
@@ -284,7 +287,7 @@ while (1) {
 
 				if (controller_param.k_r>0) {
 				//process PID controller
-				output = (uint8_t)(PID_Process_3(pv));
+				output = (uint8_t)(PID_Process(pv));
 				} else if (-1 == controller_param.k_r) {
 					output = (uint8_t)controller.y;
 				} else {
@@ -305,6 +308,50 @@ while (1) {
 				LCD_PutDecimalSigned(controller.derivative, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
 				LCD_PutStr(" ", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
 			//correct TC read END
+			}
+		/*	USART_Put('\n');
+			USART_TransmitDecimal(system_clock);
+			USART_Put(',');
+			USART_TransmitDecimalSigned(controller.PV);
+			USART_Put(',');
+			USART_TransmitDecimalSigned(controller.y);
+			USART_Put(',');
+			USART_TransmitDecimalSigned(output);
+			USART_Put(',');
+			USART_TransmitDecimalSigned(controller.integral);
+			USART_Put(',');
+			USART_TransmitDecimalSigned(controller.derivative);
+*/
+		} // end of flagged 1S section
+
+		/* ***** Every 0.1s tasks here ****** */
+		if (flag & _BV(FLAG_100MS)) {
+			flag &= ~_BV(FLAG_100MS); //reset flag
+
+			/* read TC data */
+			if (0==(status=TC_performRead())) {
+				if (0 != prevstatus) {
+					LCD_Rectangle(110,0,8,132,WHITE);
+					BuzzerStart(10);
+				}
+				TC_getTCTemp(&deg, &milideg);
+				pv=deg*10+(milideg/10);
+
+				/* low-pass filter using exponential moving average */
+				if (0 == floatpv) {
+					floatpv = deg+milideg/100.0;
+				} else {
+					floatpv = deg+milideg/100.0 + (0.92 * (floatpv-(deg+milideg/100.0)));
+				}
+
+/*				USART_TransmitDouble(floatpv);
+				USART_Put(' ');
+				USART_TransmitDecimal(pv);
+				USART_Put(' ');
+				USART_TransmitDecimal(controller.PV);
+				USART_Put('\r');
+				USART_Put('\n');
+*/
 			} else {
 				// some error while TC reading has occured
 				output = 0;
@@ -327,23 +374,6 @@ while (1) {
 			}
 			prevstatus = status;
 
-		/*	USART_Put('\n');
-			USART_TransmitDecimal(system_clock);
-			USART_Put(',');
-			USART_TransmitDecimalSigned(controller.PV);
-			USART_Put(',');
-			USART_TransmitDecimalSigned(controller.y);
-			USART_Put(',');
-			USART_TransmitDecimalSigned(output);
-			USART_Put(',');
-			USART_TransmitDecimalSigned(controller.integral);
-			USART_Put(',');
-			USART_TransmitDecimalSigned(controller.derivative);
-*/
-		} // end of flagged 1S section
-		/* ***** Every 0.1s tasks here ****** */
-		if (flag & _BV(FLAG_100MS)) {
-			flag &= ~_BV(FLAG_100MS); //reset flag
 
 			// reset timer automatically after few seconds after switching pump off
 			if (0 != in_flag) {

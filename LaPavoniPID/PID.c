@@ -12,8 +12,9 @@ volatile Tcontroller_param controller_param;
 
 void PID_Init(void) {
 	USART_Put(eeprom_read_byte(0));
-	if (0xff==eeprom_read_byte(0)) {
+	if (PID_EEPROM_VERSION != eeprom_read_byte(0)) {
 		USART_Puts("Defaults restored\n");
+
 		//Load defaults
 		PID_Reset();
 	} else {
@@ -33,7 +34,8 @@ void PID_Init(void) {
 }
 
 void PID_Reset(void) {
-	controller_param.SV = 940;
+	controller_param.version = PID_EEPROM_VERSION;
+	controller_param.SV = 935;
 	controller_param.k_r = 3;
 	controller_param.T_d = 0;
 	controller_param.T_i  = 0;
@@ -41,7 +43,7 @@ void PID_Reset(void) {
 	controller_param.dead = 20;
 	controller_param.limit_bottom = 0;
 	controller_param.limit_top = 255;
-
+	controller_param.alpha = 120;
 	controller.firstpass = 1;
 }
 
@@ -152,7 +154,7 @@ int16_t PID_Process_2(int16_t processValue) {
 
 /// PID Algorithm
 
-int16_t PID_Process_3(int16_t processValue) {
+int16_t PID_Process_3(float processValue) {
 
 	/*
 	 * function u=pid(x)
@@ -215,12 +217,7 @@ end
 u=uk;
 	 */
 
-	/* low-pass filter using exponential moving average */
-	if (!controller.firstpass) {
-		controller.PV = processValue + (120 * (controller.PV_1 - processValue))/128;
-	} else {
-		controller.PV = processValue;
-	}
+	controller.PV = processValue;
 
 	//calculate error
 	controller.e = controller_param.SV - controller.PV;
@@ -238,8 +235,6 @@ u=uk;
 
 
 	if (!controller.firstpass) {
-
-
 		controller.proportional = controller_param.k_r * (controller.e_1 - controller.e); //TODO kp, proportional from PV
 		controller.integral = controller_param.T_i * controller.e;
 		//controller.integral /= 100;
