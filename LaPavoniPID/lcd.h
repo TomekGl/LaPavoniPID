@@ -8,8 +8,7 @@
  * lcd.h
  * LCD based on PCF8833
   *  Created on: 04-03-2012
- *      Author: tomek
- *
+ *      Author: Tomasz Głuch
  *
  */
 

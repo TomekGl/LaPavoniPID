@@ -82,11 +82,11 @@ void USART_StartSending() {
 	{
 		USART_TX_Byte();
 	}
-	//remaining bytes will be sent automatically
+	//next and another remaining bytes will be sent automatically
 }
 
 void USART_TX_Byte() {
-		//sprawdzenie czy w buforze nadawczym są dane
+	    // Check transmit buffer for data to be sent
 		if (buf_getcount((Tcircle_buffer *)&USART_buffer_TX)) {
 			/* Wait for empty transmit buffer */
 			while (!(UCSRA & (1 << UDRE)))
@@ -97,18 +97,16 @@ void USART_TX_Byte() {
 			UDR = (buf_getbyte((Tcircle_buffer *)&USART_buffer_TX));
 		} else
 			USART_state = USART_STATE_IDLE;
-	//pozostałe bajty z bufora będą wysłane automatycznie
+	//next and another remaining bytes will be sent automatically
 }
 
 
 /** Transmition completed interrupt */
 ISR(USART_TXC_vect)
 { ///TODO USART_UDRE_vect
-	//wysłanie następnego znaku jeżeli bufor zawiera dane
+	//send next byte if exist
 	USART_TX_Byte();
 }
-
-
 
 void USART_Puts(const char *s) {
 	register char c;

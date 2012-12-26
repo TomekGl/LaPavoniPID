@@ -9,7 +9,7 @@
 #define BUZZER_TIME 15
 /// time of build
 const char TXT_VERSION[] __attribute__ ((progmem)) = "Build:" __DATE__ " " __TIME__;
-const char TXT_Hello[] __attribute__ ((progmem)) = "Coffee PID controller v0.2\n tomaszgluch.pl 2012\n";
+const char TXT_Hello[] __attribute__ ((progmem)) = "Coffee PID controller v0.2\n\rtomaszgluch.pl 2012\r\n";
 const char TXT_SerialInit[] __attribute__ ((progmem)) = "USART initialization...";
 const char TXT_PumpTimer[] __attribute__ ((progmem)) = "PUMP TIMER: ";
 const char TXT_PV[]  __attribute__ ((progmem)) = "PV:";
@@ -21,10 +21,6 @@ const char TXT_TCErrorShortMinus[] __attribute__ ((progmem)) = "Short-!";
 volatile uint8_t flag;
 
 volatile uint8_t buzzer_timeout;
-
-//Moving average window size
-#define AVG_WIN_SIZE 8
-
 
 /// System clock control routine
 ISR(TIMER0_OVF_vect)
@@ -74,11 +70,6 @@ ISR(TIMER1_OVF_vect) {
 	return;
 }
 
-ISR(TIMER2_OVF_vect) {
-//	TCNT2 = 255-30;
-//	return;
-}
-
 /// External interrupt - AC input 1
 ISR(INT1_vect)
 {
@@ -93,6 +84,7 @@ ISR(INT1_vect)
 /// Non-blocking buzzer support
 void BuzzerStart(uint8_t time) {
 #ifdef BEEPER
+	if (tmp_buzz==0) return;
 	BUZZ_PORT |= _BV(BUZZ);
 	buzzer_timeout = time;
 #endif
@@ -152,7 +144,7 @@ void __attribute__ ((naked)) main(void) {
 	TCNT1 = 65535-29; //255-72;
 
 	// PWM for LCD backlight
-	TCCR2 |= _BV(CS20)|/* _BV(CS21) |*/ _BV(CS22) //Prescaler /128
+	TCCR2 |= /*_BV(CS20)|*/ /* _BV(CS21) |*/ _BV(CS22) //Prescaler /64
 			| _BV(WGM21) | _BV(WGM20) //Fast PWM
 			| _BV(COM21); //Clear OC2 on compare match, set OC2 at BOTTOM,
 	OCR2 = 160;
@@ -219,6 +211,9 @@ while (1) {
 			if ('s'==bajt) {
 				USART_TransmitDecimal(TCNT2);
 			}
+			if ('d'==bajt) {
+				USART_TransmitDecimal(OSCCAL);
+			}
 		}
 
 /*		if (system_clock%1000 < 10) {
@@ -229,13 +224,7 @@ while (1) {
 		}
 */
 
-		/*	if (tmp_buzz) {
-			BUZZ_PORT |= _BV(BUZZ);
-		} else {
-			BUZZ_PORT &= ~_BV(BUZZ);
-		}
 
-		 */
 		if (tmp_out1) {
 			OUT1_PORT |= _BV(OUT1);
 		} else {
@@ -246,14 +235,6 @@ while (1) {
 		} else {
 			OUT2_PORT &= ~_BV(OUT2);
 		}
-		/* PORT 3 CONTROLLED BY PWM
-		if (tmp_out3) {
-			OUT3_PORT |= _BV(OUT3);
-		} else {
-			OUT3_PORT &= ~_BV(OUT3);
-		}
-		 */
-
 
 		/* ***** Every-1s tasks are here ***** */
 		if (flag & _BV(FLAG_1S)) {
@@ -286,8 +267,8 @@ while (1) {
 				//USART_Put('\n');
 
 				if (controller_param.k_r>0) {
-				//process PID controller
-				output = (uint8_t)(PID_Process(pv));
+					//process PID controller
+					output = (uint8_t)(PID_Process(pv));
 				} else if (-1 == controller_param.k_r) {
 					output = (uint8_t)controller.y;
 				} else {
@@ -389,8 +370,8 @@ while (1) {
 			}
 
 			//Display system clock in lower left corner:
-			LCD_PutDecimal(system_clock, 0, 0, 0, BLACK, WHITE);
-			LCD_PutChar(' ', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, 0, WHITE);
+			//LCD_PutDecimal(system_clock, 0, 0, 0, BLACK, WHITE);
+			//LCD_PutChar(' ', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, 0, WHITE);
 
 			// status bar - inputs, outputs
 			LCD_PutChar('1', 0, 96, 1, WHITE, tmp_out1?RED:GREEN);
@@ -450,4 +431,4 @@ while (1) {
 		//refresh watchdog timer
 		wdt_reset();
 	} //main loop
-}				/* main() */
+}	/* ******** main() */

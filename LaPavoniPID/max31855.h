@@ -5,12 +5,11 @@
 */
 
 /*
-
-
  * max31855.h
  *
  *  Created on: 11-03-2012
- *      Author: tomek
+ *      Author: Tomasz Głuch
+ *      http://tomaszgluch.pl/
  */
 
 #ifndef MAX31855_H_

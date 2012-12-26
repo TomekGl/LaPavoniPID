@@ -743,6 +743,7 @@ void LCD_PutStr_P(const char *s, uint8_t x, uint8_t y, uint8_t Size, int fColor,
 	// loop until null-terminator is seen
 	while (0 != (c = pgm_read_byte(s++))) {
 		// draw the character
+		if (c=='\r') continue;
 		LCD_PutChar(c, cursorx, cursory, Size, fColor, bColor);
 	}
 }
