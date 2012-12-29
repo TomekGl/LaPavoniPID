@@ -69,7 +69,7 @@ int16_t PID_Process(int16_t processValue) {
 	controller.e = controller_param.SV - controller.PV;
 
 
-    controller.y_1 = controller.y;
+	controller.y_1 = controller.y;
 
 
 	//PROPORTIONAL TERM
@@ -79,8 +79,12 @@ int16_t PID_Process(int16_t processValue) {
 		//INTEGRAL TERM
 		controller.integral += (controller.e + controller.e_1)/2;
 		if (0 != controller_param.windup) {
-			if (controller.integral>controller_param.windup) { controller.integral = controller_param.windup; }
-			else if (controller.integral<(controller_param.windup*-1)) { controller.integral = controller_param.windup*-1; }
+			if (controller.integral>controller_param.windup) {
+				controller.integral = controller_param.windup;
+			}
+			else if (controller.integral<(controller_param.windup*-1)) {
+				controller.integral = controller_param.windup*-1;
+			}
 		}
 		if (0 != controller_param.T_i ) {
 			controller.y += (controller.integral /(controller_param.T_i))*dt;
@@ -158,63 +162,63 @@ int16_t PID_Process_3(float processValue) {
 
 	/*
 	 * function u=pid(x)
-global Tpid Tf t0 t1 tf k
-global sp ek uk uk_1 yk yk_1 vk vk_1
-% Digital filter and PID control
-% Designed by BESTune Comp.
-% WWW: http://bestune.50megs.com
-% Copyright 1998-2002
-t=x(6);        % Read time
-if t==0
-   k=0;
-   Tpid=1;     % PID loop update time
-   t0=0;
-   t1=0;
-   uk=x(8);    % Initial CO value
-   yk=x(1);    % Initial PV value
-   sp=x(2);    % Initial setpoint
-   ek=sp-yk;
-   Tf=0.1;     % Filter time constant
-   tf=200;     % Simulation stop time
-else           % Filtering yk
-   T0=t-t0;
-  x yk=yk*Tf/(Tf+T0)+x(1)*T0/(Tf+T0);
-   t0=t;
-end
-% End of the filter.
-% The filtered yk will be used to
-% (1)calculate PID control and
-% (2)tune the PID controller
-% Beginning of the PID controller
-if t-t1>=Tpid | x(2)~=sp   %Every Tpid sec calculate the new CO value
-   sp=x(2);
-   T=t-t1;
-   if T>0.0001             %Avoid division by T=0
-      if x(7)==1 & k>=3    % Then use PID control
-         Kp=x(3);
-         Ki=x(4);
-         Kd=x(5);
-         ek=sp-yk;
-         vk=(yk-yk_1)/T;
-         ak=(vk-vk_1)/T;
-         Du=(Ki*ek-Kp*vk-Kd*ak)*T;
-         uk=uk_1+Du;
-      else
-         if k>=1 vk=(yk-yk_1)/T; end
-         if k>=2 ak=(vk-vk_1)/T; end
-         uk=x(8);       % Use manual uk value x(8)
-         k=k+1;
-      end
-   end
-   if uk>5 uk=5;end     % uk must be <= upper limit
-   if uk<-5 uk=-5;end   % uk must be >= lower limit
+	global Tpid Tf t0 t1 tf k
+	global sp ek uk uk_1 yk yk_1 vk vk_1
+	% Digital filter and PID control
+	% Designed by BESTune Comp.
+	% WWW: http://bestune.50megs.com
+	% Copyright 1998-2002
+	t=x(6);        % Read time
+	if t==0
+	k=0;
+	Tpid=1;     % PID loop update time
+	t0=0;
+	t1=0;
+	uk=x(8);    % Initial CO value
+	yk=x(1);    % Initial PV value
+	sp=x(2);    % Initial setpoint
+	ek=sp-yk;
+	Tf=0.1;     % Filter time constant
+	tf=200;     % Simulation stop time
+	else           % Filtering yk
+	T0=t-t0;
+	x yk=yk*Tf/(Tf+T0)+x(1)*T0/(Tf+T0);
+	t0=t;
+	end
+	% End of the filter.
+	% The filtered yk will be used to
+	% (1)calculate PID control and
+	% (2)tune the PID controller
+	% Beginning of the PID controller
+	if t-t1>=Tpid | x(2)~=sp   %Every Tpid sec calculate the new CO value
+	sp=x(2);
+	T=t-t1;
+	if T>0.0001             %Avoid division by T=0
+	  if x(7)==1 & k>=3    % Then use PID control
+	     Kp=x(3);
+	     Ki=x(4);
+	     Kd=x(5);
+	     ek=sp-yk;
+	     vk=(yk-yk_1)/T;
+	     ak=(vk-vk_1)/T;
+	     Du=(Ki*ek-Kp*vk-Kd*ak)*T;
+	     uk=uk_1+Du;
+	  else
+	     if k>=1 vk=(yk-yk_1)/T; end
+	     if k>=2 ak=(vk-vk_1)/T; end
+	     uk=x(8);       % Use manual uk value x(8)
+	     k=k+1;
+	  end
+	end
+	if uk>5 uk=5;end     % uk must be <= upper limit
+	if uk<-5 uk=-5;end   % uk must be >= lower limit
 
-% Show the control results and update t1, yk_1, vk_1, uk_1
-fprintf('time=%5.2f setpoint=%5.2f pv=%5.2f co=%5.2f\n',t,x(2),yk,uk)
-t1=t;yk_1=yk;vk_1=vk;uk_1=uk;
-end
-% End of the PID controller
-u=uk;
+	% Show the control results and update t1, yk_1, vk_1, uk_1
+	fprintf('time=%5.2f setpoint=%5.2f pv=%5.2f co=%5.2f\n',t,x(2),yk,uk)
+	t1=t;yk_1=yk;vk_1=vk;uk_1=uk;
+	end
+	% End of the PID controller
+	u=uk;
 	 */
 
 	controller.PV = processValue;

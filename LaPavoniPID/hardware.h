@@ -13,7 +13,7 @@
 
 #define SQW_PIN PIND
 #define SQW PD3
-#define SQW_DDR DDRD 
+#define SQW_DDR DDRD
 #define SQW_PORT PORTD
 
 #define SW1_PIN PINC

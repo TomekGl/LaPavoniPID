@@ -38,31 +38,31 @@ const char menu_entry_3_2[] __attribute__ ((progmem)) = "Valve off dly:";
 
 
 const char *menu_first_level[] __attribute__ ((progmem)) = {
-		menu_entry_0,
-		menu_entry_1,
-		menu_entry_2,
-		menu_entry_3
+	menu_entry_0,
+	menu_entry_1,
+	menu_entry_2,
+	menu_entry_3
 };
 
 const char  *menu_second_level[] __attribute__ ((progmem)) =  {
-		menu_entry_0_0, menu_entry_0_1, menu_entry_0_2, menu_entry_0_3, menu_entry_0_4,
-		menu_entry_1_0, menu_entry_1_1, menu_entry_1_2, menu_entry_1_3,menu_entry_1_4,
-		menu_entry_2_0, menu_entry_2_1, menu_entry_2_2,
-		menu_entry_3_0, menu_entry_3_1, menu_entry_3_2
+	menu_entry_0_0, menu_entry_0_1, menu_entry_0_2, menu_entry_0_3, menu_entry_0_4,
+	menu_entry_1_0, menu_entry_1_1, menu_entry_1_2, menu_entry_1_3,menu_entry_1_4,
+	menu_entry_2_0, menu_entry_2_1, menu_entry_2_2,
+	menu_entry_3_0, menu_entry_3_1, menu_entry_3_2
 };
 
 const FuncPtr functions[] __attribute__ ((progmem)) = {
-		(void*)&setSignedInteger16, (void*)&setSignedInteger16, (void*)&setSignedInteger16, (void*)&setSignedInteger16, (void*)&setSignedInteger16,
-		(void*)&setBoolean, (void*)&setBoolean, (void*)&setBoolean, (void*)&setBoolean, (void*)&setInteger,
-		(void*)&setInteger, (void*)&callAfterConfirm, (void*)&setInteger,
-		(void*)&setInteger, (void*)&setInteger, (void*)&setInteger
+	(void*)&setSignedInteger16, (void*)&setSignedInteger16, (void*)&setSignedInteger16, (void*)&setSignedInteger16, (void*)&setSignedInteger16,
+	(void*)&setBoolean, (void*)&setBoolean, (void*)&setBoolean, (void*)&setBoolean, (void*)&setInteger,
+	(void*)&setInteger, (void*)&callAfterConfirm, (void*)&setInteger,
+	(void*)&setInteger, (void*)&setInteger, (void*)&setInteger
 };
 
 const void * variables[] = {
-		(void *)&(controller_param.SV), (void *)&(controller_param.k_r), (void *)&(controller_param.T_d), (void *)&(controller_param.T_i),(void *)&(controller.y),
-		(void *)&tmp_buzz, (void *)&tmp_out1,(void *)&tmp_out2, (void *)&tmp_out3,/*(void *)&tmp_in,*/ (void *)&output,
-		(void *)&timer0, (void*)&PID_SaveSettings, (void *)&OCR2,
-		(void *)&(controller_param.preinfusion_time), (void*)&(controller_param.preinfusion_duty_cycle), (void *)&(controller_param.preinfusion_valve_off_delay)
+	(void *)&(controller_param.SV), (void *)&(controller_param.k_r), (void *)&(controller_param.T_d), (void *)&(controller_param.T_i),(void *)&(controller.y),
+	(void *)&tmp_buzz, (void *)&tmp_out1,(void *)&tmp_out2, (void *)&tmp_out3,/*(void *)&tmp_in,*/ (void *)&output,
+	(void *)&timer0, (void*)&PID_SaveSettings, (void *)&OCR2,
+	(void *)&(controller_param.preinfusion_time), (void*)&(controller_param.preinfusion_duty_cycle), (void *)&(controller_param.preinfusion_valve_off_delay)
 };
 
 const uint8_t submenu_entries_count[] = { 5,5,3,3 };

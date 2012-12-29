@@ -78,7 +78,7 @@ ISR(TIMER1_OVF_vect) {
 ISR(INT1_vect)
 {
 	if (tmp_in != 255) {
-	tmp_in++;
+		tmp_in++;
 	}
 
 	in_flag = 4;
@@ -149,8 +149,8 @@ void __attribute__ ((naked)) main(void) {
 
 	// PWM for LCD backlight
 	TCCR2 |= /*_BV(CS20)|*/ /* _BV(CS21) |*/ _BV(CS22) //Prescaler /64
-			| _BV(WGM21) | _BV(WGM20) //Fast PWM
-			| _BV(COM21); //Clear OC2 on compare match, set OC2 at BOTTOM,
+	        | _BV(WGM21) | _BV(WGM20) //Fast PWM
+	        | _BV(COM21); //Clear OC2 on compare match, set OC2 at BOTTOM,
 	OCR2 = 160;
 
 	//enable interrupts
@@ -241,11 +241,11 @@ void __attribute__ ((naked)) main(void) {
 				LCD_PutChar(' ', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, 0, WHITE);
 
 //				TC_getInternalTemp(&deg, &milideg);
-/*				LCD_PutStr("IN: ", 102,5,0,BLACK,WHITE);
-				LCD_PutDecimalSigned(deg, 102, 35, 0, GREEN,WHITE);
-				LCD_PutChar('.', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, GREEN,WHITE);
-				LCD_PutDecimal(milideg, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, GREEN,WHITE);
-*/
+				/*				LCD_PutStr("IN: ", 102,5,0,BLACK,WHITE);
+								LCD_PutDecimalSigned(deg, 102, 35, 0, GREEN,WHITE);
+								LCD_PutChar('.', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, GREEN,WHITE);
+								LCD_PutDecimal(milideg, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, GREEN,WHITE);
+				*/
 
 				//USART_TransmitDecimal(milideg);
 				//USART_Puts_P(VERSION);
@@ -274,21 +274,21 @@ void __attribute__ ((naked)) main(void) {
 				LCD_PutStr(",DVDT:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
 				LCD_PutDecimalSigned(controller.derivative, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
 				LCD_PutStr(" ", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
-			//correct TC read END
+				//correct TC read END
 			}
-		/*	USART_Put('\n');
-			USART_TransmitDecimal(system_clock);
-			USART_Put(',');
-			USART_TransmitDecimalSigned(controller.PV);
-			USART_Put(',');
-			USART_TransmitDecimalSigned(controller.y);
-			USART_Put(',');
-			USART_TransmitDecimalSigned(output);
-			USART_Put(',');
-			USART_TransmitDecimalSigned(controller.integral);
-			USART_Put(',');
-			USART_TransmitDecimalSigned(controller.derivative);
-*/
+			/*	USART_Put('\n');
+				USART_TransmitDecimal(system_clock);
+				USART_Put(',');
+				USART_TransmitDecimalSigned(controller.PV);
+				USART_Put(',');
+				USART_TransmitDecimalSigned(controller.y);
+				USART_Put(',');
+				USART_TransmitDecimalSigned(output);
+				USART_Put(',');
+				USART_TransmitDecimalSigned(controller.integral);
+				USART_Put(',');
+				USART_TransmitDecimalSigned(controller.derivative);
+			*/
 		} // end of flagged 1S section
 
 		/* ***** Every 0.1s tasks here ****** */
@@ -311,14 +311,14 @@ void __attribute__ ((naked)) main(void) {
 					floatpv = deg+milideg/100.0 + (0.92 * (floatpv-(deg+milideg/100.0)));
 				}
 
-/*				USART_TransmitDouble(floatpv);
-				USART_Put(' ');
-				USART_TransmitDecimal(pv);
-				USART_Put(' ');
-				USART_TransmitDecimal(controller.PV);
-				USART_Put('\r');
-				USART_Put('\n');
-*/
+				/*				USART_TransmitDouble(floatpv);
+								USART_Put(' ');
+								USART_TransmitDecimal(pv);
+								USART_Put(' ');
+								USART_TransmitDecimal(controller.PV);
+								USART_Put('\r');
+								USART_Put('\n');
+				*/
 			} else {
 				// some error while TC reading has occured
 				output = 0;
@@ -409,7 +409,7 @@ void __attribute__ ((naked)) main(void) {
 				repeat = 0;
 				repeated_flag = 0;
 			}
-			SKIP:
+SKIP:
 			prev_switch_status = switch_status;
 
 		}

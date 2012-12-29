@@ -84,24 +84,24 @@ void USART_StartSending() {
 }
 
 void USART_TX_Byte() {
-	    // Check transmit buffer for data to be sent
-		if (buf_getcount((Tcircle_buffer *)&USART_buffer_TX)) {
-			/* Wait for empty transmit buffer */
-			while (!(UCSRA & (1 << UDRE)))
-				;
+	// Check transmit buffer for data to be sent
+	if (buf_getcount((Tcircle_buffer *)&USART_buffer_TX)) {
+		/* Wait for empty transmit buffer */
+		while (!(UCSRA & (1 << UDRE)))
+			;
 
-			//sending of first character
-			USART_state = USART_STATE_INTHEMIDDLE;
-			UDR = (buf_getbyte((Tcircle_buffer *)&USART_buffer_TX));
-		} else
-			USART_state = USART_STATE_IDLE;
+		//sending of first character
+		USART_state = USART_STATE_INTHEMIDDLE;
+		UDR = (buf_getbyte((Tcircle_buffer *)&USART_buffer_TX));
+	} else
+		USART_state = USART_STATE_IDLE;
 	//next and another remaining bytes will be sent automatically
 }
 
 
 /** Transmition completed interrupt */
 ISR(USART_TXC_vect)
-{ ///TODO USART_UDRE_vect
+{	///TODO USART_UDRE_vect
 	//send next byte if exist
 	USART_TX_Byte();
 }
@@ -186,7 +186,7 @@ void USART_TransmitDouble(double data) {
 	dtostre(data, str, 4, 0);
 
 	USART_Puts(str);
-	}
+}
 
 /** @} */
 

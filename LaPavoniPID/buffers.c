@@ -46,22 +46,22 @@ uint8_t buf_getcount(Tcircle_buffer *buffer)
 uint8_t buf_isfree(Tcircle_buffer *buffer)
 {
 	if (buffer->count < BUF_SIZE)
-			return true;
-		else
-			return false;
+		return true;
+	else
+		return false;
 }
 
 uint8_t buf_putbyte(Tcircle_buffer *buffer, uint8_t byte)
 {
 	if (buffer->count < BUF_SIZE) {
-	cli();
-	buffer->data[buffer->write_ptr++] = byte;
-	buffer->count++;
-	if(buffer->write_ptr >	(BUF_SIZE-1))
-		buffer->write_ptr =	0;
-	sei();
-	return true;
+		cli();
+		buffer->data[buffer->write_ptr++] = byte;
+		buffer->count++;
+		if(buffer->write_ptr >	(BUF_SIZE-1))
+			buffer->write_ptr =	0;
+		sei();
+		return true;
 	}
 	else
-	return false;
+		return false;
 }

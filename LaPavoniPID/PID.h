@@ -23,30 +23,30 @@
 
 ///controller presets kept in EEPROM
 struct Tcontroller_param_tag {
- /* controller parameters */
+	/* controller parameters */
 	int8_t version; ///< Header
 	int16_t SV; ///< Set point
 	int16_t k_r; ///< Regulator's gain
 	int16_t k_p; ///< Proportional gain
-    int16_t T_i; ///< Integral time
-    int16_t T_d; ///< Derivative time
-    int16_t T_s; ///< Time constant
-    int16_t dead; ///< Dead band
-    int16_t windup; ///< Integral anti-windup limit
-    int16_t limit_bottom; ///< negative output limit
-    int16_t limit_top; ///< positive output limit
- /* filter presets */
-    int8_t  alpha; ///< Filter coefficient 0 < alpha < 128
- /* pre-infusion presets */
-    int8_t  preinfusion_time; ///<pre-infussion time
-    int8_t  preinfusion_duty_cycle; ///<pump duty-cycle during pre-infusion
-    int8_t  preinfusion_valve_off_delay; ///<valve off delay after finished extraction
+	int16_t T_i; ///< Integral time
+	int16_t T_d; ///< Derivative time
+	int16_t T_s; ///< Time constant
+	int16_t dead; ///< Dead band
+	int16_t windup; ///< Integral anti-windup limit
+	int16_t limit_bottom; ///< negative output limit
+	int16_t limit_top; ///< positive output limit
+	/* filter presets */
+	int8_t  alpha; ///< Filter coefficient 0 < alpha < 128
+	/* pre-infusion presets */
+	int8_t  preinfusion_time; ///<pre-infussion time
+	int8_t  preinfusion_duty_cycle; ///<pump duty-cycle during pre-infusion
+	int8_t  preinfusion_valve_off_delay; ///<valve off delay after finished extraction
 
 };
 
 ///internal runtime variables of controller
 struct Tcontroller_tag {
-  /* run-time variables */
+	/* run-time variables */
 	int16_t PV; ///< Process value
 	int16_t PV_1; ///< PV[t-1]
 	int16_t PV_2; ///< PV[t-2]
@@ -54,10 +54,10 @@ struct Tcontroller_tag {
 	int16_t e_1; ///< Previous error
 	int16_t y; ///< Output
 	int16_t y_1; ///< previous output value
-    int16_t proportional; ///< present value of proportional term
-    int16_t integral; ///< present value of integral term
-    int16_t derivative; ///< present value of derivative term
-    uint8_t firstpass; ///< whether first pass
+	int16_t proportional; ///< present value of proportional term
+	int16_t integral; ///< present value of integral term
+	int16_t derivative; ///< present value of derivative term
+	uint8_t firstpass; ///< whether first pass
 };
 
 typedef struct Tcontroller_tag Tcontroller;
