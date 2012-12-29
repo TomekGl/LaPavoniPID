@@ -1,6 +1,7 @@
 #ifndef DS1307_H_
 #define DS1307_H_
 
+/// I2C address
 #define DS1307 0xd0
 
 ///offsety

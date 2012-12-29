@@ -235,7 +235,7 @@ u=uk;
 
 
 	if (!controller.firstpass) {
-		controller.proportional = controller_param.k_r * (controller.e_1 - controller.e); //TODO kp, proportional from PV
+		controller.proportional = controller_param.k_r * (controller.e_1 - controller.e); //TODO kp, proportional to PV
 		controller.integral = controller_param.T_i * controller.e;
 		//controller.integral /= 100;
 		//controller.derivative = 0; //controller_param.T_d *

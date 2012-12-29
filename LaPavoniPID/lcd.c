@@ -572,46 +572,6 @@ void LCD_Reset() {
 
 }
 
-
-void LCD_Test() {
-	CS0;
-
-	//Column Adress Set
-	sendCMD(CASET);
-	sendData(0);
-	sendData(131);
-
-	//Page Adress Set
-	sendCMD(PASET);
-	sendData(0);
-	sendData(131);
-
-	//Memory Write
-	sendCMD(RAMWR);
-	int i;
-	//Test-Picture
-
-	//red bar
-	for (i=0;i<132*33;i++) {
-		setPixel(RED);
-	}
-
-	//green bar
-	for (i=0;i<132*33;i++) {
-		setPixel(GREEN);
-	}
-
-	//blue bar
-	for (i=0;i<132*33;i++) {
-		setPixel(BLUE);
-	}
-
-	//white bar
-	for (i=0;i<132*33;i++) {
-		setPixel(WHITE);
-	}
-	CS1
-}
 void LCD_Blank(uint8_t mode) {
 	CS0;
 
@@ -628,11 +588,9 @@ void LCD_Blank(uint8_t mode) {
 	//Memory Write
 	sendCMD(RAMWR);
 	int i;
-	//Test-Picture
 
-	//red bar
-	for (i=0;i<132*132;i++) {
-		//setPixel(mode,mode,mode);
+	//fill with white
+	for (i=132*132;i>0;i++) {
 		setPixel(WHITE);
 	}
 	sendCMD(NOP);
@@ -696,7 +654,7 @@ void setPixel(uint16_t col) {
 #endif
 }
 
-void LCD_Rectangle(uint8_t x, uint8_t y, uint8_t height, uint8_t width, uint16_t col) {
+void LCD_Rectangle(uint8_t x, uint8_t y, uint8_t height, uint8_t width, uint16_t foreground) {
 	CS0;
 	// Column address set
 	sendCMD(PASET);
@@ -718,23 +676,23 @@ void LCD_Rectangle(uint8_t x, uint8_t y, uint8_t height, uint8_t width, uint16_t
 
 	sendCMD(RAMWR);
 	for (uint16_t i=0; i<width*height; i++) {
-		setPixel(col);
+		setPixel(foreground);
 	}
 	sendCMD(NOP);
 	CS1;
 }
 
 #ifdef LCDTEXT
-void LCD_PutStr(char *s, uint8_t x, uint8_t y, uint8_t Size, int fColor, int bColor) {
+void LCD_PutStr(char *s, uint8_t x, uint8_t y, uint8_t size, int foreground, int background) {
 	if (x!=LCD_AUTOINCREMENT) cursorx=x;
 	if (y!=LCD_AUTOINCREMENT) cursory=y;
 	// loop until null-terminator is seen
 	while (0 != *s) {
 		// draw the character
-		LCD_PutChar(*s++, cursorx, cursory, Size, fColor, bColor);
+		LCD_PutChar(*s++, cursorx, cursory, size, foreground, background);
 	}
 }
-void LCD_PutStr_P(const char *s, uint8_t x, uint8_t y, uint8_t Size, int fColor, int bColor) {
+void LCD_PutStr_P(const char *s, uint8_t x, uint8_t y, uint8_t size, int foreground, int background) {
 	register char c;
 
 	if (x!=LCD_AUTOINCREMENT) cursorx=x;
@@ -744,11 +702,11 @@ void LCD_PutStr_P(const char *s, uint8_t x, uint8_t y, uint8_t Size, int fColor,
 	while (0 != (c = pgm_read_byte(s++))) {
 		// draw the character
 		if (c=='\r') continue;
-		LCD_PutChar(c, cursorx, cursory, Size, fColor, bColor);
+		LCD_PutChar(c, cursorx, cursory, size, foreground, background);
 	}
 }
 
-void LCD_PutChar(char c, uint8_t x, uint8_t y, uint8_t size, int fColor, int bColor) {
+void LCD_PutChar(char c, uint8_t x, uint8_t y, uint8_t size, int foreground, int background) {
 	//autoincrement previous position if coordinates are not set
 	if (x==LCD_AUTOINCREMENT) {x=cursorx;}
 	if (y==LCD_AUTOINCREMENT) {y=cursory;}
@@ -802,17 +760,17 @@ void LCD_PutChar(char c, uint8_t x, uint8_t y, uint8_t size, int fColor, int bCo
 			// now get the pixel color for two successive pixels
 			//if ((PixelRow & Mask) == 0) { setPixel(0,0,0); } else { setPixel(255,255,255); }
 	 		if ((PixelRow & Mask) == 0)
-				Word0 = bColor;
+				Word0 = background;
 	 			//setPixel(0,0,0);
 			else
-				Word0 = fColor;
+				Word0 = foreground;
 				//setPixel(255,255,255);
 			Mask = Mask >> 1;
 			if ((PixelRow & Mask) == 0)
-				Word1 = bColor;
+				Word1 = background;
 			    //setPixel(0,0,0);
 			else
-				Word1 = fColor;
+				Word1 = foreground;
 			    //setPixel(255,255,255);
 			Mask = Mask >> 1;
 #ifdef MODE12BPP
@@ -847,16 +805,16 @@ MOVECURSOR:
 	cursorx=x;
 }
 
-void LCD_PutDecimal(uint32_t value, uint8_t x, uint8_t y, uint8_t size, int fColor, int bColor) {
+void LCD_PutDecimal(uint32_t value, uint8_t x, uint8_t y, uint8_t size, int foreground, int background) {
 	char str[11];
 
 	/* convert unsigned integer into string */
 	ultoa(value, str, 10);
 
-	LCD_PutStr(str, x, y, size, fColor, bColor);
+	LCD_PutStr(str, x, y, size, foreground, background);
 }
 
-void LCD_PutDecimalFixedDigits(uint32_t value, uint8_t x, uint8_t y, uint8_t size, int fColor, int bColor, uint8_t digits) {
+void LCD_PutDecimalFixedDigits(uint32_t value, uint8_t x, uint8_t y, uint8_t size, int foreground, int background, uint8_t digits) {
 	char str[11];
 
 	/* convert unsigned integer into string */
@@ -867,22 +825,22 @@ void LCD_PutDecimalFixedDigits(uint32_t value, uint8_t x, uint8_t y, uint8_t siz
 		;
 	//fill preceding digits
 	if (digits>n) {
-		LCD_PutChar('0',x,y,size,fColor,bColor);
+		LCD_PutChar('0',x,y,size,foreground,background);
 		for (n=digits-n;n>1;n--) {
-			LCD_PutChar('0',LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, size,fColor,bColor);
+			LCD_PutChar('0',LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, size,foreground,background);
 		}
-		LCD_PutStr(str, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, size, fColor, bColor);
+		LCD_PutStr(str, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, size, foreground, background);
 	} else {
-		LCD_PutStr(str, x, y, size, fColor, bColor);
+		LCD_PutStr(str, x, y, size, foreground, background);
 	}
 }
-void LCD_PutDecimalSigned(int32_t value, uint8_t x, uint8_t y, uint8_t size, int fColor, int bColor) {
+void LCD_PutDecimalSigned(int32_t value, uint8_t x, uint8_t y, uint8_t size, int foreground, int background) {
 	char str[11];
 
 	/* convert signed integer into string */
 	ltoa(value, str, 10);
 
-	LCD_PutStr(str, x, y, size, fColor, bColor);
+	LCD_PutStr(str, x, y, size, foreground, background);
 }
 
 #endif //LCDTEXT

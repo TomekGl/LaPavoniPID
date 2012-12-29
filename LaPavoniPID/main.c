@@ -1,12 +1,16 @@
 #include "includes.h"
 
+/// timer flag 1s mask
 #define FLAG_1S 1
+/// timer flag 0.1s mask
 #define FLAG_100MS 2
+/// timer flag 0.01s mask
 #define FLAG_10MS 4
 
-//enable beeper
+///enable beeper
 #define BEEPER
 #define BUZZER_TIME 15
+
 /// time of build
 const char TXT_VERSION[] __attribute__ ((progmem)) = "Build:" __DATE__ " " __TIME__;
 const char TXT_Hello[] __attribute__ ((progmem)) = "Coffee PID controller v0.2\n\rtomaszgluch.pl 2012\r\n";
@@ -51,7 +55,7 @@ ISR(TIMER0_OVF_vect)
 
 /// Timer 1 (16bit) support - AC output 3
 ISR(TIMER1_OVF_vect) {
-	TCNT1 = 65535-30;
+	TCNT1 = 65535-30; //FIXME
 
 	pwm++;
 	if (0 == output) {
@@ -164,7 +168,7 @@ void __attribute__ ((naked)) main(void) {
 	TC_init();
 
 	//RTC
-	//	DS1307_Init();
+	//DS1307_Init();
 
 	USART_Puts_P(TXT_Hello);
 	USART_Puts_P(TXT_VERSION);
@@ -184,21 +188,10 @@ void __attribute__ ((naked)) main(void) {
 
 	wdt_enable(WDTO_2S);
 
-	/*double myfloat1 = 40.245224;
-	double myfloat2 = 0.87343;
-
-	USART_TransmitDouble(myfloat1);
-	USART_Put(' ');
-	USART_TransmitDouble(myfloat2);
-	USART_Put(' ');
-	USART_TransmitDouble(myfloat2*myfloat1);
-	USART_Put('\r');
-	USART_Put('\n');
-	*/
 	/* ****** MAIN LOOP ******* */
 	double floatpv = 0;
 
-while (1) {
+	while (1) {
 		//process data received on serial port
 		if (0!=buf_getcount((Tcircle_buffer *)&USART_buffer_RX)) {
 			bajt = buf_getbyte((Tcircle_buffer *)&USART_buffer_RX);
@@ -216,15 +209,7 @@ while (1) {
 			}
 		}
 
-/*		if (system_clock%1000 < 10) {
-			LCD_Reset();
-			BuzzerStart(5);
-			USART_Put('X');
-			USART_StartSending();
-		}
-*/
-
-
+		// control outputs
 		if (tmp_out1) {
 			OUT1_PORT |= _BV(OUT1);
 		} else {
@@ -240,7 +225,7 @@ while (1) {
 		if (flag & _BV(FLAG_1S)) {
 			flag &= ~_BV(FLAG_1S);
 
-			// if no error from termocouple converter
+			// no error from termocouple converter
 			if (0 == status) {
 				/*  Display process value */
 				LCD_PutStr_P(TXT_PV, 112, 5, 1, BLACK, WHITE);
@@ -269,6 +254,7 @@ while (1) {
 				if (controller_param.k_r>0) {
 					//process PID controller
 					output = (uint8_t)(PID_Process(pv));
+					//output = (uint8_t)(PID_Process_3(floatpv));
 				} else if (-1 == controller_param.k_r) {
 					output = (uint8_t)controller.y;
 				} else {

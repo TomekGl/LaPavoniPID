@@ -1,7 +1,5 @@
 #include "includes.h"
 
-/** \defgroup serial USART support module
- @{ */
 
 //inline uint8_t *buf_getptr(Tcircle_buffer *buffer)
 //{

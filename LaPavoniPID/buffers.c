@@ -1,9 +1,3 @@
-/*
- * buffers.c
- *
- *  Created on: 2009-03-06
- *      Author: tomek
- */
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>

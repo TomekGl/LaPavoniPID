@@ -3,7 +3,7 @@
 
 #ifndef F_CPU
 /** częstotliwość procesora */
-#define F_CPU 8000000UL
+#define F_CPU 7372800UL
 #endif
 
 #define BUZZ_PORT PORTD

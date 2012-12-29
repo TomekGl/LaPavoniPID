@@ -1,24 +1,15 @@
 #include "includes.h"
 
-//Start menu at row:
-#define X_POS 64
-
-//Max menu rows
-#define MENU_ROWS 4
-
 #define NOT_SELECTED 255
-
-/// Colors of menu elements
-#define MENUCOLOR_CURSOR BLUE
-#define MENUCOLOR_BACKGROUND BLACK
-#define MENUCOLOR_TEXT WHITE
-#define MENUCOLOR_VALUE RED
-#define MENUCOLOR_HEADER ORANGE
 
 typedef void (*FuncPtr)(uint8_t keys, uint8_t * value );
 
 //function pointer
 FuncPtr FPtr;
+
+/** @} */
+
+/********** MENU CONTENTS CONFIG **********/
 
 /// menu strings
 const char menu_entry_0[] __attribute__ ((progmem)) = "PID Settings" ;
@@ -34,37 +25,50 @@ const char menu_entry_1_1[] __attribute__ ((progmem)) = "Output1: " ;
 const char menu_entry_1_2[] __attribute__ ((progmem)) = "Output2: " ;
 const char menu_entry_1_3[] __attribute__ ((progmem)) = "Output3: " ;
 const char menu_entry_1_4[] __attribute__ ((progmem)) = "Input: " ;
+
 const char menu_entry_2[] __attribute__ ((progmem)) = "Status " ;
 const char menu_entry_2_0[] __attribute__ ((progmem)) = "TIM0: " ;
 const char menu_entry_2_1[] __attribute__ ((progmem)) = "Save settings " ;
 const char menu_entry_2_2[] __attribute__ ((progmem)) = "Backlight " ;
 
+const char menu_entry_3[] __attribute__ ((progmem)) = "Pre-infusion " ;
+const char menu_entry_3_0[] __attribute__ ((progmem)) = "Time x0.1:" ;
+const char menu_entry_3_1[] __attribute__ ((progmem)) = "Duty cycle:";
+const char menu_entry_3_2[] __attribute__ ((progmem)) = "Valve off dly:";
+
 
 const char *menu_first_level[] __attribute__ ((progmem)) = {
 		menu_entry_0,
 		menu_entry_1,
-		menu_entry_2
+		menu_entry_2,
+		menu_entry_3
 };
 
 const char  *menu_second_level[] __attribute__ ((progmem)) =  {
 		menu_entry_0_0, menu_entry_0_1, menu_entry_0_2, menu_entry_0_3, menu_entry_0_4,
 		menu_entry_1_0, menu_entry_1_1, menu_entry_1_2, menu_entry_1_3,menu_entry_1_4,
-		menu_entry_2_0, menu_entry_2_1, menu_entry_2_2
+		menu_entry_2_0, menu_entry_2_1, menu_entry_2_2,
+		menu_entry_3_0, menu_entry_3_1, menu_entry_3_2
 };
 
 const FuncPtr functions[] __attribute__ ((progmem)) = {
 		(void*)&setSignedInteger16, (void*)&setSignedInteger16, (void*)&setSignedInteger16, (void*)&setSignedInteger16, (void*)&setSignedInteger16,
 		(void*)&setBoolean, (void*)&setBoolean, (void*)&setBoolean, (void*)&setBoolean, (void*)&setInteger,
-		(void*)&setInteger, (void*)&callAfterConfirm, (void*)&setInteger
+		(void*)&setInteger, (void*)&callAfterConfirm, (void*)&setInteger,
+		(void*)&setInteger, (void*)&setInteger, (void*)&setInteger
 };
 
 const void * variables[] = {
 		(void *)&(controller_param.SV), (void *)&(controller_param.k_r), (void *)&(controller_param.T_d), (void *)&(controller_param.T_i),(void *)&(controller.y),
 		(void *)&tmp_buzz, (void *)&tmp_out1,(void *)&tmp_out2, (void *)&tmp_out3,/*(void *)&tmp_in,*/ (void *)&output,
-		(void *)&timer0, (void*)&PID_SaveSettings, (void *)&OCR2
+		(void *)&timer0, (void*)&PID_SaveSettings, (void *)&OCR2,
+		(void *)&(controller_param.preinfusion_time), (void*)&(controller_param.preinfusion_duty_cycle), (void *)&(controller_param.preinfusion_valve_off_delay)
 };
 
-const uint8_t submenu_index[] = { 5,5,3 };
+const uint8_t submenu_entries_count[] = { 5,5,3,3 };
+
+
+/********** END OF MENU CONTENTS CONFIG **********/
 
 struct Tmenu_position menu_position;
 
@@ -148,7 +152,7 @@ void setBoolean(uint8_t keys, uint8_t * value) {
 uint8_t resolve_index(uint8_t first_level, uint8_t second_level) {
 	uint8_t index = 0;
 	for (uint8_t i = 0; i<first_level; i++) {
-		index += submenu_index[i];
+		index += submenu_entries_count[i];
 	}
 	index += second_level-1;
 	return index;
@@ -169,7 +173,7 @@ void MenuProcess(TKey key) {
 				menu_position.first_level = 0;
 			}
 		} else if (0 == menu_position.entry_selected) {
-			if (menu_position.second_level<submenu_index[menu_position.first_level]) {
+			if (menu_position.second_level<submenu_entries_count[menu_position.first_level]) {
 				menu_position.second_level++;
 			} else {
 				menu_position.second_level = 1;
@@ -187,7 +191,7 @@ void MenuProcess(TKey key) {
 			if (menu_position.second_level>1) {
 				menu_position.second_level--;
 			} else {
-				menu_position.second_level = submenu_index[menu_position.first_level];
+				menu_position.second_level = submenu_entries_count[menu_position.first_level];
 			}
 		}
 	}
@@ -206,27 +210,29 @@ void MenuProcess(TKey key) {
 		}
 	}
 
-	//redraw menu//48
-	LCD_Rectangle(X_POS-16-8*MENU_ROWS,0,56,132,MENUCOLOR_BACKGROUND);
+	//redraw menu
+	LCD_Rectangle(MENU_X_POS-16-8*MENU_ROWS,0,56,132,MENUCOLOR_BACKGROUND);
 
 	if (NOT_SELECTED == menu_position.second_level) {
 		//dispay first level menulist
 		for (uint8_t i = 0; i<(sizeof(menu_first_level)/sizeof(menu_first_level[0])); i++) {
-			LCD_PutStr_P((char *)pgm_read_word(&(menu_first_level[i])), X_POS-i*8, 2, 0, MENUCOLOR_TEXT, (i==menu_position.first_level)?MENUCOLOR_CURSOR:MENUCOLOR_BACKGROUND);
+			LCD_PutStr_P((char *)pgm_read_word(&(menu_first_level[i])), MENU_X_POS-i*8, 2, 0, MENUCOLOR_TEXT, (i==menu_position.first_level)?MENUCOLOR_CURSOR:MENUCOLOR_BACKGROUND);
 		}
 
 	} else {
 		// submenu
-		LCD_PutStr_P((char *)pgm_read_word(&(menu_first_level[menu_position.first_level])), X_POS, 2, 0, MENUCOLOR_HEADER, MENUCOLOR_BACKGROUND);
-//		n = submenu_index[menu_position.first_level]);
+		LCD_PutStr_P((char *)pgm_read_word(&(menu_first_level[menu_position.first_level])), MENU_X_POS, 2, 0, MENUCOLOR_HEADER, MENUCOLOR_BACKGROUND);
+//		n = submenu_entries_count[menu_position.first_level]);
 //		if (n > MENU_ROWS) {
 //			n = MENU_ROWS;
 //		}
-		for (uint8_t i = 0; i<submenu_index[menu_position.first_level]; i++) {
+		for (uint8_t i = 0; i<submenu_entries_count[menu_position.first_level]; i++) {
 			//LCD_PutDecimal(resolve_index(menu_position.first_level, i+1), 92-i*8,0,0, MENUCOLOR_VALUE,BLACK);
-			LCD_PutStr_P((char *)pgm_read_word(&(menu_second_level[resolve_index(menu_position.first_level, i+1)])), X_POS-8-i*8, 10, 0, MENUCOLOR_TEXT, (i==menu_position.second_level-1)?MENUCOLOR_CURSOR:MENUCOLOR_BACKGROUND);
+			LCD_PutStr_P((char *)pgm_read_word(&(menu_second_level[resolve_index(menu_position.first_level, i+1)])), MENU_X_POS-8-i*8, 10, 0, MENUCOLOR_TEXT, (i==menu_position.second_level-1)?MENUCOLOR_CURSOR:MENUCOLOR_BACKGROUND);
 
+			//acquire pointer to callback function
 			FPtr=(FuncPtr)pgm_read_word(&functions[resolve_index(menu_position.first_level, i+1)]);
+			//execute if not null
 			if (FPtr!=0) {
 				FPtr((menu_position.entry_selected && menu_position.second_level==i+1)?key:0, variables[resolve_index(menu_position.first_level, i+1)] );
 			}

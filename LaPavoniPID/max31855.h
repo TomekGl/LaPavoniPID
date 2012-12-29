@@ -1,39 +1,36 @@
-/*! \file max31855.h
-    \brief MAX31855 Cold-Junction Compensated Thermocouple-to-Digital Converter driver header file
-
-    This module provides support for MAX31855 Cold-Junction Compensated Thermocouple-to-Digital Converter. It uses hardware SPI to make readings.
-*/
-
-/*
- * max31855.h
- *
- *  Created on: 11-03-2012
- *      Author: Tomasz Głuch
- *      http://tomaszgluch.pl/
- */
-
 #ifndef MAX31855_H_
 #define MAX31855_H_
-/** \defgroup max31855 MAX31855 Cold-Junction Compensated Thermocouple-to-Digital Converter driver
- @{ */
+/**
+ @file max31855.h
+
+ @defgroup max31855 MAX31855 Cold-Junction Compensated Thermocouple-to-Digital Converter driver
+
+ @code #include <max31855.h> @endcode
+
+ @brief MAX31855 Cold-Junction Compensated Thermocouple-to-Digital Converter driver
+
+ This library provides routines to comunicate with MAX31855 via hardware SPI
+
+ @author Tomasz Głuch contact+avr@tomaszgluch.pl http://tomaszgluch.pl/
+ @date 11-03-2012
+*/
+
+/**@{*/
+
 
 /// Last reading status
 typedef enum {
-	/// reading correct
-	TC_READOK = 0,
-	/// reading incorrect - thermocouple connector open
-	TC_READOC = 1,
-	/// reading incorrect - thermocouple short to ground
-	TC_READSCG = 2,
-	/// reading incorrect - thermocouple short to VCC
-	TC_READSCV = 4
+	TC_READOK = 0, ///< reading correct
+	TC_READOC = 1, ///< reading incorrect - thermocouple connector open
+	TC_READSCG = 2, ///< reading incorrect - thermocouple short to ground
+	TC_READSCV = 4 ///< reading incorrect - thermocouple short to VCC
 } TTC_read_status;
 
-/// Converter RAW data structure
+/// RAW data received from chip
 union MAX31855Data {
-	uint32_t integer;
-	int16_t word[2];
-	uint8_t byte[4];
+	uint32_t integer; ///< as integer
+	int16_t word[2]; ///< as 2 words
+	uint8_t byte[4]; ///< as 4 bytes
 };
 
 

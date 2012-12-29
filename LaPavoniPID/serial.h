@@ -1,7 +1,21 @@
 #ifndef SERIAL_H_
 #define SERIAL_H_
-/** \defgroup serial Serial port support
- @{ */
+/**
+ @file serial.h
+
+ @defgroup serial AVR USART support module
+ @code #include <serial.h> @endcode
+
+ @brief AVR USART support module
+
+ This library provides routines to interrupt-driven USART
+
+ @author Tomasz Głuch contact+avr@tomaszgluch.pl http://tomaszgluch.pl/
+ @date 06-03-2009
+
+*/
+
+/**@{*/
 
 /// Framing error flag
 #define FRAMING_ERROR (1<<FE)
@@ -12,10 +26,11 @@
 
 /// USART errors structure
 struct TUSART_errors_tag {
-	uint8_t framing;
-	uint8_t parity;
-	uint8_t overrun;
+	uint8_t framing; ///< framing errors counter
+	uint8_t parity; ///< parity errors counter
+	uint8_t overrun; ///< overrun errors counter
 } ;
+/// USART errors structure type definition
 typedef struct TUSART_errors_tag TUSART_errors;
 
 /// errors counters
@@ -80,7 +95,4 @@ void USART_TransmitDouble(double data);
 
 /** @} */
 
-/*! \file serial.h
-    \brief Serial port support header file
-*/
 #endif /*SERIAL_H_*/

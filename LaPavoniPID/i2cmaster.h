@@ -9,7 +9,7 @@
 * Target:   any AVR device
 * Usage:    see Doxygen manual
 **************************************************************************/
-
+#define DOXYGEN
 #ifdef DOXYGEN
 /**
  @defgroup pfleury_ic2master I2C Master library
