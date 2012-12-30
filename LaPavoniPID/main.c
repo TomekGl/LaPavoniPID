@@ -88,7 +88,7 @@ ISR(INT1_vect)
 		tmp_in++;
 	}
 
-	in_flag = 4; //decremented every 0.1s
+	in_flag = 4; //timeout to avoid flapping when input is AC 50Hz, decremented every 0.1s
 	return;
 }
 
@@ -211,7 +211,7 @@ void __attribute__ ((naked)) main(void) {
 				USART_TransmitDecimal(TCNT2);
 			}
 			if ('d'==bajt) {
-				USART_TransmitDecimal(OSCCAL);
+				USART_TransmitDecimal(OSCCAL); //181 was OK in my uC
 			}
 		}
 
@@ -295,7 +295,7 @@ void __attribute__ ((naked)) main(void) {
 				USART_Put(',');
 				USART_TransmitDecimalSigned(controller.derivative);
 			*/
-		} // end of flagged 1S section
+		} // end of every-1s section
 
 		/* ***** Every 0.1s tasks here ****** */
 		if (flag & _BV(FLAG_100MS)) {
@@ -317,6 +317,8 @@ void __attribute__ ((naked)) main(void) {
 					floatpv = deg+milideg/100.0 + (0.92 * (floatpv-(deg+milideg/100.0)));
 				}
 
+				USART_TransmitDecimal(system_clock);
+				USART_Put(',');
 				USART_TransmitDouble(floatpv);
 				USART_Put(',');
 				USART_TransmitDecimal((int16_t)(floatpv*10));
@@ -358,16 +360,32 @@ void __attribute__ ((naked)) main(void) {
 			prevstatus = status;
 
 
-			// reset timer automatically after few seconds after switching pump off
+			// input is on
 			if (0 != in_flag) {
 				in_flag--;
 				pump_timer++;
-				pump_timer_reset_timeout = PUMP_TIMER_RESET_TIMEOUT;
+				pump_timer_reset_timeout = controller_param.preinfusion_valve_off_delay; // PUMP_TIMER_RESET_TIMEOUT;
+				tmp_out2 = 1; //enable valve during whole extraction process
+				if (pump_timer == controller_param.preinfusion_time)
+					BuzzerStart(15);
+				if (pump_timer > controller_param.preinfusion_time) {
+					//pre-infusion finished, full steam ahead!
+					tmp_out1 = 1;
+				} else {
+					//preinfussion PWM
+					tmp_out1 = ((pump_timer%10) > controller_param.preinfusion_duty_cycle)?0:1; //duty cycle must be in <0;10>
+				}
 			} else {
+				tmp_out1 = 0; //disable pump
+				// reset timer automatically after few seconds after switching pump switch off
 				if (0 != pump_timer_reset_timeout) {
 					pump_timer_reset_timeout--;
-				} else {
-					pump_timer = 0;
+					// pump_timer_reset_timeout zeroed
+					if (0 == pump_timer_reset_timeout) {
+						pump_timer = 0;
+						tmp_out2 = 0; //release valve
+						BuzzerStart(50);
+					}
 				}
 			}
 
@@ -379,7 +397,8 @@ void __attribute__ ((naked)) main(void) {
 			LCD_PutChar('1', 0, 96, 1, WHITE, tmp_out1?RED:GREEN);
 			LCD_PutChar('2', 0, 105, 1, WHITE, tmp_out2?RED:GREEN);
 			LCD_PutChar('3', 0, 114, 1, WHITE, bit_is_clear(OUT3_PORT,OUT3)?RED:GREEN);
-			LCD_PutChar('I', 0, 123, 1, WHITE, bit_is_clear(IN1_PIN,IN1)?RED:GREEN);
+			//LCD_PutChar('I', 0, 123, 1, WHITE, bit_is_clear(IN1_PIN,IN1)?RED:GREEN);
+			LCD_PutChar('I', 0, 123, 1, WHITE, (in_flag)?RED:GREEN);
 
 			LCD_Rectangle(0,64+16, 16,16, WHITE); //clear last 2 chars
 			LCD_PutDecimal((output*100)/255, 0, 64, 1, BLACK, WHITE);
