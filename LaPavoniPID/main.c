@@ -95,7 +95,7 @@ ISR(INT1_vect)
 /// Non-blocking buzzer support
 void BuzzerStart(uint8_t time) {
 #ifdef BEEPER
-	if (tmp_buzz==0) return;
+	if (controller_param.buzzer_enabled == 0) return;
 	BUZZ_PORT |= _BV(BUZZ);
 	buzzer_timeout = time;
 #endif

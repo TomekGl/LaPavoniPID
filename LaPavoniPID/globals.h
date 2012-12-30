@@ -7,7 +7,6 @@
 /// System clock
 extern volatile uint32_t system_clock;
 
-extern uint8_t tmp_buzz;
 extern uint8_t tmp_out1;
 extern uint8_t tmp_out2;
 extern uint8_t tmp_out3;

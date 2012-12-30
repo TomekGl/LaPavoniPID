@@ -19,13 +19,13 @@
 #define PID_EEPROM_ADDRESS 0
 
 ///current version of data structure
-#define PID_EEPROM_VERSION 7
+#define PID_EEPROM_VERSION 8
 
 ///controller presets kept in RAM & EEPROM - structure definition
 struct Tcontroller_param_tag {
 	/* controller parameters */
 	int8_t version; ///< Header
-	int16_t SV; ///< Set point
+	int16_t SV; ///< Set point (SP is reserved for stack pointer :) )
 	int16_t k_r; ///< Regulator's gain
 	int16_t k_p; ///< Proportional gain
 	int16_t T_i; ///< Integral time
@@ -41,7 +41,8 @@ struct Tcontroller_param_tag {
 	int8_t  preinfusion_time; ///<pre-infussion time
 	int8_t  preinfusion_duty_cycle; ///<pump duty-cycle during pre-infusion
 	int8_t  preinfusion_valve_off_delay; ///<valve off delay after finished extraction
-
+	uint8_t  buzzer_enabled; ///< buzzer enabled
+	uint8_t  lcd_brightness; ///< LCD brightness
 };
 
 ///internal runtime variables of controller structure definition

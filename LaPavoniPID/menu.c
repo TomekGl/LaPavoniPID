@@ -27,7 +27,7 @@ FuncPtr CallbackFunction;
 
 // menu strings
 const char menu_entry_0[] __attribute__ ((progmem)) = "PID Settings" ;
-const char menu_entry_0_0[] __attribute__ ((progmem)) = "SV: " ;
+const char menu_entry_0_0[] __attribute__ ((progmem)) = "SP: " ;
 const char menu_entry_0_1[] __attribute__ ((progmem)) = "K_p: " ;
 const char menu_entry_0_2[] __attribute__ ((progmem)) = "T_d: " ;
 const char menu_entry_0_3[] __attribute__ ((progmem)) = "T_i: " ;
@@ -76,7 +76,7 @@ const FuncPtr functions[] __attribute__ ((progmem)) = {
 ///array of pointers on variables connected with item
 const void * variables[] = {
 	(void *)&(controller_param.SV), (void *)&(controller_param.k_r), (void *)&(controller_param.T_d), (void *)&(controller_param.T_i),(void *)&(controller.y),
-	(void *)&tmp_buzz, (void *)&tmp_out1,(void *)&tmp_out2, (void *)&tmp_out3, (void *)&output,
+	(void *)&(controller_param.buzzer_enabled), (void *)&tmp_out1,(void *)&tmp_out2, (void *)&tmp_out3, (void *)&output,
 	(void *)&timer0, (void*)&PID_SaveSettings, (void *)&OCR2,
 	(void *)&(controller_param.preinfusion_time), (void*)&(controller_param.preinfusion_duty_cycle), (void *)&(controller_param.preinfusion_valve_off_delay)
 };
