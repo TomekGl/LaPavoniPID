@@ -36,13 +36,14 @@ TTC_read_status  TC_performRead() {
 }
 
 
-void TC_debug() {
+/*void TC_debug() {
 	for (uint8_t j=0; j<4; j++) {
 		USART_TransmitBinary(read_data.byte[j]);
 	}
 	USART_Put('_');
 	USART_TransmitDecimal(read_data.integer);
 }
+*/
 
 
 void TC_getTCTemp(int16_t *deg, uint16_t *milideg) {

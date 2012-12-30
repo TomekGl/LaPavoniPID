@@ -16,6 +16,7 @@
 
 ///enable beeper
 #define BEEPER
+/// default buzzer timeout
 #define BUZZER_TIME 15
 
 /// time of build
@@ -29,6 +30,7 @@ const char TXT_TCError[] __attribute__ ((progmem)) = "TC ERR:";
 const char TXT_TCErrorOpen[] __attribute__ ((progmem)) = "Open!";
 const char TXT_TCErrorShortPlus[] __attribute__ ((progmem)) = "Short+!";
 const char TXT_TCErrorShortMinus[] __attribute__ ((progmem)) = "Short-!";
+
 volatile uint8_t flag;
 
 volatile uint8_t buzzer_timeout;
@@ -67,14 +69,11 @@ ISR(TIMER1_OVF_vect) {
 	pwm++;
 	if (0 == output) {
 		OUT3_PORT |= _BV(OUT3);//disable
-		//BUZZ_PORT &= ~_BV(BUZZ);
 	} else {
 		if (pwm <= output)  {
 			OUT3_PORT &= ~_BV(OUT3);
-			//BUZZ_PORT |= _BV(BUZZ);
 		} else {
 			OUT3_PORT |= _BV(OUT3);
-			//BUZZ_PORT &= ~_BV(BUZZ);
 		}
 	}
 
@@ -84,11 +83,12 @@ ISR(TIMER1_OVF_vect) {
 /// External interrupt - AC input 1
 ISR(INT1_vect)
 {
+	//debug
 	if (tmp_in != 255) {
 		tmp_in++;
 	}
 
-	in_flag = 4;
+	in_flag = 4; //decremented every 0.1s
 	return;
 }
 
@@ -202,7 +202,6 @@ void __attribute__ ((naked)) main(void) {
 		//process data received on serial port
 		if (0!=buf_getcount((Tcircle_buffer *)&USART_buffer_RX)) {
 			bajt = buf_getbyte((Tcircle_buffer *)&USART_buffer_RX);
-			//LCD_PutChar(bajt,0,LCD_AUTOINCREMENT,0,BLACK,WHITE);
 			USART_Put(bajt);
 			USART_StartSending();
 			if ('a'==bajt) {
@@ -213,9 +212,6 @@ void __attribute__ ((naked)) main(void) {
 			}
 			if ('d'==bajt) {
 				USART_TransmitDecimal(OSCCAL);
-			}
-			if ('t'==bajt) {
-				TC_debug();
 			}
 		}
 
@@ -321,14 +317,24 @@ void __attribute__ ((naked)) main(void) {
 					floatpv = deg+milideg/100.0 + (0.92 * (floatpv-(deg+milideg/100.0)));
 				}
 
-				/*				USART_TransmitDouble(floatpv);
-								USART_Put(' ');
-								USART_TransmitDecimal(pv);
-								USART_Put(' ');
-								USART_TransmitDecimal(controller.PV);
-								USART_Put('\r');
-								USART_Put('\n');
-				*/
+				USART_TransmitDouble(floatpv);
+				USART_Put(',');
+				USART_TransmitDecimal((int16_t)(floatpv*10));
+				USART_Put(',');
+				USART_TransmitDecimal(pv);
+				USART_Put(',');
+				USART_TransmitDecimal(controller.PV);
+				USART_Put(',');
+				USART_Put((OUT1_PORT && _BV(OUT1))?'0':'1');
+				USART_Put(',');
+				USART_Put((OUT2_PORT && _BV(OUT2))?'0':'1');
+				USART_Put(',');
+				USART_Put((OUT3_PORT && _BV(OUT3))?'0':'1');
+				USART_Put(',');
+				USART_TransmitDecimal(in_flag);
+				USART_Put('\r');
+				USART_Put('\n');
+
 			} else {
 				// some error while TC reading has occured
 				output = 0;

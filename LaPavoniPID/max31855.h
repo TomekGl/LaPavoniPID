@@ -39,10 +39,10 @@ union MAX31855Data {
  */
 void TC_init();
 
-/**
+/*
  * Debug, print raw data on serial port
  */
-void TC_debug();
+/* void TC_debug(); */
 
 
 /**

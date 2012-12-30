@@ -594,7 +594,7 @@ void LCD_Blank() {
 	int i;
 
 	//fill with white
-	for (i=132*132; i>0; i++) {
+	for (i=132*132; i>0; i--) {
 		setPixel(WHITE);
 	}
 	sendCMD(NOP);
