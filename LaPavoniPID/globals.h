@@ -7,11 +7,6 @@
 /// System clock
 extern volatile uint32_t system_clock;
 
-//extern volatile Tcircle_buffer USART_buffer_RX;
-extern volatile uint32_t USART_arrival_time;
-//extern volatile Tcircle_buffer USART_buffer_TX;
-//extern volatile Tsystime systime;
-
 extern uint8_t tmp_buzz;
 extern uint8_t tmp_out1;
 extern uint8_t tmp_out2;

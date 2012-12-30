@@ -1,17 +1,3 @@
-/*! \file lcd.h
- *  \brief Support of LCD displays base on PCF8833 controller
- *   This module provides support to LCD display with PCF8833 controller.
- *
-*/
-
-/*
- * lcd.h
- * LCD based on PCF8833
-  *  Created on: 04-03-2012
- *      Author: Tomasz Głuch
- *
- */
-
 #ifndef LCD_H_
 #define LCD_H_
 
@@ -29,6 +15,7 @@
  @note Chipset support 132x132 matrix, but only 128x128 is visible.
 
  @author Tomasz Głuch contact+avr@tomaszgluch.pl http://tomaszgluch.pl/
+ @date 04-03-2012
 
  @par Screen organization
      * 131,0                131,131

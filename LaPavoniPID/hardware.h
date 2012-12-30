@@ -2,7 +2,6 @@
 #define HARDWARE_H_
 
 #ifndef F_CPU
-/** częstotliwość procesora */
 #define F_CPU 7372800UL
 #endif
 

@@ -1,3 +1,10 @@
+/**
+ @file main.c
+ @defgroup main Espresso PID controller
+ @author Tomasz Głuch contact+avr@tomaszgluch.pl http://tomaszgluch.pl/
+ @date 03-01-2012
+*/
+/**@{*/
 #include "includes.h"
 
 /// timer flag 1s mask
@@ -180,9 +187,9 @@ void __attribute__ ((naked)) main(void) {
 	for (uint8_t i=0; i<20; i++) {
 		_delay_ms(100);
 	}
-	LCD_Blank(0);
-	menu_Init();
-	MenuProcess(0);
+	LCD_Blank();
+	Menu_Init();
+	Menu_Process(0);
 
 	BuzzerStart(50);
 
@@ -206,6 +213,9 @@ void __attribute__ ((naked)) main(void) {
 			}
 			if ('d'==bajt) {
 				USART_TransmitDecimal(OSCCAL);
+			}
+			if ('t'==bajt) {
+				TC_debug();
 			}
 		}
 
@@ -388,19 +398,19 @@ void __attribute__ ((naked)) main(void) {
 				}
 				/* button ->  task mapping */
 				if (bit_is_clear(switch_status, SW1)) { // && bit_is_set(prev_switch_status, SW1)) {
-					MenuProcess(KEY_UP|repeated_flag);
+					Menu_Process(KEY_UP|repeated_flag);
 					BuzzerStart(BUZZER_TIME);
 				}
 				if (bit_is_clear(switch_status, SW2)) { // && bit_is_set(prev_switch_status, SW2)) {
-					MenuProcess(KEY_DOWN|repeated_flag);
+					Menu_Process(KEY_DOWN|repeated_flag);
 					BuzzerStart(BUZZER_TIME);
 				}
 				if (bit_is_clear(switch_status, SW3) && bit_is_set(prev_switch_status, SW3)) {
-					MenuProcess(KEY_LEFT);
+					Menu_Process(KEY_LEFT);
 					BuzzerStart(BUZZER_TIME);
 				}
 				if (bit_is_clear(switch_status, SW4)&& bit_is_set(prev_switch_status, SW4)) {
-					MenuProcess(KEY_RIGHT);
+					Menu_Process(KEY_RIGHT);
 					BuzzerStart(BUZZER_TIME);
 				}
 

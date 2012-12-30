@@ -1,3 +1,11 @@
+/**
+ @file main.h
+ @defgroup main Espresso PID controller
+ @author Tomasz Głuch contact+avr@tomaszgluch.pl http://tomaszgluch.pl/
+ @date 03-01-2012
+*/
+/**@{*/
+
 #ifndef MAIN_H_
 #define MAIN_H_
 

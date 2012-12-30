@@ -4,7 +4,6 @@
  *  Created on: 11-03-2012
  *      Author: tomek
  */
-#include <util/twi.h>
 #include "includes.h"
 #define ADCCS0 cbi(ADC_CSPORT,ADC_CS);
 #define ADCCS1 sbi(ADC_CSPORT,ADC_CS);
@@ -36,6 +35,7 @@ TTC_read_status  TC_performRead() {
 	return read_data.byte[0]&0x3;
 }
 
+
 void TC_debug() {
 	for (uint8_t j=0; j<4; j++) {
 		USART_TransmitBinary(read_data.byte[j]);
@@ -43,11 +43,14 @@ void TC_debug() {
 	USART_Put('_');
 	USART_TransmitDecimal(read_data.integer);
 }
+
+
 void TC_getTCTemp(int16_t *deg, uint16_t *milideg) {
 	*deg = (read_data.word[1]>>4);
 	*milideg = ((read_data.word[1]>>2)&0x03)*25;
 	return;
 }
+
 void TC_getInternalTemp(int16_t *deg, uint16_t *milideg) {
 	*deg = (int16_t)read_data.byte[1]; //12bit internal temp
 	*milideg = (uint8_t)(read_data.byte[0]>>4)*625;

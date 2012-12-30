@@ -1,17 +1,31 @@
+/**
+ @file menu.c
+ @defgroup menu Multilevel menu library
+ @author Tomasz Głuch contact+avr@tomaszgluch.pl http://tomaszgluch.pl/
+ @date 18-03-2012
+*/
+
 #include "includes.h"
 
+/**@{*/
+
+/// meta index of currently selected item, if none
 #define NOT_SELECTED 255
 
-typedef void (*FuncPtr)(uint8_t keys, uint8_t * value );
+/// definition of pointer to function with 2 params
+typedef void (*FuncPtr)(uint8_t keys, const void * value );
 
-//function pointer
-FuncPtr FPtr;
-
-/** @} */
+///pointer to callback function called on every modification of item
+FuncPtr CallbackFunction;
 
 /********** MENU CONTENTS CONFIG **********/
 
-/// menu strings
+/**
+ * \defgroup menu_items Menu items definition
+ * @{
+ */
+
+// menu strings
 const char menu_entry_0[] __attribute__ ((progmem)) = "PID Settings" ;
 const char menu_entry_0_0[] __attribute__ ((progmem)) = "SV: " ;
 const char menu_entry_0_1[] __attribute__ ((progmem)) = "K_p: " ;
@@ -51,6 +65,7 @@ const char  *menu_second_level[] __attribute__ ((progmem)) =  {
 	menu_entry_3_0, menu_entry_3_1, menu_entry_3_2
 };
 
+///array of pointers on callback functions
 const FuncPtr functions[] __attribute__ ((progmem)) = {
 	(void*)&setSignedInteger16, (void*)&setSignedInteger16, (void*)&setSignedInteger16, (void*)&setSignedInteger16, (void*)&setSignedInteger16,
 	(void*)&setBoolean, (void*)&setBoolean, (void*)&setBoolean, (void*)&setBoolean, (void*)&setInteger,
@@ -58,15 +73,18 @@ const FuncPtr functions[] __attribute__ ((progmem)) = {
 	(void*)&setInteger, (void*)&setInteger, (void*)&setInteger
 };
 
+///array of pointers on variables connected with item
 const void * variables[] = {
 	(void *)&(controller_param.SV), (void *)&(controller_param.k_r), (void *)&(controller_param.T_d), (void *)&(controller_param.T_i),(void *)&(controller.y),
-	(void *)&tmp_buzz, (void *)&tmp_out1,(void *)&tmp_out2, (void *)&tmp_out3,/*(void *)&tmp_in,*/ (void *)&output,
+	(void *)&tmp_buzz, (void *)&tmp_out1,(void *)&tmp_out2, (void *)&tmp_out3, (void *)&output,
 	(void *)&timer0, (void*)&PID_SaveSettings, (void *)&OCR2,
 	(void *)&(controller_param.preinfusion_time), (void*)&(controller_param.preinfusion_duty_cycle), (void *)&(controller_param.preinfusion_valve_off_delay)
 };
 
+///map of menu structure
 const uint8_t submenu_entries_count[] = { 5,5,3,3 };
 
+/**@}*/
 
 /********** END OF MENU CONTENTS CONFIG **********/
 
@@ -149,7 +167,7 @@ void setBoolean(uint8_t keys, uint8_t * value) {
 	return;
 }
 
-uint8_t resolve_index(uint8_t first_level, uint8_t second_level) {
+uint8_t Menu_ObjectIndex(uint8_t first_level, uint8_t second_level) {
 	uint8_t index = 0;
 	for (uint8_t i = 0; i<first_level; i++) {
 		index += submenu_entries_count[i];
@@ -158,13 +176,13 @@ uint8_t resolve_index(uint8_t first_level, uint8_t second_level) {
 	return index;
 }
 
-void menu_Init(void) {
+void Menu_Init(void) {
 	menu_position.first_level = 0;
 	menu_position.second_level = NOT_SELECTED;
 	menu_position.entry_selected = 0;
 }
 
-void MenuProcess(TKey key) {
+void Menu_Process(TKey key) {
 	if (key & KEY_DOWN) {
 		if (NOT_SELECTED == menu_position.second_level) { //MAIN MENU
 			if (menu_position.first_level<(sizeof(menu_first_level)/sizeof(menu_first_level[0])-1)) {
@@ -227,14 +245,14 @@ void MenuProcess(TKey key) {
 //			n = MENU_ROWS;
 //		}
 		for (uint8_t i = 0; i<submenu_entries_count[menu_position.first_level]; i++) {
-			//LCD_PutDecimal(resolve_index(menu_position.first_level, i+1), 92-i*8,0,0, MENUCOLOR_VALUE,BLACK);
-			LCD_PutStr_P((char *)pgm_read_word(&(menu_second_level[resolve_index(menu_position.first_level, i+1)])), MENU_X_POS-8-i*8, 10, 0, MENUCOLOR_TEXT, (i==menu_position.second_level-1)?MENUCOLOR_CURSOR:MENUCOLOR_BACKGROUND);
+			LCD_PutStr_P((char *)pgm_read_word(&(menu_second_level[Menu_ObjectIndex(menu_position.first_level, i+1)])), MENU_X_POS-8-i*8, 10, 0, MENUCOLOR_TEXT, (i==menu_position.second_level-1)?MENUCOLOR_CURSOR:MENUCOLOR_BACKGROUND);
 
 			//acquire pointer to callback function
-			FPtr=(FuncPtr)pgm_read_word(&functions[resolve_index(menu_position.first_level, i+1)]);
+			CallbackFunction=(FuncPtr)pgm_read_word(&functions[Menu_ObjectIndex(menu_position.first_level, i+1)]);
 			//execute if not null
-			if (FPtr!=0) {
-				FPtr((menu_position.entry_selected && menu_position.second_level==i+1)?key:0, variables[resolve_index(menu_position.first_level, i+1)] );
+			if (CallbackFunction!=0) {
+				CallbackFunction((menu_position.entry_selected && menu_position.second_level==i+1)?key:0,
+						variables[Menu_ObjectIndex(menu_position.first_level, i+1)] );
 			}
 
 		}

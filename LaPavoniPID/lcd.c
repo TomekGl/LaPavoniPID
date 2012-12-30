@@ -1,9 +1,12 @@
-/*
- * lcd.c
- *
- *  Created on: 04-03-2012
- *      Author: tomek
- */
+/**
+ @file lcd.c
+ @defgroup lcd LCD based on PCF8833 library
+
+ @author Tomasz Głuch contact+avr@tomaszgluch.pl http://tomaszgluch.pl/
+ @date 04-03-2012
+
+ Fonts and char lookup table algorithm was written by Jim Parise, James P Lynch, see copyright below
+*/
 #include "includes.h"
 
 
@@ -573,7 +576,7 @@ void LCD_Reset() {
 
 }
 
-void LCD_Blank(uint8_t mode) {
+void LCD_Blank() {
 	CS0;
 
 	//Column Adress Set

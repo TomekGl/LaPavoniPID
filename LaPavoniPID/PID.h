@@ -21,7 +21,7 @@
 ///current version of data structure
 #define PID_EEPROM_VERSION 7
 
-///controller presets kept in EEPROM
+///controller presets kept in RAM & EEPROM - structure definition
 struct Tcontroller_param_tag {
 	/* controller parameters */
 	int8_t version; ///< Header
@@ -44,7 +44,7 @@ struct Tcontroller_param_tag {
 
 };
 
-///internal runtime variables of controller
+///internal runtime variables of controller structure definition
 struct Tcontroller_tag {
 	/* run-time variables */
 	int16_t PV; ///< Process value
@@ -60,13 +60,17 @@ struct Tcontroller_tag {
 	uint8_t firstpass; ///< whether first pass
 };
 
+///controller presets kept in RAM & EEPROM - type definition
 typedef struct Tcontroller_tag Tcontroller;
+///internal runtime variables of controller - type definition
 typedef struct Tcontroller_param_tag Tcontroller_param;
 
+///controller presets kept in RAM
 extern volatile Tcontroller controller;
+///internal runtime variables of controller
 extern volatile Tcontroller_param controller_param;
 
-
+//!  Initialize controller
 /**
  * Initialize internal structures of PID controller
  */
@@ -87,6 +91,7 @@ void PID_SaveSettings(void);
  * @param processValue last measured process value
  */
 int16_t PID_Process(int16_t processValue);
+
 int16_t PID_Process_2(int16_t processValue);
 
 /** @} */

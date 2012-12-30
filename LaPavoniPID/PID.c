@@ -1,10 +1,15 @@
-/*
- * PID.c
- *
- *  Created on: 17-03-2012
- *      Author: tomek
- */
+/**
+ @file PID.c
 
+ @defgroup PID Implementation of PID controller
+ @code #include <LCD.h> @endcode
+
+ @brief Implementation of PID controller
+
+
+ @author Tomasz Głuch contact+avr@tomaszgluch.pl http://tomaszgluch.pl/
+ @date 17-03-2012
+*/
 #include "includes.h"
 
 volatile Tcontroller controller;

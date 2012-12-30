@@ -1,3 +1,10 @@
+/**
+ @file buffers.c
+ @defgroup buffers Circular buffers library
+
+ @author Tomasz Głuch contact+avr@tomaszgluch.pl http://tomaszgluch.pl/
+ @date 06-03-2009
+*/
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>

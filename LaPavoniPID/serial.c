@@ -1,3 +1,10 @@
+/**
+ @file serial.c
+ @defgroup serial AVR USART support module
+ @author Tomasz Głuch contact+avr@tomaszgluch.pl http://tomaszgluch.pl/
+ @date 06-03-2009
+
+*/
 #include "includes.h"
 
 
