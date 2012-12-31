@@ -214,7 +214,7 @@ void LCD_PutChar(char c, uint8_t x, uint8_t y, uint8_t size, int foreground, int
  */
 void LCD_PutStr(char *s, uint8_t x, uint8_t y, uint8_t size, int foreground, int background);
 
-//! Print null-terminated string from program memory
+//! Print null-terminated string from RAM
 /**
  * @param *s Pointer to null-terminated string in program memory
  * @param x X coordinate
@@ -238,7 +238,7 @@ void LCD_PutDecimal(uint32_t value, uint8_t x, uint8_t y, uint8_t size, int fore
 
 //! Print signed integer as string
 /**
- * @param value Pointer to null-terminated string in program memory
+ * @param value Pointer to integer
  * @param x X coordinate
  * @param y Y coordinate
  * @param size Font size index
@@ -249,7 +249,7 @@ void LCD_PutDecimalSigned(int32_t value, uint8_t x, uint8_t y, uint8_t size, int
 
 //! Print unsigned integer as string, right aligned
 /**
- * @param value Pointer to null-terminated string in program memory
+ * @param value Pointer to unsigned integer
  * @param x X coordinate
  * @param y Y coordinate
  * @param size Font size index
@@ -258,6 +258,17 @@ void LCD_PutDecimalSigned(int32_t value, uint8_t x, uint8_t y, uint8_t size, int
  * @param digits Lenght of string, including leading spaces
  */
 void LCD_PutDecimalFixedDigits(uint32_t value, uint8_t x, uint8_t y, uint8_t size, int foreground, int background, uint8_t digits);
+
+//! Print double as string
+/**
+ * @param value Pointer to double
+ * @param x X coordinate
+ * @param y Y coordinate
+ * @param size Font size index
+ * @param foreground Foreground color
+ * @param background Background color
+ */
+void LCD_PutDouble(double value, uint8_t x, uint8_t y, uint8_t size, int foreground, int background);
 
 #endif
 

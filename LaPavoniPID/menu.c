@@ -131,6 +131,29 @@ void getIntegerReadOnly(uint8_t keys, uint8_t * value) {
 	return;
 }
 
+void setFloat(uint8_t keys, float * value) {
+	if (keys & KEY_UP) {
+		if (keys & REPEATED_2X_FLAG) {
+			(*value)+=10;
+		} else if (keys & REPEATED_FLAG) {
+			(*value)+=1;
+		} else {
+			(*value)+=0.1;
+		}
+	}
+	if (keys & KEY_DOWN) {
+		if (keys & REPEATED_2X_FLAG) {
+			(*value)-=10;
+		} else if (keys & REPEATED_FLAG) {
+			(*value)-=1;
+		} else {
+			(*value)-=0.1;
+		}
+	}
+	LCD_PutDouble(*value, LCD_AUTOINCREMENT,LCD_AUTOINCREMENT, 0, MENUCOLOR_VALUE, (keys==0)?MENUCOLOR_BACKGROUND:MENUCOLOR_CURSOR);
+	return;
+}
+
 void setSignedInteger16(uint8_t keys, int16_t * value) {
 	if (keys & KEY_UP) {
 		if (keys & REPEATED_2X_FLAG) {

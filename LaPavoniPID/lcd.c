@@ -856,5 +856,15 @@ void LCD_PutDecimalSigned(int32_t value, uint8_t x, uint8_t y, uint8_t size, int
 	LCD_PutStr(str, x, y, size, foreground, background);
 }
 
+void LCD_PutDouble(double value, uint8_t x, uint8_t y, uint8_t size, int foreground, int background) {
+
+	char str[12];
+
+	/* convert signed integer into string */
+	dtostrf(value, -3, 2, str);
+
+	LCD_PutStr(str, x, y, size, foreground, background);
+}
+
 #endif //LCDTEXT
 

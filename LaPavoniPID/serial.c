@@ -189,7 +189,7 @@ void USART_Transmit(unsigned char data) {
 void USART_TransmitDouble(double data) {
 	char str[12];
 
-	/* convert signed integer into string */
+	/* convert double into string (engineer's format) */
 	dtostre(data, str, 4, 0);
 
 	USART_Puts(str);
