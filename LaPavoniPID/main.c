@@ -158,7 +158,7 @@ void __attribute__ ((naked)) main(void) {
 	TCCR2 |= /*_BV(CS20)|*/ /* _BV(CS21) |*/ _BV(CS22) //Prescaler /64
 	        | _BV(WGM21) | _BV(WGM20) //Fast PWM
 	        | _BV(COM21); //Clear OC2 on compare match, set OC2 at BOTTOM,
-	OCR2 = 160;
+	OCR2 = 160; //tentative brightness setting
 
 	//enable interrupts
 	sei();
@@ -217,14 +217,14 @@ void __attribute__ ((naked)) main(void) {
 
 		// control outputs
 		if (tmp_out1) {
-			OUT1_PORT |= _BV(OUT1);
-		} else {
 			OUT1_PORT &= ~_BV(OUT1);
+		} else {
+			OUT1_PORT |= _BV(OUT1);
 		}
 		if (tmp_out2) {
-			OUT2_PORT |= _BV(OUT2);
-		} else {
 			OUT2_PORT &= ~_BV(OUT2);
+		} else {
+			OUT2_PORT |= _BV(OUT2);
 		}
 
 		/* ***** Every-1s tasks are here ***** */
@@ -327,15 +327,18 @@ void __attribute__ ((naked)) main(void) {
 				USART_Put(',');
 				USART_TransmitDecimal(controller.PV);
 				USART_Put(',');
-				USART_Put((OUT1_PORT && _BV(OUT1))?'0':'1');
+				USART_Put(tmp_out1?'1':'0');
 				USART_Put(',');
-				USART_Put((OUT2_PORT && _BV(OUT2))?'0':'1');
+				USART_Put(tmp_out2?'1':'0');
 				USART_Put(',');
-				USART_Put((OUT3_PORT && _BV(OUT3))?'0':'1');
+				USART_Put(bit_is_clear(OUT3_PORT,OUT3)?'1':'0');
 				USART_Put(',');
 				USART_TransmitDecimal(in_flag);
+				USART_Put(',');
+				USART_TransmitDecimal(output);
 				USART_Put('\r');
 				USART_Put('\n');
+
 
 			} else {
 				// some error while TC reading has occured
@@ -447,7 +450,8 @@ void __attribute__ ((naked)) main(void) {
 SKIP:
 			prev_switch_status = switch_status;
 
-		}
+			OCR2 = controller_param.lcd_brightness;
+		} // end every 0.1s section
 
 		//refresh watchdog timer
 		wdt_reset();

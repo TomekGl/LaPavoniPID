@@ -50,6 +50,14 @@ void PID_Reset(void) {
 	controller_param.limit_top = 255;
 	controller_param.alpha = 120;
 	controller.firstpass = 1;
+
+	//FIXME make separate struct
+	controller_param.buzzer_enabled = 1;
+	controller_param.lcd_brightness = 160;
+	controller_param.preinfusion_duty_cycle = 4;
+	controller_param.preinfusion_time = 40;
+	controller_param.preinfusion_valve_off_delay = 30;
+
 }
 
 void PID_SaveSettings(void) {
