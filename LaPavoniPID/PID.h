@@ -19,24 +19,24 @@
 #define PID_EEPROM_ADDRESS 0
 
 ///current version of data structure
-#define PID_EEPROM_VERSION 9
+#define PID_EEPROM_VERSION 10
 
 ///controller presets kept in RAM & EEPROM - structure definition
 struct Tcontroller_param_tag {
 	/* controller parameters */
 	int8_t version; ///< Header
-	int16_t SV; ///< Set point (SP is reserved for stack pointer :) )
-	int16_t k_r; ///< Regulator's gain
-	int16_t k_p; ///< Proportional gain
-	int16_t T_i; ///< Integral time
-	int16_t T_d; ///< Derivative time
-	int16_t T_s; ///< Time constant
-	int16_t dead; ///< Dead band
-	int16_t windup; ///< Integral anti-windup limit
-	int16_t limit_bottom; ///< negative output limit
-	int16_t limit_top; ///< positive output limit
+	double SV; ///< Set point (SP is reserved for stack pointer :) )
+	double k_r; ///< Regulator's gain
+	double k_p; ///< Proportional gain
+	double T_i; ///< Integral time
+	double T_d; ///< Derivative time
+	double T_s; ///< Time constant
+	double dead; ///< Dead band
+	double windup; ///< Integral anti-windup limit
+	double limit_bottom; ///< negative output limit
+	double limit_top; ///< positive output limit
 	/* filter presets */
-	int8_t  alpha; ///< Filter coefficient 0 < alpha < 128
+	double  alpha; ///< Filter coefficient
 	/* pre-infusion presets */
 	int8_t  preinfusion_time; ///<pre-infussion time
 	int8_t  preinfusion_duty_cycle; ///<pump duty-cycle during pre-infusion
@@ -48,16 +48,16 @@ struct Tcontroller_param_tag {
 ///internal runtime variables of controller structure definition
 struct Tcontroller_tag {
 	/* run-time variables */
-	int16_t PV; ///< Process value
-	int16_t PV_1; ///< PV[t-1]
-	int16_t PV_2; ///< PV[t-2]
-	int16_t e;  ///< Error
-	int16_t e_1; ///< Previous error
-	int16_t y; ///< Output
-	int16_t y_1; ///< previous output value
-	int16_t proportional; ///< present value of proportional term
-	int16_t integral; ///< present value of integral term
-	int16_t derivative; ///< present value of derivative term
+	double PV; ///< Process value
+	double PV_1; ///< PV[t-1]
+	double PV_2; ///< PV[t-2]
+	double e;  ///< Error
+	double e_1; ///< Previous error
+	double y; ///< Output
+	double y_1; ///< previous output value
+	double proportional; ///< present value of proportional term
+	double integral; ///< present value of integral term
+	double derivative; ///< present value of derivative term
 	uint8_t firstpass; ///< whether first pass
 };
 
@@ -91,7 +91,7 @@ void PID_SaveSettings(void);
  * Compute next output
  * @param processValue last measured process value
  */
-int16_t PID_Process(int16_t processValue);
+int16_t PID_Process(double processValue);
 
 int16_t PID_Process_2(int16_t processValue);
 

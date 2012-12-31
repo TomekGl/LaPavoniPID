@@ -124,6 +124,8 @@ void setSignedInteger16(uint8_t keys, int16_t * value);
  */
 void setBoolean(uint8_t keys, uint8_t * value);
 
+void setDouble(uint8_t keys, double * value);
+
 /** \brief Dedicated callback function to take action after button being pressed on, after confirmation
  * @param keys Pressed keys
  * @param *value Might be NULL

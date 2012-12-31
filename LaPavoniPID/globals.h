@@ -17,6 +17,8 @@ extern volatile uint8_t in_flag;
 extern uint8_t timer0;
 extern volatile uint8_t output;
 extern volatile uint8_t pwm;
+extern double floatpv;
+extern double floattest;
 
 
 #endif				/*GLOBALS_H_ */

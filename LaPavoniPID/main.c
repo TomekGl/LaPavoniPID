@@ -196,7 +196,6 @@ void __attribute__ ((naked)) main(void) {
 	wdt_enable(WDTO_2S);
 
 	/* ****** MAIN LOOP ******* */
-	double floatpv = 0;
 
 	while (1) {
 		//process data received on serial port
@@ -259,14 +258,14 @@ void __attribute__ ((naked)) main(void) {
 
 				if (controller_param.k_r>0) {
 					//process PID controller
-					output = (uint8_t)(PID_Process(pv));
+					output = (uint8_t)(PID_Process(floatpv));
 					//output = (uint8_t)(PID_Process_3(floatpv));
 				} else if (-1 == controller_param.k_r) {
 					output = (uint8_t)controller.y;
 				} else {
 					output = 0;
 				}
-
+/* integer
 				LCD_PutStr("PV:", 89,5,0,BLUE,WHITE);
 				LCD_PutDecimalSigned(controller.PV, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
 				LCD_PutStr(",SP:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
@@ -279,6 +278,21 @@ void __attribute__ ((naked)) main(void) {
 				LCD_PutDecimalSigned(controller.integral, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
 				LCD_PutStr(",DVDT:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
 				LCD_PutDecimalSigned(controller.derivative, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
+				LCD_PutStr(" ", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
+*/
+/* floating point */
+				LCD_PutStr("PV:", 89,5,0,BLUE,WHITE);
+				LCD_PutDouble(controller.PV, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
+//				LCD_PutStr(",SP:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
+//				LCD_PutDecimalSigned(controller_param.SV, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
+				LCD_PutStr(",E:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
+				LCD_PutDouble(controller.e, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
+				//LCD_PutStr(",OUT:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,RED,WHITE);
+				//LCD_PutDecimalSigned(output, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED,WHITE);
+				LCD_PutStr(",INT:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
+				LCD_PutDouble(controller.integral, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
+//				LCD_PutStr(",DVDT:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
+//				LCD_PutDecimalSigned(controller.derivative, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
 				LCD_PutStr(" ", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
 				//correct TC read END
 			}
@@ -308,13 +322,13 @@ void __attribute__ ((naked)) main(void) {
 					BuzzerStart(10);
 				}
 				TC_getTCTemp(&deg, &milideg);
-				pv=deg*10+(milideg/10);
+				//pv=deg*10+(milideg/10);
 
 				/* low-pass filter using exponential moving average */
 				if (0 == floatpv) {
 					floatpv = deg+milideg/100.0;
 				} else {
-					floatpv = deg+milideg/100.0 + (0.92 * (floatpv-(deg+milideg/100.0)));
+					floatpv = deg+milideg/100.0 + (controller_param.alpha * (floatpv-(deg+milideg/100.0)));
 				}
 
 				USART_TransmitDecimal(system_clock);
@@ -325,7 +339,7 @@ void __attribute__ ((naked)) main(void) {
 				USART_Put(',');
 				USART_TransmitDecimal(pv);
 				USART_Put(',');
-				USART_TransmitDecimal(controller.PV);
+				USART_TransmitDouble(controller.PV);
 				USART_Put(',');
 				USART_Put(tmp_out1?'1':'0');
 				USART_Put(',');

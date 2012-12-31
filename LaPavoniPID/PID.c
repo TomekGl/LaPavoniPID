@@ -18,10 +18,10 @@ volatile Tcontroller_param controller_param;
 void PID_Init(void) {
 	USART_Put(eeprom_read_byte(0));
 	if (PID_EEPROM_VERSION != eeprom_read_byte(0)) {
-		USART_Puts("Defaults restored\n");
-
+		LCD_PutStr("Eeprom bad version\n", LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLACK, WHITE);
 		//Load defaults
 		PID_Reset();
+		LCD_PutStr("Default restored\n", LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLACK, WHITE);
 	} else {
 		//Load saved parameters
 		eeprom_read_block((void*)&controller_param, PID_EEPROM_ADDRESS, sizeof(controller_param));
@@ -48,7 +48,7 @@ void PID_Reset(void) {
 	controller_param.dead = 20;
 	controller_param.limit_bottom = 0;
 	controller_param.limit_top = 255;
-	controller_param.alpha = 120;
+	controller_param.alpha = 0.92;
 	controller.firstpass = 1;
 
 	//FIXME make separate struct
@@ -67,14 +67,14 @@ void PID_SaveSettings(void) {
 
 
 /// Positional PID Algorithm
-int16_t PID_Process(int16_t processValue) {
+int16_t PID_Process(double processValue) {
 	/**
 	 * u(t) = k_r * [ e(t) + 1/T_i*(int(e)dt) + T_d*deriv(e(t)) ]
 	 */
-	static int16_t dt;
+	static double dt;
 
 	//dt = system_clock - controller.t_prev;
-	dt = 1; // [s]
+	dt = 1.; // [s]
 	//controller.t_prev = system_clock;
 
 	controller.PV = processValue;
@@ -111,7 +111,7 @@ int16_t PID_Process(int16_t processValue) {
 	} //first
 
 	controller.y *= controller_param.k_r;
-	controller.y /= 10;
+	//controller.y /= 10;
 
 	if (controller.y>controller_param.limit_top) controller.y=controller_param.limit_top;
 	if (controller.y<controller_param.limit_bottom) controller.y=controller_param.limit_bottom;

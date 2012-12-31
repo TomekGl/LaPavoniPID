@@ -44,6 +44,8 @@ const char menu_entry_2[] __attribute__ ((progmem)) = "Status " ;
 const char menu_entry_2_0[] __attribute__ ((progmem)) = "TIM0: " ;
 const char menu_entry_2_1[] __attribute__ ((progmem)) = "Save settings " ;
 const char menu_entry_2_2[] __attribute__ ((progmem)) = "Backlight " ;
+const char menu_entry_2_3[] __attribute__ ((progmem)) = "T1: " ;
+const char menu_entry_2_4[] __attribute__ ((progmem)) = "T2: " ;
 
 const char menu_entry_3[] __attribute__ ((progmem)) = "Pre-infusion " ;
 const char menu_entry_3_0[] __attribute__ ((progmem)) = "Time x0.1:" ;
@@ -60,16 +62,16 @@ const char *menu_first_level[] __attribute__ ((progmem)) = {
 
 const char  *menu_second_level[] __attribute__ ((progmem)) =  {
 	menu_entry_0_0, menu_entry_0_1, menu_entry_0_2, menu_entry_0_3, menu_entry_0_4,
-	menu_entry_1_0, menu_entry_1_1, menu_entry_1_2, menu_entry_1_3,menu_entry_1_4,
-	menu_entry_2_0, menu_entry_2_1, menu_entry_2_2,
+	menu_entry_1_0, menu_entry_1_1, menu_entry_1_2, menu_entry_1_3, menu_entry_1_4,
+	menu_entry_2_0, menu_entry_2_1, menu_entry_2_2, menu_entry_2_3, menu_entry_2_4,
 	menu_entry_3_0, menu_entry_3_1, menu_entry_3_2
 };
 
 ///array of pointers on callback functions
 const FuncPtr functions[] __attribute__ ((progmem)) = {
-	(void*)&setSignedInteger16, (void*)&setSignedInteger16, (void*)&setSignedInteger16, (void*)&setSignedInteger16, (void*)&setSignedInteger16,
+	(void*)&setDouble, (void*)&setDouble, (void*)&setDouble, (void*)&setDouble, (void*)&setDouble,
 	(void*)&setBoolean, (void*)&setBoolean, (void*)&setBoolean, (void*)&setBoolean, (void*)&setInteger,
-	(void*)&setInteger, (void*)&callAfterConfirm, (void*)&setInteger,
+	(void*)&setInteger, (void*)&callAfterConfirm, (void*)&setInteger, (void*)&setDouble, (void*)&setDouble,
 	(void*)&setInteger, (void*)&setInteger, (void*)&setInteger
 };
 
@@ -77,12 +79,12 @@ const FuncPtr functions[] __attribute__ ((progmem)) = {
 const void * variables[] = {
 	(void *)&(controller_param.SV), (void *)&(controller_param.k_r), (void *)&(controller_param.T_d), (void *)&(controller_param.T_i),(void *)&(controller.y),
 	(void *)&(controller_param.buzzer_enabled), (void *)&tmp_out1,(void *)&tmp_out2, (void *)&tmp_out3, (void *)&output,
-	(void *)&timer0, (void*)&PID_SaveSettings, (void *)&OCR2,
+	(void *)&timer0, (void*)&PID_SaveSettings, (void *)&OCR2, 	(void *)&floatpv, (void *)&floattest,
 	(void *)&(controller_param.preinfusion_time), (void*)&(controller_param.preinfusion_duty_cycle), (void *)&(controller_param.preinfusion_valve_off_delay)
 };
 
 ///map of menu structure
-const uint8_t submenu_entries_count[] = { 5,5,3,3 };
+const uint8_t submenu_entries_count[] = { 5,5,5,3 };
 
 /**@}*/
 
@@ -131,7 +133,7 @@ void getIntegerReadOnly(uint8_t keys, uint8_t * value) {
 	return;
 }
 
-void setFloat(uint8_t keys, float * value) {
+void setDouble(uint8_t keys, double * value) {
 	if (keys & KEY_UP) {
 		if (keys & REPEATED_2X_FLAG) {
 			(*value)+=10;
