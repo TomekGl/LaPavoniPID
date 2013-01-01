@@ -1,0 +1,10 @@
+Sterownik eskpresu do kawy z regulatorem PID, opartego na mikrokontrolerze
+ATmega32A.
+Cechy:
+- 3 wyjścia cyfrowe AC 230V, w tym jedno z regulacją grupową,
+- 1 wejście cyfrowe AC 230V,
+- 1 wejście termopary K,
+- regulacja PID,
+- pre-infusion,
+- wyjscie szeregowe do akwizycji danych,
+- konfiguracja z menu
