@@ -1,9 +1,14 @@
-/*
- * max31855.c
- *
- *  Created on: 11-03-2012
- *      Author: tomek
- */
+/**
+ @file max31855.c
+
+ @defgroup max31855 MAX31855 Cold-Junction Compensated Thermocouple-to-Digital Converter driver
+
+ This library provides routines to comunicate with MAX31855 via hardware SPI
+
+ @author Tomasz Głuch contact+avr@tomaszgluch.pl http://tomaszgluch.pl/
+ @date 11-03-2012
+*/
+
 #include "includes.h"
 #define ADCCS0 cbi(ADC_CSPORT,ADC_CS);
 #define ADCCS1 sbi(ADC_CSPORT,ADC_CS);
