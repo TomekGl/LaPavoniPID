@@ -190,6 +190,10 @@ void LCD_Reset();
  */
 void LCD_Rectangle(uint8_t x, uint8_t y, uint8_t width, uint8_t height, uint16_t foreground);
 
+//! Clear screen
+void LCD_Blank();
+
+
 #ifdef LCDTEXT
 
 //! Print single char
