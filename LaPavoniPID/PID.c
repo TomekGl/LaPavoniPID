@@ -40,12 +40,12 @@ void PID_Init(void) {
 
 void PID_Reset(void) {
 	controller_param.version = PID_EEPROM_VERSION;
-	controller_param.SV = 935;
-	controller_param.k_r = 3;
+	controller_param.SV = 93.5;
+	controller_param.k_r = 2.5;
 	controller_param.T_d = 0;
-	controller_param.T_i  = 0;
-	controller_param.windup = 100;
-	controller_param.dead = 20;
+	controller_param.T_i  = 1;
+	controller_param.windup = 10;
+	controller_param.dead = 0;
 	controller_param.limit_bottom = 0;
 	controller_param.limit_top = 255;
 	controller_param.alpha = 0.92;
@@ -74,7 +74,7 @@ int16_t PID_Process(double processValue) {
 	static double dt;
 
 	//dt = system_clock - controller.t_prev;
-	dt = 1.; // [s]
+	dt = 1; // [s]
 	//controller.t_prev = system_clock;
 
 	controller.PV = processValue;
@@ -99,11 +99,13 @@ int16_t PID_Process(double processValue) {
 				controller.integral = controller_param.windup*-1;
 			}
 		}
-		if (0 != controller_param.T_i ) {
+		//0.00 in menu can be not exactly euqal zero, check range
+		if (!(controller_param.T_i < 0.1 && controller_param.T_i > -0.1)) {
 			controller.y += (controller.integral /(controller_param.T_i))*dt;
 		}
 		//DERIVATIVE TERM
-		if (0 != controller_param.T_d) {
+		//0.00 in menu means "term disabled", but can be not exactly euqal zero, so check range
+		if (!(controller_param.T_d < 0.1 && controller_param.T_d > -0.1)) {
 			controller.derivative = controller_param.T_d * (controller.e - controller.e_1) * dt;
 			controller.y += controller.derivative;
 		}
@@ -170,7 +172,7 @@ int16_t PID_Process_2(int16_t processValue) {
 }
 
 /// PID Algorithm
-
+//TODO
 int16_t PID_Process_3(float processValue) {
 
 	/*

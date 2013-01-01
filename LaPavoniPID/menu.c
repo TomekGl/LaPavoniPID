@@ -3,6 +3,8 @@
  @defgroup menu Multilevel menu library
  @author Tomasz Głuch contact+avr@tomaszgluch.pl http://tomaszgluch.pl/
  @date 18-03-2012
+
+ @note Due to used progmem handling via pointer to const char, this code compiles only with gcc version 4.5.3 (GCC) or older!
 */
 
 #include "includes.h"
@@ -27,11 +29,12 @@ FuncPtr CallbackFunction;
 
 // menu strings
 const char menu_entry_0[] __attribute__ ((progmem)) = "PID Settings" ;
-const char menu_entry_0_0[] __attribute__ ((progmem)) = "SP: " ;
-const char menu_entry_0_1[] __attribute__ ((progmem)) = "K_p: " ;
-const char menu_entry_0_2[] __attribute__ ((progmem)) = "T_d: " ;
-const char menu_entry_0_3[] __attribute__ ((progmem)) = "T_i: " ;
-const char menu_entry_0_4[] __attribute__ ((progmem)) = "Integr: " ;
+const char menu_entry_0_0[] __attribute__ ((progmem)) = "SP[oC]: " ;
+const char menu_entry_0_1[] __attribute__ ((progmem)) = "Gain[]: " ;
+const char menu_entry_0_2[] __attribute__ ((progmem)) = "T_d[/s]: " ;
+const char menu_entry_0_3[] __attribute__ ((progmem)) = "T_i[s]: " ;
+const char menu_entry_0_4[] __attribute__ ((progmem)) = "Windup: " ;
+/*const char menu_entry_0_5[] __attribute__ ((progmem)) = "Deadband: " ;*/
 
 const char menu_entry_1[] __attribute__ ((progmem)) = "I/O " ;
 const char menu_entry_1_0[] __attribute__ ((progmem)) = "Buzzer: " ;
@@ -44,8 +47,7 @@ const char menu_entry_2[] __attribute__ ((progmem)) = "Status " ;
 const char menu_entry_2_0[] __attribute__ ((progmem)) = "TIM0: " ;
 const char menu_entry_2_1[] __attribute__ ((progmem)) = "Save settings " ;
 const char menu_entry_2_2[] __attribute__ ((progmem)) = "Backlight " ;
-const char menu_entry_2_3[] __attribute__ ((progmem)) = "T1: " ;
-const char menu_entry_2_4[] __attribute__ ((progmem)) = "T2: " ;
+const char menu_entry_2_3[] __attribute__ ((progmem)) = "Alpha: " ;
 
 const char menu_entry_3[] __attribute__ ((progmem)) = "Pre-infusion " ;
 const char menu_entry_3_0[] __attribute__ ((progmem)) = "Time x0.1:" ;
@@ -61,30 +63,30 @@ const char *menu_first_level[] __attribute__ ((progmem)) = {
 };
 
 const char  *menu_second_level[] __attribute__ ((progmem)) =  {
-	menu_entry_0_0, menu_entry_0_1, menu_entry_0_2, menu_entry_0_3, menu_entry_0_4,
+	menu_entry_0_0, menu_entry_0_1, menu_entry_0_2, menu_entry_0_3, menu_entry_0_4, /*menu_entry_0_5,*/
 	menu_entry_1_0, menu_entry_1_1, menu_entry_1_2, menu_entry_1_3, menu_entry_1_4,
-	menu_entry_2_0, menu_entry_2_1, menu_entry_2_2, menu_entry_2_3, menu_entry_2_4,
+	menu_entry_2_0, menu_entry_2_1, menu_entry_2_2, menu_entry_2_3,
 	menu_entry_3_0, menu_entry_3_1, menu_entry_3_2
 };
 
 ///array of pointers on callback functions
 const FuncPtr functions[] __attribute__ ((progmem)) = {
-	(void*)&setDouble, (void*)&setDouble, (void*)&setDouble, (void*)&setDouble, (void*)&setDouble,
+	(void*)&setDouble, (void*)&setDouble, (void*)&setDouble, (void*)&setDouble, (void*)&setDouble, /*(void*)&setDouble,*/
 	(void*)&setBoolean, (void*)&setBoolean, (void*)&setBoolean, (void*)&setBoolean, (void*)&setInteger,
-	(void*)&setInteger, (void*)&callAfterConfirm, (void*)&setInteger, (void*)&setDouble, (void*)&setDouble,
+	(void*)&setInteger, (void*)&callAfterConfirm, (void*)&setInteger, (void*)&setDouble,
 	(void*)&setInteger, (void*)&setInteger, (void*)&setInteger
 };
 
 ///array of pointers on variables connected with item
 const void * variables[] = {
-	(void *)&(controller_param.SV), (void *)&(controller_param.k_r), (void *)&(controller_param.T_d), (void *)&(controller_param.T_i),(void *)&(controller.y),
+	(void *)&(controller_param.SV), (void *)&(controller_param.k_r), (void *)&(controller_param.T_d), (void *)&(controller_param.T_i), (void *)&(controller_param.windup), /*(void *)&(controller_param.dead),*/
 	(void *)&(controller_param.buzzer_enabled), (void *)&tmp_out1,(void *)&tmp_out2, (void *)&tmp_out3, (void *)&output,
-	(void *)&timer0, (void*)&PID_SaveSettings, (void *)&OCR2, 	(void *)&floatpv, (void *)&floattest,
+	(void *)&timer0, (void*)&PID_SaveSettings, (void *)&OCR2, 	(void *)&(controller_param.alpha),
 	(void *)&(controller_param.preinfusion_time), (void*)&(controller_param.preinfusion_duty_cycle), (void *)&(controller_param.preinfusion_valve_off_delay)
 };
 
 ///map of menu structure
-const uint8_t submenu_entries_count[] = { 5,5,5,3 };
+const uint8_t submenu_entries_count[] = { 5,5,4,3 };
 
 /**@}*/
 
@@ -269,6 +271,7 @@ void Menu_Process(TKey key) {
 //		if (n > MENU_ROWS) {
 //			n = MENU_ROWS;
 //		}
+		//TODO do not redraw all items when not necessary
 		for (uint8_t i = 0; i<submenu_entries_count[menu_position.first_level]; i++) {
 			LCD_PutStr_P((char *)pgm_read_word(&(menu_second_level[Menu_ObjectIndex(menu_position.first_level, i+1)])), MENU_X_POS-8-i*8, 10, 0, MENUCOLOR_TEXT, (i==menu_position.second_level-1)?MENUCOLOR_CURSOR:MENUCOLOR_BACKGROUND);
 

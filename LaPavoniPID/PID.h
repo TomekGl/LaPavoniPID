@@ -19,7 +19,7 @@
 #define PID_EEPROM_ADDRESS 0
 
 ///current version of data structure
-#define PID_EEPROM_VERSION 10
+#define PID_EEPROM_VERSION 11
 
 ///controller presets kept in RAM & EEPROM - structure definition
 struct Tcontroller_param_tag {
