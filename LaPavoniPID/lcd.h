@@ -196,6 +196,12 @@ void LCD_Blank();
 
 #ifdef LCDTEXT
 
+//! Move cursor to next line
+/**
+ * @param size Font size index
+ */
+void LCD_SkipLine(uint8_t size);
+
 //! Print single char
 /**
  * @param c Character

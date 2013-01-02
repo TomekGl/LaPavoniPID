@@ -210,6 +210,7 @@ void Menu_Init(void) {
 }
 
 void Menu_Process(TKey key) {
+
 	if (key & KEY_DOWN) {
 		if (NOT_SELECTED == menu_position.second_level) { //MAIN MENU
 			if (menu_position.first_level<(sizeof(menu_first_level)/sizeof(menu_first_level[0])-1)) {
@@ -224,8 +225,7 @@ void Menu_Process(TKey key) {
 				menu_position.second_level = 1;
 			}
 		}
-	}
-	if (key & KEY_UP) {
+	} else if (key & KEY_UP) {
 		if (NOT_SELECTED == menu_position.second_level) {
 			if (menu_position.first_level>0) {
 				menu_position.first_level--;
@@ -239,15 +239,13 @@ void Menu_Process(TKey key) {
 				menu_position.second_level = submenu_entries_count[menu_position.first_level];
 			}
 		}
-	}
-	if (key & KEY_RIGHT) {
+	} else 	if (key & KEY_RIGHT) {
 		if (NOT_SELECTED == menu_position.second_level) {
 			menu_position.second_level = 1;
 		} else {
 			menu_position.entry_selected = 1;
 		}
-	}
-	if (key & KEY_LEFT) {
+	} else if (key & KEY_LEFT) {
 		if (NOT_SELECTED != menu_position.second_level && 0 == menu_position.entry_selected) {
 			menu_position.second_level = NOT_SELECTED;
 		} else {
@@ -255,8 +253,10 @@ void Menu_Process(TKey key) {
 		}
 	}
 
-	//redraw menu
-	LCD_Rectangle(MENU_X_POS-16-8*MENU_ROWS,0,56,132,MENUCOLOR_BACKGROUND);
+	if (! menu_position.entry_selected) {
+		//redraw menu
+		LCD_Rectangle(MENU_X_POS-16-8*MENU_ROWS,0,56,132,MENUCOLOR_BACKGROUND);
+	}
 
 	if (NOT_SELECTED == menu_position.second_level) {
 		//dispay first level menulist
@@ -273,7 +273,15 @@ void Menu_Process(TKey key) {
 //		}
 		//TODO do not redraw all items when not necessary
 		for (uint8_t i = 0; i<submenu_entries_count[menu_position.first_level]; i++) {
-			LCD_PutStr_P((char *)pgm_read_word(&(menu_second_level[Menu_ObjectIndex(menu_position.first_level, i+1)])), MENU_X_POS-8-i*8, 10, 0, MENUCOLOR_TEXT, (i==menu_position.second_level-1)?MENUCOLOR_CURSOR:MENUCOLOR_BACKGROUND);
+			if (menu_position.entry_selected && menu_position.second_level!=i+1) {
+				//do not redraw another items in edit mode
+				LCD_SkipLine(0); //increment cursor by 1 row
+				continue;
+			}
+			//print entry description
+			LCD_PutStr_P((char *)pgm_read_word(&(menu_second_level[Menu_ObjectIndex(menu_position.first_level, i+1)])),
+					MENU_X_POS-8-i*8, 10, 0,
+					MENUCOLOR_TEXT, (i==menu_position.second_level-1)?MENUCOLOR_CURSOR:MENUCOLOR_BACKGROUND);
 
 			//acquire pointer to callback function
 			CallbackFunction=(FuncPtr)pgm_read_word(&functions[Menu_ObjectIndex(menu_position.first_level, i+1)]);

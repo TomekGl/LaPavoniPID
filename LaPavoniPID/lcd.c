@@ -708,6 +708,16 @@ void LCD_PutStr_P(const char *s, uint8_t x, uint8_t y, uint8_t size, int foregro
 	}
 }
 
+void LCD_SkipLine(uint8_t size) {
+	if (size == 0) //SMALL
+		cursory = cursory + 8;
+	else if (size == 1) //MEDIUM
+		cursory = cursory + 8;
+	else
+		cursory = cursory + 8;
+
+}
+
 void LCD_PutChar(char c, uint8_t x, uint8_t y, uint8_t size, int foreground, int background) {
 	//autoincrement previous position if coordinates are not set
 	if (x==LCD_AUTOINCREMENT) {
@@ -796,7 +806,7 @@ void LCD_PutChar(char c, uint8_t x, uint8_t y, uint8_t size, int foreground, int
 	CS1;
 
 MOVECURSOR:
-	// advance the y position
+	// increment the y position
 	if (size == 0) //SMALL
 		y = y + 8;
 	else if (size == 1) //MEDIUM
@@ -804,7 +814,7 @@ MOVECURSOR:
 	else
 		y = y + 8;
 
-	// bail out if y exceeds 131
+	// line wrap if y exceeds 131
 	if (y > 131-8) {
 		y=0;
 		x-=8;
