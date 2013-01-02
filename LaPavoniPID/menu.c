@@ -271,11 +271,10 @@ void Menu_Process(TKey key) {
 //		if (n > MENU_ROWS) {
 //			n = MENU_ROWS;
 //		}
-		//TODO do not redraw all items when not necessary
 		for (uint8_t i = 0; i<submenu_entries_count[menu_position.first_level]; i++) {
 			if (menu_position.entry_selected && menu_position.second_level!=i+1) {
 				//do not redraw another items in edit mode
-				LCD_SkipLine(0); //increment cursor by 1 row
+				/*LCD_SkipLine(0);*/ //increment cursor by 1 row
 				continue;
 			}
 			//print entry description

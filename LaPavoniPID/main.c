@@ -174,7 +174,7 @@ void __attribute__ ((naked)) main(void) {
 	USART_Init((unsigned int)115200);
 
 	//Thermocouple
-	TC_init();
+	TC_Init();
 
 	//RTC
 	//DS1307_Init();
@@ -318,12 +318,12 @@ void __attribute__ ((naked)) main(void) {
 			flag &= ~_BV(FLAG_100MS); //reset flag
 
 			/* read TC data */
-			if (0==(status=TC_performRead())) {
+			if (0==(status=TC_PerformRead())) {
 				if (0 != prevstatus) {
 					LCD_Rectangle(110,0,8,132,WHITE);
 					BuzzerStart(10);
 				}
-				TC_getTCTemp(&deg, &milideg);
+				TC_GetTCTemp(&deg, &milideg);
 				//pv=deg*10+(milideg/10);
 
 				/* low-pass filter using exponential moving average */

@@ -10,20 +10,20 @@
 */
 
 #include "includes.h"
-#define ADCCS0 cbi(ADC_CSPORT,ADC_CS);
-#define ADCCS1 sbi(ADC_CSPORT,ADC_CS);
-#define CLK0 cbi(LCD_SPIPORT,LCD_SCK);
-#define CLK1 sbi(LCD_SPIPORT,LCD_SCK);
+#define ADCCS0 ADC_CSPORT&=~_BV(ADC_CS);
+#define ADCCS1 ADC_CSPORT|=_BV(ADC_CS);
+#define CLK0 LCD_SPIPORT&=~_BV(LCD_SCK);
+#define CLK1 LCD_SPIPORT|=_BV(LCD_SCK);
 
 union MAX31855Data read_data;
 
-void TC_init()
+void TC_Init()
 {
 	ADC_CSDDR |= _BV(ADC_CS);
 	ADC_CSPORT |= _BV(ADC_CS); //High - inactive
 }
 
-TTC_read_status  TC_performRead() {
+TTC_read_status  TC_PerformRead() {
 	SPCR |= _BV(SPE) | _BV(MSTR); // Enable Hardware SPI
 
 	LCD_CTRPORT |= _BV(LCD_CS);
@@ -51,13 +51,13 @@ TTC_read_status  TC_performRead() {
 */
 
 
-void TC_getTCTemp(int16_t *deg, uint16_t *milideg) {
+void TC_GetTCTemp(int16_t *deg, uint16_t *milideg) {
 	*deg = (read_data.word[1]>>4);
 	*milideg = ((read_data.word[1]>>2)&0x03)*25;
 	return;
 }
 
-void TC_getInternalTemp(int16_t *deg, uint16_t *milideg) {
+void TC_GetInternalTemp(int16_t *deg, uint16_t *milideg) {
 	*deg = (int16_t)read_data.byte[1]; //12bit internal temp
 	*milideg = (uint8_t)(read_data.byte[0]>>4)*625;
 	return;

@@ -37,7 +37,7 @@ union MAX31855Data {
 /**
  * Initialize communication with converter connected via SPI
  */
-void TC_init();
+void TC_Init();
 
 /*
  * Debug, print raw data on serial port
@@ -49,21 +49,21 @@ void TC_init();
  * Acquire data from thermocouple converter
  * @return TTC_read_status structure with RAW values and error flags
  */
-TTC_read_status TC_performRead();
+TTC_read_status TC_PerformRead();
 
 /**
  * Convert previously acquired data of TC temperature to Celsius degrees
  * @param *deg Pointer to integer part of value
  * @param *milideg Pointer to fractional part of value
  */
-void TC_getTCTemp(int16_t *deg, uint16_t *milideg);
+void TC_GetTCTemp(int16_t *deg, uint16_t *milideg);
 
 /**
  * Convert previously acquired data of cold junction to temperature in Celsius degrees
  * @param *deg Pointer to integer part of value
  * @param *milideg Pointer to fractional part of value
  */
-void TC_getInternalTemp(int16_t *deg, uint16_t *milideg);
+void TC_GetInternalTemp(int16_t *deg, uint16_t *milideg);
 
 /** @} */
 
