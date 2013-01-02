@@ -74,7 +74,7 @@ int16_t PID_Process(double processValue) {
 	static double dt;
 
 	//dt = system_clock - controller.t_prev;
-	dt = 1; // [s]
+	dt = 1.0; // [s]
 	//controller.t_prev = system_clock;
 
 	controller.PV = processValue;

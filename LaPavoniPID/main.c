@@ -263,6 +263,7 @@ void __attribute__ ((naked)) main(void) {
 					output = (uint8_t)(PID_Process(floatpv));
 					//output = (uint8_t)(PID_Process_3(floatpv));
 				} else if (-1 == controller_param.k_r) {
+					//helper for step response acquisition
 					output = (uint8_t)controller.y;
 				} else {
 					output = 0;
