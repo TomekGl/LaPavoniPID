@@ -21,7 +21,7 @@
 
 /// time of build
 const char TXT_VERSION[] __attribute__ ((progmem)) = "Build:" __DATE__ " " __TIME__;
-const char TXT_Hello[] __attribute__ ((progmem)) = "Coffee PID controller v0.2\n\rtomaszgluch.pl 2012\r\n";
+const char TXT_Hello[] __attribute__ ((progmem)) = "Coffee PID controller v1.0\n\rtomaszgluch.pl 2012\r\n";
 const char TXT_SerialInit[] __attribute__ ((progmem)) = "USART initialization...";
 const char TXT_PumpTimer[] __attribute__ ((progmem)) = "PUMP TIMER: ";
 const char TXT_PV[]  __attribute__ ((progmem)) = "PV:";
@@ -164,6 +164,8 @@ void __attribute__ ((naked)) main(void) {
 	sei();
 
 	//LCD
+	//SPSR |= _BV(SPI2X);
+
 	LCD_Init();
 	LCD_PutStr_P(TXT_Hello, 112, 5, 0, BLACK, WHITE);
 	LCD_PutStr_P(TXT_VERSION, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLACK, WHITE);

@@ -35,7 +35,7 @@ TTC_read_status  TC_performRead() {
 			;
 		read_data.byte[j]=SPDR;
 	}
-	SPCR &= ~_BV(SPE);
+//	SPCR &= ~_BV(SPE);
 	ADCCS1
 	return read_data.byte[0]&0x3;
 }

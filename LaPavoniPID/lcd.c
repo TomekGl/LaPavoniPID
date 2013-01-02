@@ -10,7 +10,7 @@
 #include "includes.h"
 
 
-void sendCMD(uint8_t cmd);
+void sendCommand(uint8_t cmd);
 void sendData(uint8_t cmd);
 void setPixel(uint16_t col);
 
@@ -22,8 +22,8 @@ void setPixel8(uint8_t col);
 #define CS1 sbi(LCD_CTRPORT,LCD_CS);
 #define CLK0 cbi(LCD_SPIPORT,LCD_SCK);
 #define CLK1 sbi(LCD_SPIPORT,LCD_SCK);
-#define SDA0 cbi(LCD_SPIPORT,LCD_SDA);
-#define SDA1 sbi(LCD_SPIPORT,LCD_SDA);
+#define MOSI0 cbi(LCD_SPIPORT,LCD_SDA);
+#define MOSI1 sbi(LCD_SPIPORT,LCD_SDA);
 #define RESET0 cbi(LCD_CTRPORT,LCD_RESET);
 #define RESET1 sbi(LCD_CTRPORT,LCD_RESET);
 
@@ -362,7 +362,7 @@ void LCD_Init() {
 
 	//Post power-up procedure
 	CS0
-	SDA0
+	MOSI0
 	CLK1
 
 	RESET1
@@ -371,50 +371,50 @@ void LCD_Init() {
 	RESET1
 
 	CLK1
-	SDA1
+	MOSI1
 	CLK1
 	_delay_ms(1);
 	//Software Reset
-	sendCMD(SWRESET);
+	sendCommand(SWRESET);
 
 	//Sleep Out
-	sendCMD(SLEEP_OUT);
+	sendCommand(SLEEP_OUT);
 
 	//Booster ON
-	sendCMD(BSTROFF);
+	sendCommand(BSTROFF);
 	_delay_ms(5);
 
 	//Normal display mode
-	sendCMD(NORON);
+	sendCommand(NORON);
 
 	//Display inversion off
-	sendCMD(INVOFF);
+	sendCommand(INVOFF);
 
 	//Data order
-	sendCMD(DOR);
+	sendCommand(DOR);
 
 	//Memory data access control
-	sendCMD(MADCTL);
+	sendCommand(MADCTL);
 	sendData(_BV(MAD_V)|_BV(MAD_MX)|_BV(MAD_MY));
 
 
 #ifdef MODE16BPP
-	sendCMD(COLMOD);
+	sendCommand(COLMOD);
 	sendData(COLMOD_16BPP);   //16-Bit per Pixel
 #endif
 #ifdef MODE12BPP
-	sendCMD(COLMOD);
+	sendCommand(COLMOD);
 	sendData(COLMOD_12BPP);   //12-Bit per Pixel (default)
 #endif
 #ifdef MODE8BPP
-	sendCMD(COLMOD);
+	sendCommand(COLMOD);
 	sendData(COLMOD_8BPP);
 #endif
 
 #ifdef MODE8BPP
 	/* if 256-color mode, bytes represent RRRGGGBB; the following
 	maps to 4-bit color for each value in range (0-7 R/G, 0-3 B) */
-	sendCMD(RGBSET);      // 256-color position set
+	sendCommand(RGBSET);      // 256-color position set
 	sendData( 0x00);        // 000 RED
 	sendData( 0x02);        // 001
 	sendData( 0x04);        // 010
@@ -438,21 +438,21 @@ void LCD_Init() {
 #endif
 
 	//Set Constrast
-	sendCMD(SETCON);
+	sendCommand(SETCON);
 	sendData(63);
 
 	//Column Adress Set
-	sendCMD(CASET);
+	sendCommand(CASET);
 	sendData(0);
 	sendData(131);
 
 	//Page Adress Set
-	sendCMD(PASET);
+	sendCommand(PASET);
 	sendData(0);
 	sendData(131);
 
 	//Memory Write
-	sendCMD(RAMWR);
+	sendCommand(RAMWR);
 
 	//Test-Picture
 	for (int i=0; i<132*132; i++) {
@@ -460,8 +460,8 @@ void LCD_Init() {
 	}
 
 	//Display On
-	sendCMD(DISPON);
-	sendCMD(NOP); //NOP
+	sendCommand(DISPON);
+	sendCommand(NOP); //NOP
 
 	CS1;
 
@@ -470,7 +470,7 @@ void LCD_Init() {
 void LCD_Reset() {
 	//Post power-up procedure
 	CS0
-	SDA0
+	MOSI0
 	CLK1
 
 	RESET1
@@ -479,51 +479,51 @@ void LCD_Reset() {
 	RESET1
 
 	CLK1
-	SDA1
+	MOSI1
 	CLK1
 	_delay_ms(1);
 
 	//Software Reset
-	sendCMD(SWRESET);
+	sendCommand(SWRESET);
 
 	//Sleep Out
-	sendCMD(SLEEP_OUT);
+	sendCommand(SLEEP_OUT);
 
 	//Booster ON
-	sendCMD(BSTROFF);
+	sendCommand(BSTROFF);
 	_delay_ms(5);
 
 	//Normal display mode
-	sendCMD(NORON);
+	sendCommand(NORON);
 
 	//Display inversion off
-	sendCMD(INVOFF);
+	sendCommand(INVOFF);
 
 	//Data order
-	sendCMD(DOR);
+	sendCommand(DOR);
 
 	//Memory data access control
-	sendCMD(MADCTL);
+	sendCommand(MADCTL);
 	sendData(_BV(MAD_V)|_BV(MAD_MX)|_BV(MAD_MY));
 
 
 #ifdef MODE16BPP
-	sendCMD(COLMOD);
+	sendCommand(COLMOD);
 	sendData(COLMOD_16BPP);   //16-Bit per Pixel
 #endif
 #ifdef MODE12BPP
-	sendCMD(COLMOD);
+	sendCommand(COLMOD);
 	sendData(COLMOD_12BPP);   //12-Bit per Pixel (default)
 #endif
 #ifdef MODE8BPP
-	sendCMD(COLMOD);
+	sendCommand(COLMOD);
 	sendData(COLMOD_8BPP);
 #endif
 
 #ifdef MODE8BPP
 	/* if 256-color mode, bytes represent RRRGGGBB; the following
 	maps to 4-bit color for each value in range (0-7 R/G, 0-3 B) */
-	sendCMD(RGBSET);      // 256-color position set
+	sendCommand(RGBSET);      // 256-color position set
 	sendData( 0x00);        // 000 RED
 	sendData( 0x02);        // 001
 	sendData( 0x04);        // 010
@@ -547,21 +547,21 @@ void LCD_Reset() {
 #endif
 
 	//Set Constrast
-	sendCMD(SETCON);
+	sendCommand(SETCON);
 	sendData(63);
 
 	/*	//Column Adress Set
-		sendCMD(CASET);
+		sendCommand(CASET);
 		sendData(0);
 		sendData(131);
 
 		//Page Adress Set
-		sendCMD(PASET);
+		sendCommand(PASET);
 		sendData(0);
 		sendData(131);
 
 		//Memory Write
-		sendCMD(RAMWR);
+		sendCommand(RAMWR);
 
 		//Test-Picture
 		for (int i=0;i<132*132;i++) {
@@ -569,8 +569,8 @@ void LCD_Reset() {
 		}
 	*/
 	//Display On
-	sendCMD(DISPON);
-	sendCMD(NOP); //NOP
+	sendCommand(DISPON);
+	sendCommand(NOP); //NOP
 
 	CS1;
 
@@ -580,54 +580,52 @@ void LCD_Blank() {
 	CS0;
 
 	//Column Adress Set
-	sendCMD(CASET);
+	sendCommand(CASET);
 	sendData(0);
 	sendData(131);
 
 	//Page Adress Set
-	sendCMD(PASET);
+	sendCommand(PASET);
 	sendData(0);
 	sendData(131);
 
 	//Memory Write
-	sendCMD(RAMWR);
+	sendCommand(RAMWR);
 	int i;
 
 	//fill with white
 	for (i=132*132; i>0; i--) {
 		setPixel(WHITE);
 	}
-	sendCMD(NOP);
+	sendCommand(NOP);
 	CS1
 }
 
 //send Command
-void sendCMD(uint8_t data) {
-	CLK0
-	SDA0 //MSB is 0 for sending command
+void sendCommand(uint8_t data) {
+	SPCR = 0; //&= ~(_BV(SPE) | _BV(MSTR));// | _BV(SPR1) | _BV(SPR0));
+    CLK0
+	MOSI0 //MSB is 0 for sending command
 	CLK1
 	CLK0
-	SPCR |= _BV(SPE) | _BV(MSTR);// Enable Hardware SPI
-	SPSR |= _BV(SPI2X);
+	SPCR = _BV(SPE) | _BV(MSTR);// Enable Hardware SPI
 	SPDR = data; // send data
 	while(!(SPSR & (1<<SPIF)))
 		;// wait until send complete
-	SPCR &= ~(_BV(SPE) | _BV(MSTR));// | _BV(SPR1) | _BV(SPR0));
 
 }
 
 //send Data
 void sendData(uint8_t data) {
+	SPCR = 0; //&= ~(_BV(SPE) | _BV(MSTR)); // | _BV(SPR1) | _BV(SPR0));
 	CLK0
-	SDA1 //MSB is 1 for sending data
+	MOSI1 //MSB is 1 for sending data
 	CLK1
 	CLK0
-	SPCR |= _BV(SPE) | _BV(MSTR); // Enable Hardware SPI
-	SPSR |= _BV(SPI2X);
+	SPCR = _BV(SPE) | _BV(MSTR); // Enable Hardware SPI
 	SPDR = data; // send data
 	while(!(SPSR & (1<<SPIF)))
 		;// wait until send complete
-	SPCR &= ~(_BV(SPE) | _BV(MSTR)); // | _BV(SPR1) | _BV(SPR0));
 
 }
 #ifdef MODE8BPP
@@ -661,7 +659,7 @@ void setPixel(uint16_t col) {
 void LCD_Rectangle(uint8_t x, uint8_t y, uint8_t height, uint8_t width, uint16_t foreground) {
 	CS0;
 	// Column address set
-	sendCMD(PASET);
+	sendCommand(PASET);
 	sendData(x);
 	if (x+height-1<132) {
 		sendData(x + height - 1);
@@ -670,7 +668,7 @@ void LCD_Rectangle(uint8_t x, uint8_t y, uint8_t height, uint8_t width, uint16_t
 	}
 
 	// Page address set
-	sendCMD(CASET);
+	sendCommand(CASET);
 	sendData(y);
 	if (y+width-1<132) {
 		sendData(y + width - 1);
@@ -678,11 +676,11 @@ void LCD_Rectangle(uint8_t x, uint8_t y, uint8_t height, uint8_t width, uint16_t
 		sendData(131);
 	}
 
-	sendCMD(RAMWR);
+	sendCommand(RAMWR);
 	for (uint16_t i=0; i<width*height; i++) {
 		setPixel(foreground);
 	}
-	sendCMD(NOP);
+	sendCommand(NOP);
 	CS1;
 }
 
@@ -747,15 +745,15 @@ void LCD_PutChar(char c, uint8_t x, uint8_t y, uint8_t size, int foreground, int
 	CS0;
 
 	// Row address set
-	sendCMD(PASET);
+	sendCommand(PASET);
 	sendData(x);
 	sendData(x + nRows - 1);
 	// Column address set
-	sendCMD(CASET);
+	sendCommand(CASET);
 	sendData(y);
 	sendData(y + nCols - 1);
 	// WRITE MEMORY
-	sendCMD(RAMWR);
+	sendCommand(RAMWR);
 	// loop on each row, working backwards from the bottom to the top
 	for (i = nRows - 1; i >= 0; i--) {
 		// copy pixel row from font table and then decrement row
@@ -794,7 +792,7 @@ void LCD_PutChar(char c, uint8_t x, uint8_t y, uint8_t size, int foreground, int
 		}
 	}
 	// terminate the Write Memory command
-	sendCMD(NOP);
+	sendCommand(NOP);
 	CS1;
 
 MOVECURSOR:

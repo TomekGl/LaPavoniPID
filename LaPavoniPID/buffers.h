@@ -46,7 +46,7 @@
 
 
 /// buffer size in bytes,
-#define BUF_SIZE 48
+#define BUF_SIZE 80
 
 ///circullar buffer structure definition
 struct Tcircle_buffer_tag
