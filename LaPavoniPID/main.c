@@ -139,9 +139,6 @@ void __attribute__ ((naked)) main(void) {
 	//Buzzer
 	BUZZ_DDR |= _BV(BUZZ);
 
-	//SPI
-	SPI_DDR |= _BV(SPI_MOSI) | _BV(SPI_SCK);
-	SPI_PORT |= _BV(SPI_MISO); //pullup on MISO
 
 
 	// timer 0 - system ticks generation      8e6 / 1024 / 79 ~= 100Hz     7372800/
@@ -163,10 +160,15 @@ void __attribute__ ((naked)) main(void) {
 	//enable interrupts
 	sei();
 
-	//LCD
-	//SPSR |= _BV(SPI2X);
-
-	LCD_Init();
+    //SPI
+	SPI_DDR |= _BV(SPI_MOSI) | _BV(SPI_SCK);
+	SPI_PORT |= _BV(SPI_MISO); //pullup on MISO
+	SPSR |= _BV(SPI2X);
+	SPCR = _BV(SPE) | _BV(MSTR);// Enable Hardware SPI
+	SPDR = 0; // send some data, to ensure SPIF flag set
+	_delay_us(2);
+	SPCR &= ~_BV(SPE);
+    LCD_Init();
 	LCD_PutStr_P(TXT_Hello, 112, 5, 0, BLACK, WHITE);
 	LCD_PutStr_P(TXT_VERSION, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLACK, WHITE);
 
@@ -190,6 +192,14 @@ void __attribute__ ((naked)) main(void) {
 		_delay_ms(100);
 	}
 	LCD_Blank();
+//	for (uint8_t i=40; i>0; i--) {
+//		LCD_Rectangle(0,0,128,128,RED);
+//		LCD_Rectangle(0,0,128,128,BLUE);
+//		LCD_Rectangle(0,0,128,128,GREEN);
+//	}
+//	LCD_PutDecimal(system_clock, 0, 0, 0, BLACK, WHITE);
+//	while(1) {}
+
 	Menu_Init();
 	Menu_Process(0);
 
@@ -319,7 +329,10 @@ void __attribute__ ((naked)) main(void) {
 			flag &= ~_BV(FLAG_100MS); //reset flag
 
 			/* read TC data */
-			if (0==(status=TC_PerformRead())) {
+			_delay_ms(10);
+			status = TC_PerformRead();
+			_delay_ms(10);
+			if (0==(status/*=TC_PerformRead()*/)) {
 				if (0 != prevstatus) {
 					LCD_Rectangle(110,0,8,132,WHITE);
 					BuzzerStart(10);

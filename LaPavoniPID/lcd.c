@@ -5,7 +5,7 @@
  @author Tomasz Głuch contact+avr@tomaszgluch.pl http://tomaszgluch.pl/
  @date 04-03-2012
 
- Fonts and char lookup table algorithm was written by Jim Parise, James P Lynch, see copyright below
+ Fonts and char lookup table algorithm was written by Jim Parise, James P Lynch, see comments below
 */
 #include "includes.h"
 
@@ -19,7 +19,7 @@ void LCD_SetPixel8(uint8_t col);
 #endif
 
 #define CS0    LCD_CTRPORT&=~_BV(LCD_CS);
-#define CS1    LCD_CTRPORT|=_BV(LCD_CS);
+#define CS1    {_delay_us(2);LCD_CTRPORT|=_BV(LCD_CS);}
 #define CLK0   LCD_SPIPORT&=~_BV(LCD_SCK);
 #define CLK1   LCD_SPIPORT|=_BV(LCD_SCK);
 #define MOSI0  LCD_SPIPORT&=~_BV(LCD_SDA);
@@ -602,31 +602,32 @@ void LCD_Blank() {
 
 //send Command
 void LCD_SendCommand(uint8_t data) {
-	SPCR = 0; //&= ~(_BV(SPE) | _BV(MSTR));// | _BV(SPR1) | _BV(SPR0));
+	while(!(SPSR & (1<<SPIF)))
+		;// wait until send complete
+
+	SPCR &= ~_BV(SPE); // | _BV(MSTR));// | _BV(SPR1) | _BV(SPR0));
     CLK0
 	MOSI0 //MSB is 0 for sending command
 	CLK1
 	CLK0
-	SPCR = _BV(SPE) | _BV(MSTR);// Enable Hardware SPI
+	SPCR |= _BV(SPE); // | _BV(MSTR);// Enable Hardware SPI
 	SPDR = data; // send data
-	while(!(SPSR & (1<<SPIF)))
-		;// wait until send complete
 
 }
 
 //send Data
 void LCD_SendData(uint8_t data) {
-	SPCR = 0; //&= ~(_BV(SPE) | _BV(MSTR)); // | _BV(SPR1) | _BV(SPR0));
+	while(!(SPSR & (1<<SPIF)))
+		;// wait until send complete
+	SPCR &= ~_BV(SPE);
 	CLK0
 	MOSI1 //MSB is 1 for sending data
 	CLK1
 	CLK0
-	SPCR = _BV(SPE) | _BV(MSTR); // Enable Hardware SPI
+	SPCR |= _BV(SPE); // Enable Hardware SPI
 	SPDR = data; // send data
-	while(!(SPSR & (1<<SPIF)))
-		;// wait until send complete
-
 }
+
 #ifdef MODE8BPP
 void LCD_SetPixel8(uint8_t col) {
 	LCD_SendData(col);

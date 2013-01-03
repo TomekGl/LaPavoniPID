@@ -24,7 +24,10 @@ void TC_Init()
 }
 
 TTC_read_status  TC_PerformRead() {
-	SPCR |= _BV(SPE) | _BV(MSTR); // Enable Hardware SPI
+	SPCR |= _BV(SPE); // | _BV(MSTR); // Enable Hardware SPI
+//	while(!(SPSR & (1<<SPIF)))// wait until previous transmission completed
+//		;
+	SPSR &= ~_BV(SPI2X);
 
 	LCD_CTRPORT |= _BV(LCD_CS);
 	ADCCS0
@@ -37,8 +40,32 @@ TTC_read_status  TC_PerformRead() {
 	}
 //	SPCR &= ~_BV(SPE);
 	ADCCS1
+	SPSR |= _BV(SPI2X);
+	SPDR = 0xff; //send some data to ensure 1 in SPIF flag for LCD operation
+
 	return read_data.byte[0]&0x3;
 }
+
+//TTC_read_status  TC_PerformRead() {
+//	LCD_CTRPORT |= _BV(LCD_CS); //disable lcd CS
+//	_delay_ms(1);
+//	SPCR |= _BV(SPE); // Enable Hardware SPI
+//
+//	ADCCS0
+//	_delay_us(1);
+//	for (uint8_t j=3; j<4; j--) {
+//		SPDR = 0xff; // send some data
+//		while(!(SPSR & (1<<SPIF)))// wait until send complete
+//			;
+//		read_data.byte[j]=SPDR;
+//	}
+////	SPCR &= ~_BV(SPE);
+//	ADCCS1
+//	SPDR = 0xff; //send some data to ensure 1 in SPIF flag
+//	_delay_ms(1);
+//	LCD_CTRPORT &= ~_BV(LCD_CS);
+//	return read_data.byte[0]&0x3;
+//}
 
 
 /*void TC_debug() {
