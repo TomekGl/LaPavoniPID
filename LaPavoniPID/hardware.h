@@ -69,4 +69,9 @@
 #define I2C_DDR DDRC
 #define I2C_PORT PORTC
 
+#define FM1_PIN PINB
+#define FM1 PB2
+#define FM1_DDR DDRB
+#define FM1_PORT PORTB
+
 #endif /*HARDWARE_H_*/

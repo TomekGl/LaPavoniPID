@@ -92,6 +92,15 @@ ISR(INT1_vect)
 	return;
 }
 
+/// External interrupt - Flow Meter
+ISR(INT2_vect)
+{
+
+	flow_meter_pulses++;
+	return;
+}
+
+
 /// Non-blocking buzzer support
 void BuzzerStart(uint8_t time) {
 #ifdef BEEPER
@@ -125,8 +134,9 @@ void __attribute__ ((naked)) main(void) {
 
 	//Input
 	MCUCR |= _BV(ISC11); //falling edge
-	IN1_PORT |= _BV(IN1);
-	GICR |= _BV(INT1);
+	IN1_PORT |= _BV(IN1); //pullup
+	FM1_PORT |= _BV(FM1); //pullup
+	GICR |= _BV(INT1) | _BV(INT2);
 
 	//Outputs
 	DDRC |= (_BV(OUT1)|_BV(OUT2)|_BV(OUT3));
@@ -270,7 +280,11 @@ void __attribute__ ((naked)) main(void) {
 
 				if (controller_param.k_r>0) {
 					//process PID controller
-					output = (uint8_t)(PID_Process(floatpv));
+					// 0.7 * 256 = 179
+					output = (uint8_t)PID_Process(floatpv);
+					if (pump_timer > controller_param.preinfusion_time && tmp_out1) {
+						output = (output>255-179)?255:output+179;
+					}
 					//output = (uint8_t)(PID_Process_3(floatpv));
 				} else if (-1 == controller_param.k_r) {
 					//helper for step response acquisition
@@ -442,6 +456,7 @@ void __attribute__ ((naked)) main(void) {
 			LCD_Rectangle(0,64+16, 16,16, WHITE); //clear last 2 chars
 			LCD_PutDecimal((output*100)/255, 0, 64, 1, BLACK, WHITE);
 			LCD_PutChar('%', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, BLACK, WHITE);
+			LCD_PutDecimal(flow_meter_pulses, 0, 0 , 1, BLACK, RED);
 
 
 			//BUTTONS

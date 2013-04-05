@@ -19,6 +19,7 @@ extern volatile uint8_t output;
 extern volatile uint8_t pwm;
 extern double floatpv;
 extern double floattest;
+extern volatile int16_t flow_meter_pulses;
 
 
 #endif				/*GLOBALS_H_ */

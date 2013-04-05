@@ -14,3 +14,4 @@ uint8_t timer0;
 volatile uint8_t output=0, pwm=0;
 double floatpv = 0;
 double floattest = 3.14159;
+volatile int16_t flow_meter_pulses = 0;
