@@ -74,4 +74,10 @@
 #define FM1_DDR DDRB
 #define FM1_PORT PORTB
 
+#define FM2_PIN PINB
+#define FM2 PB3
+#define FM2_DDR DDRB
+#define FM2_PORT PORTB
+
+
 #endif /*HARDWARE_H_*/

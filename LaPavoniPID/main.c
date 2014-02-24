@@ -32,7 +32,7 @@ const char TXT_TCErrorShortPlus[] __attribute__ ((progmem)) = "Short+!";
 const char TXT_TCErrorShortMinus[] __attribute__ ((progmem)) = "Short-!";
 
 volatile uint8_t flag;
-
+volatile uint8_t flow_meter2_input;
 volatile uint8_t buzzer_timeout;
 
 /// System clock control routine
@@ -77,6 +77,8 @@ ISR(TIMER1_OVF_vect) {
 		}
 	}
 
+
+
 	return;
 }
 
@@ -95,8 +97,7 @@ ISR(INT1_vect)
 /// External interrupt - Flow Meter
 ISR(INT2_vect)
 {
-
-	flow_meter_pulses++;
+	flow_meter1_pulses++;
 	return;
 }
 
@@ -112,7 +113,7 @@ void BuzzerStart(uint8_t time) {
 }
 
 
-void __attribute__ ((naked)) main(void) {
+void /*__attribute__ ((naked))*/ main(void) {
 	// TC ADC read status
 	uint8_t status,prevstatus;
 	int16_t deg;
@@ -144,7 +145,7 @@ void __attribute__ ((naked)) main(void) {
 
 	//Unused connector
 	PORTA |= 0xff;
-	PORTB |= 0x0f;
+	PORTB |= 0x0f | _BV(PB2) | _BV(PB3);
 
 	//Buzzer
 	BUZZ_DDR |= _BV(BUZZ);
@@ -152,7 +153,7 @@ void __attribute__ ((naked)) main(void) {
 
 
 	// timer 0 - system ticks generation      8e6 / 1024 / 79 ~= 100Hz     7372800/
-	TCCR0 |= _BV(CS00) | _BV(CS02);
+	TCCR0 |= _BV(CS00) | _BV(CS01) /* | _BV(CS02)*/  ;  //256
 	TIMSK |= _BV(TOIE0);
 	TCNT0 = timer0; //255-72;
 
@@ -213,7 +214,7 @@ void __attribute__ ((naked)) main(void) {
 	Menu_Init();
 	Menu_Process(0);
 
-	BuzzerStart(50);
+	BuzzerStart(5);
 
 	wdt_enable(WDTO_2S);
 
@@ -235,6 +236,18 @@ void __attribute__ ((naked)) main(void) {
 				USART_TransmitDecimal(OSCCAL); //181 was OK in my uC
 			}
 		}
+
+		//flow meter for overpressure valve
+	    uint8_t t;
+	    if ((t=(FM2_PIN & _BV(FM2_PORT))) != flow_meter2_input) {
+	    	flow_meter2_input = t;
+			flow_meter2_pulses++;
+		}
+//	    if ((t=(FM1_PIN & _BV(FM1_PORT))) != flow_meter1_input) {
+//	    	flow_meter1_input = t;
+//			flow_meter1_pulses++;
+//		}
+
 
 		// control outputs
 		if (tmp_out1) {
@@ -349,7 +362,7 @@ void __attribute__ ((naked)) main(void) {
 			if (0==(status/*=TC_PerformRead()*/)) {
 				if (0 != prevstatus) {
 					LCD_Rectangle(110,0,8,132,WHITE);
-					BuzzerStart(10);
+//TODO					BuzzerStart(10);
 				}
 				TC_GetTCTemp(&deg, &milideg);
 				//pv=deg*10+(milideg/10);
@@ -386,6 +399,10 @@ void __attribute__ ((naked)) main(void) {
 				USART_TransmitDecimal(in_flag);
 				USART_Put(',');
 				USART_TransmitDecimal(output);
+				USART_Put(',');
+				USART_TransmitDecimal(flow_meter1_pulses);
+				USART_Put(',');
+				USART_TransmitDecimal(flow_meter2_pulses);
 				USART_Put('\r');
 				USART_Put('\n');
 
@@ -396,7 +413,7 @@ void __attribute__ ((naked)) main(void) {
 				if (0 == prevstatus) { //only on transition to erroneous state
 					//clear controller section on LCD
 					LCD_Rectangle(96, 0, (132-96), 132, WHITE);
-					BuzzerStart(100);
+//TODO					BuzzerStart(100);
 				}
 
 				LCD_PutStr_P(TXT_TCError, 110,5,0,RED,WHITE);
@@ -456,8 +473,7 @@ void __attribute__ ((naked)) main(void) {
 			LCD_Rectangle(0,64+16, 16,16, WHITE); //clear last 2 chars
 			LCD_PutDecimal((output*100)/255, 0, 64, 1, BLACK, WHITE);
 			LCD_PutChar('%', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, BLACK, WHITE);
-			LCD_PutDecimal(flow_meter_pulses, 0, 0 , 1, BLACK, RED);
-
+			LCD_PutDecimal(flow_meter1_pulses, 0, 0 , 1, BLACK, RED);
 
 			//BUTTONS
 			switch_status = ( SW1_PIN & (_BV(SW1)|_BV(SW3)|_BV(SW4))) | ( SW2_PIN & _BV(SW2));
