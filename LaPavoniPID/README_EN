@@ -3,7 +3,7 @@ Espresso machine PID controller, with ATmega32A microcontroller.
 Features:
 - 3 digital outputs (AC 230V),
 - 1 digital input (AC 230V),
-- 1 wejście termopary K,
+- 1 K-type thermocouple input,
 - PID controller
 - pre-infusion,
 - serial interface for data acquisition,
