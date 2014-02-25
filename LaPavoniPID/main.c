@@ -122,10 +122,19 @@ void Display(TDisplayTask phase) {
 	case DISP_PROCESS:
 		/*  Display process value */
 		LCD_PutStr_P(TXT_PV, 112, 5, 1, BLACK, WHITE);
+
+#ifndef AVOIDFLOAT
+		LCD_PutDouble(Temperature.TC.deg+Temperature.TC.milideg/100.0,
+				LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, RED, WHITE);
+#else
 		LCD_PutDecimalSigned(Temperature.TC.deg, 112, 35, 1, RED, WHITE);
 		LCD_PutChar('.', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, RED, WHITE);
+		if (Temperature.TC.milideg < 10) {
+			LCD_PutChar('0', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, RED, WHITE);
+		}
 		LCD_PutDecimal(Temperature.TC.milideg, LCD_AUTOINCREMENT,
 				LCD_AUTOINCREMENT, 1, RED, WHITE);
+#endif
 		LCD_PutStr(" oC ", LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, RED, WHITE);
 
 		/*  Display pump timer */
