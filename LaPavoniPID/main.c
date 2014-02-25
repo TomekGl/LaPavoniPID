@@ -32,7 +32,6 @@ const char TXT_TCErrorShortPlus[] __attribute__ ((progmem)) = "Short+!";
 const char TXT_TCErrorShortMinus[] __attribute__ ((progmem)) = "Short-!";
 
 volatile uint8_t flag;
-volatile uint8_t flow_meter2_input;
 volatile uint8_t buzzer_timeout;
 
 struct MAX31855Temp Temperature;
@@ -78,9 +77,6 @@ ISR(TIMER1_OVF_vect) {
 			OUT3_PORT |= _BV(OUT3);
 		}
 	}
-
-
-
 	return;
 }
 
@@ -243,7 +239,7 @@ void /*__attribute__ ((naked))*/ main(void) {
 	// TC ADC read status
 	uint8_t status,prevstatus;
 
-	uint8_t bajt;
+	uint8_t rcvdByte;
 	uint8_t switch_status = 0xff, prev_switch_status = 0xff;
 	uint8_t repeat, repeated_flag;
 	int16_t pv=100; //, output=0;
@@ -326,13 +322,6 @@ void /*__attribute__ ((naked))*/ main(void) {
 		_delay_ms(100);
 	}
 	LCD_Blank();
-//	for (uint8_t i=40; i>0; i--) {
-//		LCD_Rectangle(0,0,128,128,RED);
-//		LCD_Rectangle(0,0,128,128,BLUE);
-//		LCD_Rectangle(0,0,128,128,GREEN);
-//	}
-//	LCD_PutDecimal(system_clock, 0, 0, 0, BLACK, WHITE);
-//	while(1) {}
 
 	Menu_Init();
 	Menu_Process(0);
@@ -346,30 +335,28 @@ void /*__attribute__ ((naked))*/ main(void) {
 	while (1) {
 		//process data received on serial port
 		if (0!=buf_getcount((Tcircle_buffer *)&USART_buffer_RX)) {
-			bajt = buf_getbyte((Tcircle_buffer *)&USART_buffer_RX);
-			USART_Put(bajt);
+			rcvdByte = buf_getbyte((Tcircle_buffer *)&USART_buffer_RX);
+			USART_Put(rcvdByte);
 			USART_StartSending();
-			if ('a'==bajt) {
+			if ('a'==rcvdByte) {
 				USART_TransmitDecimal(TCNT1);
 			}
-			if ('s'==bajt) {
+			if ('s'==rcvdByte) {
 				USART_TransmitDecimal(TCNT2);
 			}
-			if ('d'==bajt) {
+			if ('d'==rcvdByte) {
 				USART_TransmitDecimal(OSCCAL); //181 was OK in my uC
 			}
 		}
 
+#ifdef SECOND_FLOW_METER
 		//flow meter for overpressure valve
 	    uint8_t t;
 	    if ((t=(FM2_PIN & _BV(FM2_PORT))) != flow_meter2_input) {
 	    	flow_meter2_input = t;
 			flow_meter2_pulses++;
 		}
-//	    if ((t=(FM1_PIN & _BV(FM1_PORT))) != flow_meter1_input) {
-//	    	flow_meter1_input = t;
-//			flow_meter1_pulses++;
-//		}
+#endif
 
 
 		// control outputs
@@ -420,7 +407,7 @@ void /*__attribute__ ((naked))*/ main(void) {
 			if (0==(status/*=TC_PerformRead()*/)) {
 				if (0 != prevstatus) {
 					LCD_Rectangle(110,0,8,132,WHITE);
-//TODO					BuzzerStart(10);
+				BuzzerStart(10);
 				}
 				TC_DecodeTemp(&Temperature);
 
@@ -439,7 +426,7 @@ void /*__attribute__ ((naked))*/ main(void) {
 				if (0 == prevstatus) { //only on transition to erroneous state
 					//clear controller section on LCD
 					LCD_Rectangle(96, 0, (132-96), 132, WHITE);
-//TODO					BuzzerStart(100);
+				BuzzerStart(100);
 				}
 
 				LCD_PutStr_P(TXT_TCError, 110,5,0,RED,WHITE);
@@ -490,7 +477,7 @@ void /*__attribute__ ((naked))*/ main(void) {
 			switch_status = ( SW1_PIN & (_BV(SW1)|_BV(SW3)|_BV(SW4))) | ( SW2_PIN & _BV(SW2));
 			if (switch_status != (_BV(SW1)| _BV(SW3) | _BV(SW4) | _BV(SW2))) { //some button is pressed
 				if (switch_status != prev_switch_status) { // key pressed
-					_delay_ms(10); //debouncing - slightly blocking :)
+					_delay_ms(1); //debouncing - slightly blocking :)
 					switch_status = ( SW1_PIN & (_BV(SW1)|_BV(SW3)|_BV(SW4))) | ( SW2_PIN & _BV(SW2)); //TODO
 
 				} else { //end if key status changed
