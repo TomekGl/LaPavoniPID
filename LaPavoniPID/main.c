@@ -114,6 +114,130 @@ void BuzzerStart(uint8_t time) {
 	return;
 }
 
+typedef enum {
+	DISP_PROCESS,
+	DISP_PIDVARS,
+	DISP_STATUSBAR
+} TDisplayTask;
+
+void Display(TDisplayTask phase) {
+
+	switch (phase) {
+	case DISP_PROCESS:
+		/*  Display process value */
+		LCD_PutStr_P(TXT_PV, 112, 5, 1, BLACK, WHITE);
+		LCD_PutDecimalSigned(Temperature.TC.deg, 112, 35, 1, RED, WHITE);
+		LCD_PutChar('.', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, RED, WHITE);
+		LCD_PutDecimal(Temperature.TC.milideg, LCD_AUTOINCREMENT,
+				LCD_AUTOINCREMENT, 1, RED, WHITE);
+		LCD_PutStr(" oC ", LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, RED, WHITE);
+
+		/*  Display pump timer */
+		LCD_PutStr_P(TXT_PumpTimer, 98, 5, 1, BLACK, WHITE);
+		LCD_PutDecimal(pump_timer / 10, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1,
+				GREEN, WHITE);
+		LCD_PutChar('s', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, 0, WHITE);
+		LCD_PutChar(' ', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, 0, WHITE);
+
+//				LCD_PutStr("IN: ", 102,5,0,BLACK,WHITE);
+//				LCD_PutDecimalSigned(deg, 102, 35, 0, GREEN,WHITE);
+//				LCD_PutChar('.', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, GREEN,WHITE);
+//				LCD_PutDecimal(milideg, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, GREEN,WHITE);
+		break;
+	case DISP_PIDVARS:
+		/* integer
+		 LCD_PutStr("PV:", 89,5,0,BLUE,WHITE);
+		 LCD_PutDecimalSigned(controller.PV, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
+		 LCD_PutStr(",SP:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
+		 LCD_PutDecimalSigned(controller_param.SV, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
+		 LCD_PutStr(",E:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
+		 LCD_PutDecimalSigned(controller.e, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
+		 //LCD_PutStr(",OUT:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,RED,WHITE);
+		 //LCD_PutDecimalSigned(output, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED,WHITE);
+		 LCD_PutStr(",INT:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
+		 LCD_PutDecimalSigned(controller.integral, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
+		 LCD_PutStr(",DVDT:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
+		 LCD_PutDecimalSigned(controller.derivative, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
+		 LCD_PutStr(" ", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
+		 */
+		/* floating point */
+		LCD_PutStr("PV:", 89, 5, 0, BLUE, WHITE);
+		LCD_PutDouble(controller.PV, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0,
+				BLUE, WHITE);
+		//				LCD_PutStr(",SP:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
+		//				LCD_PutDecimalSigned(controller_param.SV, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
+		LCD_PutStr(",E:", LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE, WHITE);
+		LCD_PutDouble(controller.e, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0,
+				BLUE, WHITE);
+		//LCD_PutStr(",OUT:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,RED,WHITE);
+		//LCD_PutDecimalSigned(output, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED,WHITE);
+		LCD_PutStr(",INT:", LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,
+				WHITE);
+		LCD_PutDouble(controller.integral, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT,
+				0, BLUE, WHITE);
+		//				LCD_PutStr(",DVDT:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
+		//				LCD_PutDecimalSigned(controller.derivative, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
+		LCD_PutStr(" ", LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE, WHITE);
+		break;
+	case DISP_STATUSBAR:
+
+		//Display system clock in lower left corner:
+		//LCD_PutDecimal(system_clock, 0, 0, 0, BLACK, WHITE);
+		//LCD_PutChar(' ', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, 0, WHITE);
+
+		// status bar - inputs, outputs
+		LCD_PutChar('1', 0, 96, 1, WHITE, tmp_out1 ? RED : GREEN);
+		LCD_PutChar('2', 0, 105, 1, WHITE, tmp_out2 ? RED : GREEN);
+		LCD_PutChar('3', 0, 114, 1, WHITE,
+				bit_is_clear(OUT3_PORT,OUT3) ? RED : GREEN);
+		//LCD_PutChar('I', 0, 123, 1, WHITE, bit_is_clear(IN1_PIN,IN1)?RED:GREEN);
+		LCD_PutChar('I', 0, 123, 1, WHITE, (in_flag) ? RED : GREEN);
+
+		LCD_Rectangle(0, 64 + 16, 16, 16, WHITE); //clear last 2 chars
+		LCD_PutDecimal((output * 100) / 255, 0, 64, 1, BLACK, WHITE);
+		LCD_PutChar('%', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, BLACK, WHITE);
+		LCD_PutDecimal(flow_meter1_pulses, 0, 0, 1, BLACK, RED);
+		break;
+	}
+
+}
+
+void DebugSerial(void) {
+	USART_TransmitDecimal(system_clock);
+	USART_Put(',');
+	USART_TransmitDouble(floatpv);
+	USART_Put(',');
+	USART_TransmitDouble(controller_param.k_r);
+	USART_Put(',');
+	USART_TransmitDouble(controller_param.T_i);
+	USART_Put(',');
+	USART_TransmitDouble(controller_param.T_d);
+	USART_Put(',');
+	USART_TransmitDouble(controller.proportional);
+	USART_Put(',');
+	USART_TransmitDouble(controller.integral);
+	USART_Put(',');
+	USART_TransmitDouble(controller.derivative);
+	USART_Put(',');
+	USART_Put(tmp_out1?'1':'0');
+	USART_Put(',');
+	USART_Put(tmp_out2?'1':'0');
+	USART_Put(',');
+	USART_Put(bit_is_clear(OUT3_PORT,OUT3)?'1':'0');
+	USART_Put(',');
+	USART_TransmitDecimal(in_flag);
+	USART_Put(',');
+	USART_TransmitDecimal(output);
+	USART_Put(',');
+	USART_TransmitDecimal(flow_meter1_pulses);
+	USART_Put(',');
+	USART_TransmitDecimal(flow_meter2_pulses);
+	USART_Put('\r');
+	USART_Put('\n');
+
+
+}
+
 
 void /*__attribute__ ((naked))*/ main(void) {
 	// TC ADC read status
@@ -266,30 +390,7 @@ void /*__attribute__ ((naked))*/ main(void) {
 
 			// no error from termocouple converter
 			if (0 == status) {
-				/*  Display process value */
-				LCD_PutStr_P(TXT_PV, 112, 5, 1, BLACK, WHITE);
-				LCD_PutDecimalSigned(deg, 112, 35, 1, RED,WHITE);
-				LCD_PutChar('.', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, RED,WHITE);
-				LCD_PutDecimal(milideg, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, RED,WHITE);
-				LCD_PutStr(" oC ", LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, RED,WHITE);
-
-				/*  Display pump timer */
-				LCD_PutStr_P(TXT_PumpTimer, 98,5,1,BLACK,WHITE);
-				LCD_PutDecimal(pump_timer/10, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT,1, GREEN,WHITE);
-				LCD_PutChar('s', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, 0, WHITE);
-				LCD_PutChar(' ', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, 0, WHITE);
-
-//				TC_getInternalTemp(&deg, &milideg);
-				/*				LCD_PutStr("IN: ", 102,5,0,BLACK,WHITE);
-								LCD_PutDecimalSigned(deg, 102, 35, 0, GREEN,WHITE);
-								LCD_PutChar('.', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, GREEN,WHITE);
-								LCD_PutDecimal(milideg, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, GREEN,WHITE);
-				*/
-
-				//USART_TransmitDecimal(milideg);
-				//USART_Puts_P(VERSION);
-				//USART_Put('\n');
-
+				Display(DISP_PROCESS);
 				if (controller_param.k_r>0) {
 					//process PID controller
 					// 0.7 * 256 = 179
@@ -297,57 +398,15 @@ void /*__attribute__ ((naked))*/ main(void) {
 					if (pump_timer > controller_param.preinfusion_time && tmp_out1) {
 						output = (output>255-179)?255:output+179;
 					}
-					//output = (uint8_t)(PID_Process_3(floatpv));
 				} else if (-1 == controller_param.k_r) {
 					//helper for step response acquisition
 					output = (uint8_t)controller.y;
 				} else {
 					output = 0;
 				}
-/* integer
-				LCD_PutStr("PV:", 89,5,0,BLUE,WHITE);
-				LCD_PutDecimalSigned(controller.PV, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
-				LCD_PutStr(",SP:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
-				LCD_PutDecimalSigned(controller_param.SV, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
-				LCD_PutStr(",E:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
-				LCD_PutDecimalSigned(controller.e, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
-				//LCD_PutStr(",OUT:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,RED,WHITE);
-				//LCD_PutDecimalSigned(output, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED,WHITE);
-				LCD_PutStr(",INT:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
-				LCD_PutDecimalSigned(controller.integral, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
-				LCD_PutStr(",DVDT:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
-				LCD_PutDecimalSigned(controller.derivative, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
-				LCD_PutStr(" ", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
-*/
-/* floating point */
-				LCD_PutStr("PV:", 89,5,0,BLUE,WHITE);
-				LCD_PutDouble(controller.PV, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
-//				LCD_PutStr(",SP:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
-//				LCD_PutDecimalSigned(controller_param.SV, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
-				LCD_PutStr(",E:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
-				LCD_PutDouble(controller.e, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
-				//LCD_PutStr(",OUT:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,RED,WHITE);
-				//LCD_PutDecimalSigned(output, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, RED,WHITE);
-				LCD_PutStr(",INT:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
-				LCD_PutDouble(controller.integral, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
-//				LCD_PutStr(",DVDT:", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
-//				LCD_PutDecimalSigned(controller.derivative, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE,WHITE);
-				LCD_PutStr(" ", LCD_AUTOINCREMENT,LCD_AUTOINCREMENT,0,BLUE,WHITE);
+				Display(DISP_PIDVARS);
 				//correct TC read END
 			}
-			/*	USART_Put('\n');
-				USART_TransmitDecimal(system_clock);
-				USART_Put(',');
-				USART_TransmitDecimalSigned(controller.PV);
-				USART_Put(',');
-				USART_TransmitDecimalSigned(controller.y);
-				USART_Put(',');
-				USART_TransmitDecimalSigned(output);
-				USART_Put(',');
-				USART_TransmitDecimalSigned(controller.integral);
-				USART_Put(',');
-				USART_TransmitDecimalSigned(controller.derivative);
-			*/
 		} // end of every-1s section
 
 		/* ***** Every 0.1s tasks here ****** */
@@ -372,39 +431,7 @@ void /*__attribute__ ((naked))*/ main(void) {
 					floatpv = Temperature.TC.deg+Temperature.TC.milideg/100.0 +
 							(controller_param.alpha * (floatpv-(Temperature.TC.deg+Temperature.TC.milideg/100.0)));
 				}
-
-				USART_TransmitDecimal(system_clock);
-				USART_Put(',');
-				USART_TransmitDouble(floatpv);
-				USART_Put(',');
-				USART_TransmitDouble(controller_param.k_r);
-				USART_Put(',');
-				USART_TransmitDouble(controller_param.T_i);
-				USART_Put(',');
-				USART_TransmitDouble(controller_param.T_d);
-				USART_Put(',');
-				USART_TransmitDouble(controller.proportional);
-				USART_Put(',');
-				USART_TransmitDouble(controller.integral);
-				USART_Put(',');
-				USART_TransmitDouble(controller.derivative);
-				USART_Put(',');
-				USART_Put(tmp_out1?'1':'0');
-				USART_Put(',');
-				USART_Put(tmp_out2?'1':'0');
-				USART_Put(',');
-				USART_Put(bit_is_clear(OUT3_PORT,OUT3)?'1':'0');
-				USART_Put(',');
-				USART_TransmitDecimal(in_flag);
-				USART_Put(',');
-				USART_TransmitDecimal(output);
-				USART_Put(',');
-				USART_TransmitDecimal(flow_meter1_pulses);
-				USART_Put(',');
-				USART_TransmitDecimal(flow_meter2_pulses);
-				USART_Put('\r');
-				USART_Put('\n');
-
+				DebugSerial();
 
 			} else {
 				// some error while TC reading has occured
@@ -458,22 +485,7 @@ void /*__attribute__ ((naked))*/ main(void) {
 				}
 			}
 
-			//Display system clock in lower left corner:
-			//LCD_PutDecimal(system_clock, 0, 0, 0, BLACK, WHITE);
-			//LCD_PutChar(' ', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, 0, WHITE);
-
-			// status bar - inputs, outputs
-			LCD_PutChar('1', 0, 96, 1, WHITE, tmp_out1?RED:GREEN);
-			LCD_PutChar('2', 0, 105, 1, WHITE, tmp_out2?RED:GREEN);
-			LCD_PutChar('3', 0, 114, 1, WHITE, bit_is_clear(OUT3_PORT,OUT3)?RED:GREEN);
-			//LCD_PutChar('I', 0, 123, 1, WHITE, bit_is_clear(IN1_PIN,IN1)?RED:GREEN);
-			LCD_PutChar('I', 0, 123, 1, WHITE, (in_flag)?RED:GREEN);
-
-			LCD_Rectangle(0,64+16, 16,16, WHITE); //clear last 2 chars
-			LCD_PutDecimal((output*100)/255, 0, 64, 1, BLACK, WHITE);
-			LCD_PutChar('%', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, BLACK, WHITE);
-			LCD_PutDecimal(flow_meter1_pulses, 0, 0 , 1, BLACK, RED);
-
+			Display(DISP_STATUSBAR);
 			//BUTTONS
 			switch_status = ( SW1_PIN & (_BV(SW1)|_BV(SW3)|_BV(SW4))) | ( SW2_PIN & _BV(SW2));
 			if (switch_status != (_BV(SW1)| _BV(SW3) | _BV(SW4) | _BV(SW2))) { //some button is pressed
