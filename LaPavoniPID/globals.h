@@ -17,8 +17,7 @@ extern volatile uint8_t in_flag;
 extern uint8_t timer0;
 extern volatile uint8_t output;
 extern volatile uint8_t pwm;
-extern double floatpv;
-extern double floattest;
+extern double Temperature;
 extern volatile int16_t flow_meter1_pulses;
 extern volatile int16_t flow_meter2_pulses;
 

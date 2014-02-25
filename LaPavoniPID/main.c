@@ -34,7 +34,8 @@ const char TXT_TCErrorShortMinus[] __attribute__ ((progmem)) = "Short-!";
 volatile uint8_t flag;
 volatile uint8_t buzzer_timeout;
 
-struct MAX31855Temp Temperature;
+//
+struct MAX31855Temp TemperatureRaw;
 
 /// System clock control routine
 ISR(TIMER0_OVF_vect)
@@ -117,22 +118,21 @@ typedef enum {
 } TDisplayTask;
 
 void Display(TDisplayTask phase) {
-
 	switch (phase) {
 	case DISP_PROCESS:
 		/*  Display process value */
 		LCD_PutStr_P(TXT_PV, 112, 5, 1, BLACK, WHITE);
 
 #ifndef AVOIDFLOAT
-		LCD_PutDouble(Temperature.TC.deg+Temperature.TC.milideg/100.0,
+		LCD_PutDouble(TemperatureRaw.TC.value,
 				LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, RED, WHITE);
 #else
-		LCD_PutDecimalSigned(Temperature.TC.deg, 112, 35, 1, RED, WHITE);
+		LCD_PutDecimalSigned(TemperatureRaw.TC.deg, 112, 35, 1, RED, WHITE);
 		LCD_PutChar('.', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, RED, WHITE);
-		if (Temperature.TC.milideg < 10) {
+		if (TemperatureRaw.TC.milideg < 10) {
 			LCD_PutChar('0', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, RED, WHITE);
 		}
-		LCD_PutDecimal(Temperature.TC.milideg, LCD_AUTOINCREMENT,
+		LCD_PutDecimal(TemperatureRaw.TC.milideg, LCD_AUTOINCREMENT,
 				LCD_AUTOINCREMENT, 1, RED, WHITE);
 #endif
 		LCD_PutStr(" oC ", LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, RED, WHITE);
@@ -210,7 +210,7 @@ void Display(TDisplayTask phase) {
 void DebugSerial(void) {
 	USART_TransmitDecimal(system_clock);
 	USART_Put(',');
-	USART_TransmitDouble(floatpv);
+	USART_TransmitDouble(Temperature);
 	USART_Put(',');
 	USART_TransmitDouble(controller_param.k_r);
 	USART_Put(',');
@@ -315,7 +315,7 @@ void /*__attribute__ ((naked))*/ main(void) {
 	USART_Init((unsigned int)115200);
 
 	//Thermocouple
-	TC_Init();
+	TC_Init(&TemperatureRaw);
 
 	//RTC
 	//DS1307_Init();
@@ -390,7 +390,7 @@ void /*__attribute__ ((naked))*/ main(void) {
 				if (controller_param.k_r>0) {
 					//process PID controller
 					// 0.7 * 256 = 179
-					output = (uint8_t)PID_Process(floatpv);
+					output = (uint8_t)PID_Process(Temperature);
 					if (pump_timer > controller_param.preinfusion_time && tmp_out1) {
 						output = (output>255-179)?255:output+179;
 					}
@@ -411,21 +411,22 @@ void /*__attribute__ ((naked))*/ main(void) {
 
 			/* read TC data */
 			_delay_ms(10);
-			status = TC_PerformRead();
+			status = TC_PerformRead(&TemperatureRaw);
 			_delay_ms(10);
-			if (0==(status/*=TC_PerformRead()*/)) {
-				if (0 != prevstatus) {
+			if (TC_READOK == (status/*=TC_PerformRead(&TemperatureRaw)*/)) {
+				if (TC_READOK != prevstatus) {
+					//clean
 					LCD_Rectangle(110,0,8,132,WHITE);
-				BuzzerStart(10);
+					BuzzerStart(10);
 				}
-				TC_DecodeTemp(&Temperature);
+				//TC_DecodeTemp(&TemperatureRaw);
 
 				/* low-pass filter using exponential moving average */
-				if (0 == floatpv) {
-					floatpv = Temperature.TC.deg+Temperature.TC.milideg/100.0;
+				if (0 == Temperature) {
+					Temperature = TemperatureRaw.TC.value; //initial value
 				} else {
-					floatpv = Temperature.TC.deg+Temperature.TC.milideg/100.0 +
-							(controller_param.alpha * (floatpv-(Temperature.TC.deg+Temperature.TC.milideg/100.0)));
+					Temperature = TemperatureRaw.TC.value +
+							(controller_param.alpha * (Temperature-(TemperatureRaw.TC.value)));
 				}
 				DebugSerial();
 

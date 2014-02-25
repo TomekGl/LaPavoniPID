@@ -17,13 +17,17 @@
 
 union MAX31855Data read_data;
 
-void TC_Init()
+void TC_Init(struct MAX31855Temp *temp)
 {
 	ADC_CSDDR |= _BV(ADC_CS);
 	ADC_CSPORT |= _BV(ADC_CS); //High - inactive
+
+	temp->LastReadStatus = TC_NOTREADY;
 }
 
-TTC_read_status  TC_PerformRead() {
+TTC_read_status  TC_PerformRead(struct MAX31855Temp *temp) {
+//return TC_READOK;
+
 	SPCR |= _BV(SPE); // | _BV(MSTR); // Enable Hardware SPI
 //	while(!(SPSR & (1<<SPIF)))// wait until previous transmission completed
 //		;
@@ -43,30 +47,10 @@ TTC_read_status  TC_PerformRead() {
 	SPSR |= _BV(SPI2X);
 	SPDR = 0xff; //send some data to ensure 1 in SPIF flag for LCD operation
 
-	return read_data.byte[0]&0x3;
+	if (TC_READOK == read_data.byte[0]&0x03)
+		TC_DecodeTemp(temp);
+	return temp->LastReadStatus = read_data.byte[0]&0x3;
 }
-
-//TTC_read_status  TC_PerformRead() {
-//	LCD_CTRPORT |= _BV(LCD_CS); //disable lcd CS
-//	_delay_ms(1);
-//	SPCR |= _BV(SPE); // Enable Hardware SPI
-//
-//	ADCCS0
-//	_delay_us(1);
-//	for (uint8_t j=3; j<4; j--) {
-//		SPDR = 0xff; // send some data
-//		while(!(SPSR & (1<<SPIF)))// wait until send complete
-//			;
-//		read_data.byte[j]=SPDR;
-//	}
-////	SPCR &= ~_BV(SPE);
-//	ADCCS1
-//	SPDR = 0xff; //send some data to ensure 1 in SPIF flag
-//	_delay_ms(1);
-//	LCD_CTRPORT &= ~_BV(LCD_CS);
-//	return read_data.byte[0]&0x3;
-//}
-
 
 /*void TC_debug() {
 	for (uint8_t j=0; j<4; j++) {
@@ -78,24 +62,14 @@ TTC_read_status  TC_PerformRead() {
 */
 
 
-void TC_GetTCTemp(int16_t *deg, uint16_t *milideg) {
-	*deg = (read_data.word[1]>>4);
-	*milideg = ((read_data.word[1]>>2)&0x03)*25;
-	return;
-}
-
-void TC_GetInternalTemp(int16_t *deg, uint16_t *milideg) {
-	*deg = (int16_t)read_data.byte[1]; //12bit internal temp
-	*milideg = (uint8_t)(read_data.byte[0]>>4)*625;
-	return;
-}
-
 void TC_DecodeTemp(struct MAX31855Temp *temp) {
 	temp->TC.deg = (read_data.word[1]>>4);
 	temp->TC.milideg = ((read_data.word[1]>>2)&0x03)*25;
+	temp->TC.value = temp->TC.deg+temp->TC.milideg/100.0;
 
 	temp->Internal.deg = (int16_t)read_data.byte[1]; //12bit internal temp
 	temp->Internal.milideg = (uint8_t)(read_data.byte[0]>>4)*625;
+	temp->Internal.value = temp->TC.deg+temp->TC.milideg/100.0;
 
 	return;
 }
