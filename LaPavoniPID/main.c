@@ -21,7 +21,7 @@
 
 /// time of build
 const char TXT_VERSION[] __attribute__ ((progmem)) = "Build:" __DATE__ " " __TIME__;
-const char TXT_Hello[] __attribute__ ((progmem)) = "Coffee PID controller v1.0\n\rtomaszgluch.pl 2012\r\n";
+const char TXT_Hello[] __attribute__ ((progmem)) = "Coffee PID controller v1.1\n\rtomaszgluch.pl 2014\r\n";
 const char TXT_SerialInit[] __attribute__ ((progmem)) = "USART initialization...";
 const char TXT_PumpTimer[] __attribute__ ((progmem)) = "PUMP TIMER: ";
 const char TXT_PV[]  __attribute__ ((progmem)) = "PV:";
@@ -34,6 +34,8 @@ const char TXT_TCErrorShortMinus[] __attribute__ ((progmem)) = "Short-!";
 volatile uint8_t flag;
 volatile uint8_t flow_meter2_input;
 volatile uint8_t buzzer_timeout;
+
+struct MAX31855Temp Temperature;
 
 /// System clock control routine
 ISR(TIMER0_OVF_vect)
@@ -116,9 +118,6 @@ void BuzzerStart(uint8_t time) {
 void /*__attribute__ ((naked))*/ main(void) {
 	// TC ADC read status
 	uint8_t status,prevstatus;
-	int16_t deg;
-	uint16_t milideg;
-
 
 	uint8_t bajt;
 	uint8_t switch_status = 0xff, prev_switch_status = 0xff;
@@ -364,14 +363,14 @@ void /*__attribute__ ((naked))*/ main(void) {
 					LCD_Rectangle(110,0,8,132,WHITE);
 //TODO					BuzzerStart(10);
 				}
-				TC_GetTCTemp(&deg, &milideg);
-				//pv=deg*10+(milideg/10);
+				TC_DecodeTemp(&Temperature);
 
 				/* low-pass filter using exponential moving average */
 				if (0 == floatpv) {
-					floatpv = deg+milideg/100.0;
+					floatpv = Temperature.TC.deg+Temperature.TC.milideg/100.0;
 				} else {
-					floatpv = deg+milideg/100.0 + (controller_param.alpha * (floatpv-(deg+milideg/100.0)));
+					floatpv = Temperature.TC.deg+Temperature.TC.milideg/100.0 +
+							(controller_param.alpha * (floatpv-(Temperature.TC.deg+Temperature.TC.milideg/100.0)));
 				}
 
 				USART_TransmitDecimal(system_clock);

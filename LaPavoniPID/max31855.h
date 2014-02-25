@@ -33,6 +33,15 @@ union MAX31855Data {
 	uint8_t byte[4]; ///< as 4 bytes
 };
 
+struct MAX31855Value {
+	int16_t deg;
+	uint16_t milideg;
+};
+
+struct MAX31855Temp {
+	struct MAX31855Value TC;
+	struct MAX31855Value Internal;
+};
 
 /**
  * Initialize communication with converter connected via SPI
@@ -64,6 +73,12 @@ void TC_GetTCTemp(int16_t *deg, uint16_t *milideg);
  * @param *milideg Pointer to fractional part of value
  */
 void TC_GetInternalTemp(int16_t *deg, uint16_t *milideg);
+
+/**
+ * Convert previously acquired data to temperature in Celsius degrees
+ * @param *struct MAX31855Temp *temp Pointer to structure
+ */
+void TC_DecodeTemp(struct MAX31855Temp *temp);
 
 /** @} */
 

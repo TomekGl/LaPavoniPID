@@ -89,3 +89,13 @@ void TC_GetInternalTemp(int16_t *deg, uint16_t *milideg) {
 	*milideg = (uint8_t)(read_data.byte[0]>>4)*625;
 	return;
 }
+
+void TC_DecodeTemp(struct MAX31855Temp *temp) {
+	temp->TC.deg = (read_data.word[1]>>4);
+	temp->TC.milideg = ((read_data.word[1]>>2)&0x03)*25;
+
+	temp->Internal.deg = (int16_t)read_data.byte[1]; //12bit internal temp
+	temp->Internal.milideg = (uint8_t)(read_data.byte[0]>>4)*625;
+
+	return;
+}
