@@ -26,7 +26,7 @@ void TC_Init(struct MAX31855Temp *temp)
 }
 
 TTC_read_status  TC_PerformRead(struct MAX31855Temp *temp) {
-//return TC_READOK;
+	uint8_t status;
 
 	SPCR |= _BV(SPE); // | _BV(MSTR); // Enable Hardware SPI
 //	while(!(SPSR & (1<<SPIF)))// wait until previous transmission completed
@@ -47,22 +47,14 @@ TTC_read_status  TC_PerformRead(struct MAX31855Temp *temp) {
 	SPSR |= _BV(SPI2X);
 	SPDR = 0xff; //send some data to ensure 1 in SPIF flag for LCD operation
 
-	if (TC_READOK == read_data.byte[0]&0x03)
+	status = read_data.byte[0]&0x03;
+
+	if (TC_READOK == status)
 		TC_DecodeTemp(temp);
-	return temp->LastReadStatus = read_data.byte[0]&0x3;
+	return status;
 }
 
-/*void TC_debug() {
-	for (uint8_t j=0; j<4; j++) {
-		USART_TransmitBinary(read_data.byte[j]);
-	}
-	USART_Put('_');
-	USART_TransmitDecimal(read_data.integer);
-}
-*/
-
-
-void TC_DecodeTemp(struct MAX31855Temp *temp) {
+inline void TC_DecodeTemp(struct MAX31855Temp *temp) {
 	temp->TC.deg = (read_data.word[1]>>4);
 	temp->TC.milideg = ((read_data.word[1]>>2)&0x03)*25;
 	temp->TC.value = temp->TC.deg+temp->TC.milideg/100.0;

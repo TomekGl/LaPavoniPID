@@ -24,7 +24,7 @@ typedef enum {
 	TC_READOC = 1, ///< reading incorrect - thermocouple connector open
 	TC_READSCG = 2, ///< reading incorrect - thermocouple short to ground
 	TC_READSCV = 4, ///< reading incorrect - thermocouple short to VCC
-	TC_NOTREADY = 8
+	TC_NOTREADY = 8 ///< initial state
 } TTC_read_status;
 
 /// RAW data received from chip
@@ -50,12 +50,6 @@ struct MAX31855Temp {
  * Initialize communication with converter connected via SPI
  */
 void TC_Init(struct MAX31855Temp *temp);
-
-/*
- * Debug, print raw data on serial port
- */
-/* void TC_debug(); */
-
 
 /**
  * Acquire data from thermocouple converter

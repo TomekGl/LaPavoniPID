@@ -410,16 +410,12 @@ void /*__attribute__ ((naked))*/ main(void) {
 			flag &= ~_BV(FLAG_100MS); //reset flag
 
 			/* read TC data */
-			_delay_ms(10);
-			status = TC_PerformRead(&TemperatureRaw);
-			_delay_ms(10);
-			if (TC_READOK == (status/*=TC_PerformRead(&TemperatureRaw)*/)) {
+			if (TC_READOK == (status=TC_PerformRead(&TemperatureRaw))) {
 				if (TC_READOK != prevstatus) {
 					//clean
 					LCD_Rectangle(110,0,8,132,WHITE);
 					BuzzerStart(10);
 				}
-				//TC_DecodeTemp(&TemperatureRaw);
 
 				/* low-pass filter using exponential moving average */
 				if (0 == Temperature) {
