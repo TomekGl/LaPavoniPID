@@ -19,20 +19,23 @@
 /// default buzzer timeout
 #define BUZZER_TIME 15
 
-/// time of build
-const char TXT_VERSION[] __attribute__ ((progmem)) = "Build:" __DATE__ " " __TIME__;
+/// text constants
+const char TXT_Version[] __attribute__ ((progmem)) = "Build:" __DATE__ " " __TIME__;
 const char TXT_Hello[] __attribute__ ((progmem)) = "Coffee PID controller v1.1\n\rtomaszgluch.pl 2014\r\n";
-const char TXT_SerialInit[] __attribute__ ((progmem)) = "USART initialization...";
+const char TXT_SerialInit[] __attribute__ ((progmem)) = "USART OK...";
 const char TXT_PumpTimer[] __attribute__ ((progmem)) = "PUMP TIMER: ";
-const char TXT_PV[]  __attribute__ ((progmem)) = "PV:";
-const char TXT_OK[]  __attribute__ ((progmem)) = "OK.";
+const char TXT_Pv[]  __attribute__ ((progmem)) = "PV:";
+const char TXT_Ok[]  __attribute__ ((progmem)) = "OK.";
 const char TXT_TCError[] __attribute__ ((progmem)) = "TC ERR:";
 const char TXT_TCErrorOpen[] __attribute__ ((progmem)) = "Open!";
 const char TXT_TCErrorShortPlus[] __attribute__ ((progmem)) = "Short+!";
 const char TXT_TCErrorShortMinus[] __attribute__ ((progmem)) = "Short-!";
 
-volatile uint8_t flag;
-volatile uint8_t buzzer_timeout;
+//timing intervals flag
+volatile uint8_t Flag;
+
+//microseconds to disable buzzer
+volatile uint8_t BuzzerTimeout;
 
 //
 struct MAX31855Temp TemperatureRaw;
@@ -53,11 +56,11 @@ ISR(TIMER0_COMP_vect)
 	}
 
 #ifdef BEEPER
-	if (buzzer_timeout>0) {
-		if (buzzer_timeout == 1) {
+	if (BuzzerTimeout>0) {
+		if (BuzzerTimeout == 1) {
 			BUZZ_PORT &= ~_BV(BUZZ);
 		}
-		buzzer_timeout--;
+		BuzzerTimeout--;
 	}
 #endif
 	return;
@@ -95,7 +98,7 @@ ISR(INT1_vect)
 /// External interrupt - Flow Meter
 ISR(INT2_vect)
 {
-	flow_meter1_pulses++;
+	FlowMeterPulses++;
 	return;
 }
 
@@ -105,7 +108,7 @@ void BuzzerStart(uint8_t time) {
 #ifdef BEEPER
 	if (controller_param.buzzer_enabled == 0) return;
 	BUZZ_PORT |= _BV(BUZZ);
-	buzzer_timeout = time;
+	BuzzerTimeout = time;
 #endif
 	return;
 }
@@ -120,7 +123,7 @@ void Display(TDisplayTask phase) {
 	switch (phase) {
 	case DISP_PROCESS:
 		/*  Display process value */
-		LCD_PutStr_P(TXT_PV, 112, 5, 1, BLACK, WHITE);
+		LCD_PutStr_P(TXT_Pv, 112, 5, 1, BLACK, WHITE);
 
 #ifndef AVOIDFLOAT
 		LCD_PutDouble(TemperatureRaw.TC.value,
@@ -186,8 +189,8 @@ void Display(TDisplayTask phase) {
 	case DISP_STATUSBAR:
 
 		//Display system clock in lower left corner:
-		//LCD_PutDecimal(system_clock, 0, 0, 0, BLACK, WHITE);
-		//LCD_PutChar(' ', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, 0, WHITE);
+		LCD_PutDecimal(SystemClock, 0, 0, 0, BLACK, WHITE);
+		LCD_PutChar(' ', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, 0, WHITE);
 
 		// status bar - inputs, outputs
 		LCD_PutChar('1', 0, 96, 1, WHITE, tmp_out1 ? RED : GREEN);
@@ -200,14 +203,15 @@ void Display(TDisplayTask phase) {
 		LCD_Rectangle(0, 64 + 16, 16, 16, WHITE); //clear last 2 chars
 		LCD_PutDecimal((output * 100) / 255, 0, 64, 1, BLACK, WHITE);
 		LCD_PutChar('%', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, BLACK, WHITE);
-		LCD_PutDecimal(flow_meter1_pulses, 0, 0, 1, BLACK, RED);
+
+		//LCD_PutDecimal(FlowMeterPulses, 0, 0, 1, BLACK, RED);
 		break;
 	}
 
 }
 
 void DebugSerial(void) {
-	USART_TransmitDecimal(system_clock);
+	USART_TransmitDecimal(SystemClock);
 	USART_Put(',');
 	USART_TransmitDouble(Temperature);
 	USART_Put(',');
@@ -233,9 +237,7 @@ void DebugSerial(void) {
 	USART_Put(',');
 	USART_TransmitDecimal(output);
 	USART_Put(',');
-	USART_TransmitDecimal(flow_meter1_pulses);
-	USART_Put(',');
-	USART_TransmitDecimal(flow_meter2_pulses);
+	USART_TransmitDecimal(FlowMeterPulses);
 	USART_Put('\r');
 	USART_Put('\n');
 
@@ -245,14 +247,11 @@ void DebugSerial(void) {
 
 void /*__attribute__ ((naked))*/ main(void) {
 	// TC ADC read status
-	uint8_t status,prevstatus;
+	uint8_t status = 0xff,prevstatus;
 
 	uint8_t rcvdByte;
 	uint8_t switch_status = 0xff, prev_switch_status = 0xff;
 	uint8_t repeat, repeated_flag;
-	int16_t pv=100; //, output=0;
-
-	timer0=178;
 
 	//Pullups
 	SW1_PORT |= _BV(SW1);
@@ -309,7 +308,7 @@ void /*__attribute__ ((naked))*/ main(void) {
 	SPCR &= ~_BV(SPE);
     LCD_Init();
 	LCD_PutStr_P(TXT_Hello, 112, 5, 0, BLACK, WHITE);
-	LCD_PutStr_P(TXT_VERSION, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLACK, WHITE);
+	LCD_PutStr_P(TXT_Version, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLACK, WHITE);
 
 	//USART
 	USART_Init((unsigned int)115200);
@@ -321,7 +320,7 @@ void /*__attribute__ ((naked))*/ main(void) {
 	//DS1307_Init();
 
 	USART_Puts_P(TXT_Hello);
-	USART_Puts_P(TXT_VERSION);
+	USART_Puts_P(TXT_Version);
 
 	//Initialize runtime variables
 	PID_Init();
