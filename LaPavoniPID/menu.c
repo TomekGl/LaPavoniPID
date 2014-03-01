@@ -44,7 +44,7 @@ const char menu_entry_1_3[] __attribute__ ((progmem)) = "Output3: " ;
 const char menu_entry_1_4[] __attribute__ ((progmem)) = "Input: " ;
 
 const char menu_entry_2[] __attribute__ ((progmem)) = "Status " ;
-const char menu_entry_2_0[] __attribute__ ((progmem)) = "TIM0: " ;
+const char menu_entry_2_0[] __attribute__ ((progmem)) = "UART debug: " ;
 const char menu_entry_2_1[] __attribute__ ((progmem)) = "Save settings " ;
 const char menu_entry_2_2[] __attribute__ ((progmem)) = "Backlight " ;
 const char menu_entry_2_3[] __attribute__ ((progmem)) = "Alpha: " ;
@@ -73,7 +73,7 @@ const char  *menu_second_level[] __attribute__ ((progmem)) =  {
 const FuncPtr functions[] __attribute__ ((progmem)) = {
 	(void*)&setDouble, (void*)&setDouble, (void*)&setDouble, (void*)&setDouble, (void*)&setDouble, /*(void*)&setDouble,*/
 	(void*)&setBoolean, (void*)&setBoolean, (void*)&setBoolean, (void*)&setBoolean, (void*)&setInteger,
-	(void*)&setInteger, (void*)&callAfterConfirm, (void*)&setInteger, (void*)&setDouble,
+	(void*)&setBoolean, (void*)&callAfterConfirm, (void*)&setInteger, (void*)&setDouble,
 	(void*)&setInteger, (void*)&setInteger, (void*)&setInteger
 };
 
@@ -81,7 +81,7 @@ const FuncPtr functions[] __attribute__ ((progmem)) = {
 const void * variables[] = {
 	(void *)&(controller_param.SV), (void *)&(controller_param.k_r), (void *)&(controller_param.T_d), (void *)&(controller_param.T_i), (void *)&(controller_param.windup), /*(void *)&(controller_param.dead),*/
 	(void *)&(controller_param.buzzer_enabled), (void *)&tmp_out1,(void *)&tmp_out2, (void *)&tmp_out3, (void *)&output,
-	(void *)&timer0, (void*)&PID_SaveSettings, (void *)&OCR2, 	(void *)&(controller_param.alpha),
+	(void *)&(controller_param.serial_debug), (void*)&PID_SaveSettings, (void *)&(controller_param.lcd_brightness), 	(void *)&(controller_param.alpha),
 	(void *)&(controller_param.preinfusion_time), (void*)&(controller_param.preinfusion_duty_cycle), (void *)&(controller_param.preinfusion_valve_off_delay)
 };
 
@@ -184,8 +184,10 @@ void setSignedInteger16(uint8_t keys, int16_t * value) {
 void setBoolean(uint8_t keys, uint8_t * value) {
 	switch (keys) {
 	case KEY_UP:
+		*value = 1;
+		break;
 	case KEY_DOWN:
-		*value = ~(*value);
+		*value = 0;
 		break;
 	default:
 		break;

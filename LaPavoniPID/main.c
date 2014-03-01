@@ -428,7 +428,10 @@ void /*__attribute__ ((naked))*/ main(void) {
 					Temperature = TemperatureRaw.TC.value +
 							(controller_param.alpha * (Temperature-(TemperatureRaw.TC.value)));
 				}
-				DebugSerial();
+
+				if (controller_param.serial_debug) {
+					DebugSerial();
+				}
 
 			} else {
 				// some error while TC reading has occured
