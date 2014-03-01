@@ -38,11 +38,19 @@ volatile uint8_t buzzer_timeout;
 struct MAX31855Temp TemperatureRaw;
 
 /// System clock control routine
-ISR(TIMER0_OVF_vect)
+volatile uint8_t microticks = 9, microticks2 = 9;
+ISR(TIMER0_COMP_vect)
 {
-	// load
-	TCNT0 = timer0;
-	system_clock++;
+	Flag = _BV(FLAG_10MS);
+	SystemClock++;
+	if (0==microticks--) {
+		microticks = 9;
+		Flag = _BV(FLAG_100MS) | _BV(FLAG_10MS);
+		if (0==microticks2--) {
+			microticks2 = 9;
+			Flag = _BV(FLAG_1S) | _BV(FLAG_100MS) | _BV(FLAG_10MS);
+		}
+	}
 
 #ifdef BEEPER
 	if (buzzer_timeout>0) {
@@ -52,15 +60,6 @@ ISR(TIMER0_OVF_vect)
 		buzzer_timeout--;
 	}
 #endif
-
-	if (system_clock%100 == 0) {
-		flag = _BV(FLAG_1S) | _BV(FLAG_100MS);
-		return;
-	}
-	if (system_clock%10 == 0) {
-		flag = _BV(FLAG_100MS);
-		return;
-	}
 	return;
 }
 
@@ -280,15 +279,16 @@ void /*__attribute__ ((naked))*/ main(void) {
 
 
 
-	// timer 0 - system ticks generation      8e6 / 1024 / 79 ~= 100Hz     7372800/
-	TCCR0 |= _BV(CS00) | _BV(CS01) /* | _BV(CS02)*/  ;  //256
-	TIMSK |= _BV(TOIE0);
-	TCNT0 = timer0; //255-72;
+	// timer 0 - system ticks generation      8e6 / 1024 / 79 ~= 100Hz     7372800/1024/72
+	TCCR0 = _BV(WGM01) | _BV(CS00) | _BV(CS02)  ;  // CTC mode, prescaler 1024
+	TIMSK |= _BV(OCIE0);
+	OCR0 = F_CPU / 1024 / 100;
 
 	// timer 1 - output  T=~ 1s
 	TCCR1B = _BV(CS10)| _BV(CS12)  /*| _BV(CS21)*/ ;
 	TIMSK |= _BV(TOIE1);
 	TCNT1 = 65535-29; //255-72;
+	OSCCAL = 177;
 
 	// PWM for LCD backlight
 	TCCR2 |= /*_BV(CS20)|*/ /* _BV(CS21) |*/ _BV(CS22) //Prescaler /64
@@ -353,8 +353,14 @@ void /*__attribute__ ((naked))*/ main(void) {
 			if ('s'==rcvdByte) {
 				USART_TransmitDecimal(TCNT2);
 			}
+			if ('z'==rcvdByte) {
+				OSCCAL--; //177 was OK in my uC
+			}
+			if ('x'==rcvdByte) {
+				OSCCAL++; //177 was OK in my uC
+			}
 			if ('d'==rcvdByte) {
-				USART_TransmitDecimal(OSCCAL); //181 was OK in my uC
+				USART_TransmitDecimal(OSCCAL); //177 was OK in my uC
 			}
 		}
 
@@ -381,12 +387,11 @@ void /*__attribute__ ((naked))*/ main(void) {
 		}
 
 		/* ***** Every-1s tasks are here ***** */
-		if (flag & _BV(FLAG_1S)) {
-			flag &= ~_BV(FLAG_1S);
+		if (Flag & _BV(FLAG_1S)) {
+			Flag &= ~_BV(FLAG_1S);
 
 			// no error from termocouple converter
 			if (0 == status) {
-				Display(DISP_PROCESS);
 				if (controller_param.k_r>0) {
 					//process PID controller
 					// 0.7 * 256 = 179
@@ -400,14 +405,14 @@ void /*__attribute__ ((naked))*/ main(void) {
 				} else {
 					output = 0;
 				}
+				Display(DISP_PROCESS);
 				Display(DISP_PIDVARS);
-				//correct TC read END
+				//succesful TC read END
 			}
 		} // end of every-1s section
-
 		/* ***** Every 0.1s tasks here ****** */
-		if (flag & _BV(FLAG_100MS)) {
-			flag &= ~_BV(FLAG_100MS); //reset flag
+		if (Flag & _BV(FLAG_100MS)) {
+			Flag &= ~_BV(FLAG_100MS); //reset flag
 
 			/* read TC data */
 			if (TC_READOK == (status=TC_PerformRead(&TemperatureRaw))) {
@@ -482,6 +487,7 @@ void /*__attribute__ ((naked))*/ main(void) {
 			}
 
 			Display(DISP_STATUSBAR);
+
 			//BUTTONS
 			switch_status = ( SW1_PIN & (_BV(SW1)|_BV(SW3)|_BV(SW4))) | ( SW2_PIN & _BV(SW2));
 			if (switch_status != (_BV(SW1)| _BV(SW3) | _BV(SW4) | _BV(SW2))) { //some button is pressed
@@ -495,7 +501,7 @@ void /*__attribute__ ((naked))*/ main(void) {
 					repeated_flag = REPEATED_FLAG;  //button pressed for 1s
 					if (repeat>30) {
 						repeated_flag = REPEATED_FLAG | REPEATED_2X_FLAG; //button pressed for 3s
-						repeat--; //do not increment to avoid overflow
+						repeat--; //do not increment more to avoid overflow
 					}
 				}
 				/* button ->  task mapping */
@@ -521,6 +527,7 @@ void /*__attribute__ ((naked))*/ main(void) {
 				repeat = 0;
 				repeated_flag = 0;
 			}
+			//END OF BUTTONS
 SKIP:
 			prev_switch_status = switch_status;
 
