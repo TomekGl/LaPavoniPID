@@ -84,9 +84,9 @@ ISR(TIMER1_COMPA_vect) {
 /// External interrupt - AC input 1
 ISR(INT1_vect)
 {
-	//debug
-	if (tmp_in != 255) {
-		tmp_in++;
+	//Reset counter at start of new extraction cycle
+	if (in_flag==0) {
+		FlowMeterPulses=0;
 	}
 
 	in_flag = 4; //timeout to avoid flapping when input is AC 50Hz, decremented every 0.1s
@@ -186,23 +186,30 @@ void Display(TDisplayTask phase) {
 		break;
 	case DISP_STATUSBAR:
 
-		//Display system clock in lower left corner:
+		/* //Display system clock in lower left corner:
 		LCD_PutDecimal(SystemClock, 0, 0, 0, BLACK, WHITE);
 		LCD_PutChar(' ', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, 0, WHITE);
+		*/
 
 		// status bar - inputs, outputs
 		LCD_PutChar('1', 0, 96, 1, WHITE, tmp_out1 ? RED : GREEN);
 		LCD_PutChar('2', 0, 105, 1, WHITE, tmp_out2 ? RED : GREEN);
 		LCD_PutChar('3', 0, 114, 1, WHITE,
 				bit_is_clear(OUT3_PORT,OUT3) ? RED : GREEN);
-		//LCD_PutChar('I', 0, 123, 1, WHITE, bit_is_clear(IN1_PIN,IN1)?RED:GREEN);
+		LCD_PutChar('I', 0, 0, 1, WHITE, bit_is_clear(IN1_PIN,IN1)?RED:GREEN);
 		LCD_PutChar('I', 0, 123, 1, WHITE, (in_flag) ? RED : GREEN);
 
 		LCD_Rectangle(0, 64 + 16, 16, 16, WHITE); //clear last 2 chars
 		LCD_PutDecimal((output * 100) / 255, 0, 64, 1, BLACK, WHITE);
 		LCD_PutChar('%', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, BLACK, WHITE);
 
-		//LCD_PutDecimal(FlowMeterPulses, 0, 0, 1, BLACK, RED);
+		LCD_PutDecimal(FlowMeterPulses, 0, 8, 1, BLACK, RED);
+		if (FlowMeterPulses==0) {
+			//Clear text area after previous value)
+			LCD_PutChar(' ', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, 0, WHITE);
+			LCD_PutChar(' ', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, 0, WHITE);
+			LCD_PutChar(' ', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, 0, WHITE);
+		}
 		break;
 	}
 
