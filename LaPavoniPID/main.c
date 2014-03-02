@@ -67,9 +67,7 @@ ISR(TIMER0_COMP_vect)
 }
 
 /// Timer 1 (16bit) support - AC output 3
-ISR(TIMER1_OVF_vect) {
-	TCNT1 = 65535-30; //FIXME
-
+ISR(TIMER1_COMPA_vect) {
 	pwm++;
 	if (0 == output) {
 		OUT3_PORT |= _BV(OUT3);//disable
@@ -276,7 +274,7 @@ void /*__attribute__ ((naked))*/ main(void) {
 	//Buzzer
 	BUZZ_DDR |= _BV(BUZZ);
 
-
+DDRB = _BV(PB0)|_BV(PB1);
 
 	// timer 0 - system ticks generation      8e6 / 1024 / 79 ~= 100Hz     7372800/1024/72
 	TCCR0 = _BV(WGM01) | _BV(CS00) | _BV(CS02)  ;  // CTC mode, prescaler 1024
@@ -284,9 +282,11 @@ void /*__attribute__ ((naked))*/ main(void) {
 	OCR0 = F_CPU / 1024 / 100;
 
 	// timer 1 - output  T=~ 1s
-	TCCR1B = _BV(CS10)| _BV(CS12)  /*| _BV(CS21)*/ ;
-	TIMSK |= _BV(TOIE1);
-	TCNT1 = 65535-29; //255-72;
+	TCCR1B = _BV(WGM12) | _BV(CS10)| _BV(CS12); // /1024
+	TIMSK |= _BV(OCIE1A);
+	OCR1A = F_CPU / 1024 / 256; //1step - 1/256 of second
+
+	//Calibration of internal RC oscillator
 	OSCCAL = 177;
 
 	// PWM for LCD backlight
