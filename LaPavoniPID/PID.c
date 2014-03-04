@@ -41,7 +41,7 @@ void PID_Init(void) {
 void PID_Reset(void) {
 	controller_param.version = PID_EEPROM_VERSION;
 	controller_param.SV = 93.5;
-	controller_param.k_r = 2.5;
+	controller_param.k_r = 3.5;
 	controller_param.T_d = 0;
 	controller_param.T_i  = 1;
 	controller_param.windup = 10;
@@ -57,6 +57,7 @@ void PID_Reset(void) {
 	controller_param.preinfusion_duty_cycle = 4;
 	controller_param.preinfusion_time = 40;
 	controller_param.preinfusion_valve_off_delay = 30;
+	controller_param.flowratefactor = 10.69; //4.380; [pulses/100ml]
 
 }
 

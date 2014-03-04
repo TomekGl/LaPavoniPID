@@ -18,7 +18,7 @@ extern uint8_t timer0;
 extern volatile uint8_t output;
 extern volatile uint8_t pwm;
 extern double Temperature;
-extern volatile int16_t FlowMeterPulses;
+extern volatile int16_t FlowMeterPulses, FlowMeterPulsesPrev;
 
 
 #endif				/*GLOBALS_H_ */

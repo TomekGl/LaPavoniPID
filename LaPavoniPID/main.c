@@ -86,7 +86,8 @@ ISR(INT1_vect)
 {
 	//Reset counter at start of new extraction cycle
 	if (in_flag==0) {
-		FlowMeterPulses=0;
+		FlowMeterPulses = 0;
+		FlowMeterPulsesPrev = 0;
 	}
 
 	in_flag = 4; //timeout to avoid flapping when input is AC 50Hz, decremented every 0.1s
@@ -113,6 +114,7 @@ void BuzzerStart(uint8_t time) {
 
 typedef enum {
 	DISP_PROCESS,
+	DISP_FLOWVARS,
 	DISP_PIDVARS,
 	DISP_STATUSBAR
 } TDisplayTask;
@@ -144,10 +146,17 @@ void Display(TDisplayTask phase) {
 		LCD_PutChar('s', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, 0, WHITE);
 		LCD_PutChar(' ', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 1, 0, WHITE);
 
-//				LCD_PutStr("IN: ", 102,5,0,BLACK,WHITE);
-//				LCD_PutDecimalSigned(deg, 102, 35, 0, GREEN,WHITE);
-//				LCD_PutChar('.', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, GREEN,WHITE);
-//				LCD_PutDecimal(milideg, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, GREEN,WHITE);
+		//LCD_PutStr("IN: ", 102,5,0,BLACK,WHITE);
+		//LCD_PutDecimalSigned(deg, 102, 35, 0, GREEN,WHITE);
+		//LCD_PutChar('.', LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, GREEN,WHITE);
+		//LCD_PutDecimal(milideg, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, GREEN,WHITE);
+		break;
+	case DISP_FLOWVARS:
+		LCD_PutStr_P(PSTR(" Vol:"), 89, 5, 0, BLUE, WHITE);
+		LCD_PutDouble(controller.volume, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE, WHITE);
+		LCD_PutStr_P(PSTR("ml Flow:"), LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE, WHITE);
+		LCD_PutDouble(controller.flow, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE, WHITE);
+		LCD_PutStr_P(PSTR("ml/s  "), LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE, WHITE);
 		break;
 	case DISP_PIDVARS:
 		/* integer
@@ -412,13 +421,23 @@ DDRB = _BV(PB0)|_BV(PB1);
 					output = 0;
 				}
 				Display(DISP_PROCESS);
-				Display(DISP_PIDVARS);
+				//Display(DISP_PIDVARS);
+				Display(DISP_FLOWVARS);
+
 				//succesful TC read END
 			}
 		} // end of every-1s section
 		/* ***** Every 0.1s tasks here ****** */
 		if (Flag & _BV(FLAG_100MS)) {
 			Flag &= ~_BV(FLAG_100MS); //reset flag
+
+			//FIXME Optimize FP computations
+			/* compute flow rate */
+			controller.flow = ((FlowMeterPulses-FlowMeterPulsesPrev)*10.0)/controller_param.flowratefactor +
+					(controller_param.alpha * (controller.flow-(FlowMeterPulses-FlowMeterPulsesPrev)*10.0)/controller_param.flowratefactor);
+
+			controller.volume = FlowMeterPulses/controller_param.flowratefactor;
+			FlowMeterPulsesPrev=FlowMeterPulses;
 
 			/* read TC data */
 			if (TC_READOK == (status=TC_PerformRead(&TemperatureRaw))) {

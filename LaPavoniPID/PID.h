@@ -19,7 +19,7 @@
 #define PID_EEPROM_ADDRESS 0
 
 ///current version of data structure
-#define PID_EEPROM_VERSION 12
+#define PID_EEPROM_VERSION 13
 
 ///controller presets kept in RAM & EEPROM - structure definition
 struct Tcontroller_param_tag {
@@ -43,7 +43,8 @@ struct Tcontroller_param_tag {
 	int8_t  preinfusion_valve_off_delay; ///<valve off delay after finished extraction
 	uint8_t  buzzer_enabled; ///< buzzer enabled
 	uint8_t  lcd_brightness; ///< LCD brightness
-	uint8_t  serial_debug; ///print process variables over USART
+	uint8_t  serial_debug; ///< print process variables over USART
+	double flowratefactor; ///< flow rate factor, for 1milliliter
 };
 
 ///internal runtime variables of controller structure definition
@@ -59,6 +60,8 @@ struct Tcontroller_tag {
 	double proportional; ///< present value of proportional term
 	double integral; ///< present value of integral term
 	double derivative; ///< present value of derivative term
+	double flow; ///< present flow rate
+	double volume; ///< Volume of used water in current extraction
 	uint8_t firstpass; ///< whether first pass
 };
 
