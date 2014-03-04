@@ -98,6 +98,8 @@ void Menu_Init(void);
 void Menu_Process(TKey key);
 
 
+uint8_t Menu_isNotSelected(void);
+
 /******* CALLBACKS ********/
 
 /** \brief Callback function  to display/increase/decrease integer variable depending on keys status

@@ -169,6 +169,7 @@
 #define BROWN   0xB22 ///< brown
 #define ORANGE  0xFA0 ///< orange
 #define PINK    0xF6A ///< pink
+#define GRAY    0x777 ///< gray
 /**@}*/
 
 

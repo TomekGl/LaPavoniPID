@@ -111,6 +111,10 @@ void callAfterConfirm(uint8_t keys, uint8_t * value) {
 
 }
 
+uint8_t Menu_isNotSelected() {
+	return (NOT_SELECTED == menu_position.second_level);
+}
+
 void setInteger(uint8_t keys, uint8_t * value) {
 	if (keys & KEY_UP) {
 		if (keys & REPEATED_FLAG) {

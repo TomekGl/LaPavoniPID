@@ -12,7 +12,9 @@
 /// timer flag 0.1s mask
 #define FLAG_100MS 2
 /// timer flag 0.01s mask
-#define FLAG_10MS 4
+#define FLAG_10MS 3
+/// timer flag 0.1s mask / 2nd run
+#define FLAG_100MS_A 4
 
 ///enable beeper
 #define BEEPER
@@ -44,15 +46,17 @@ struct MAX31855Temp TemperatureRaw;
 volatile uint8_t microticks = 9, microticks2 = 9;
 ISR(TIMER0_COMP_vect)
 {
-	Flag = _BV(FLAG_10MS);
+	Flag |= _BV(FLAG_10MS);
 	SystemClock++;
-	if (0==microticks--) {
+	if (0 == microticks--) {
 		microticks = 9;
 		Flag = _BV(FLAG_100MS) | _BV(FLAG_10MS);
-		if (0==microticks2--) {
+		if (0 == microticks2--) {
 			microticks2 = 9;
 			Flag = _BV(FLAG_1S) | _BV(FLAG_100MS) | _BV(FLAG_10MS);
 		}
+	} else if (3 == microticks) {
+		Flag = _BV(FLAG_100MS_A)| _BV(FLAG_10MS);
 	}
 
 #ifdef BEEPER
@@ -259,13 +263,16 @@ void DebugSerial(void) {
 }
 
 
-void /*__attribute__ ((naked))*/ main(void) {
+void __attribute__ ((noreturn)) main()   {
 	// TC ADC read status
-	uint8_t status = 0xff,prevstatus;
+	uint8_t status = 0xff, prevstatus = 0;
 
 	uint8_t rcvdByte;
 	uint8_t switch_status = 0xff, prev_switch_status = 0xff;
-	uint8_t repeat, repeated_flag;
+	uint8_t repeat = 0, repeated_flag = 0;
+
+	uint8_t PlotWaitState = 0;
+	uint8_t MenuIsVisible = 0;
 
 	//Pullups
 	SW1_PORT |= _BV(SW1);
@@ -289,8 +296,6 @@ void /*__attribute__ ((naked))*/ main(void) {
 
 	//Buzzer
 	BUZZ_DDR |= _BV(BUZZ);
-
-DDRB = _BV(PB0)|_BV(PB1);
 
 	// timer 0 - system ticks generation      8e6 / 1024 / 79 ~= 100Hz     7372800/1024/72
 	TCCR0 = _BV(WGM01) | _BV(CS00) | _BV(CS02)  ;  // CTC mode, prescaler 1024
@@ -348,7 +353,9 @@ DDRB = _BV(PB0)|_BV(PB1);
 	LCD_Blank();
 
 	Menu_Init();
-	Menu_Process(0);
+//	Menu_Process(0);
+
+	PlotInit();
 
 	BuzzerStart(5);
 
@@ -465,7 +472,7 @@ DDRB = _BV(PB0)|_BV(PB1);
 				if (0 == prevstatus) { //only on transition to erroneous state
 					//clear controller section on LCD
 					LCD_Rectangle(96, 0, (132-96), 132, WHITE);
-				BuzzerStart(100);
+					BuzzerStart(100);
 				}
 
 				LCD_PutStr_P(TXT_TCError, 110,5,0,RED,WHITE);
@@ -484,6 +491,7 @@ DDRB = _BV(PB0)|_BV(PB1);
 
 			// input is on
 			if (0 != in_flag) {
+				PlotInterval = 1;
 				in_flag--;
 				pump_timer++;
 				pump_timer_reset_timeout = controller_param.preinfusion_valve_off_delay; // PUMP_TIMER_RESET_TIMEOUT;
@@ -507,11 +515,23 @@ DDRB = _BV(PB0)|_BV(PB1);
 						pump_timer = 0;
 						tmp_out2 = 0; //release valve
 						BuzzerStart(50);
+						PlotInterval = 5;
 					}
 				}
 			}
+		} // end every 0.1s section
+		if (Flag & _BV(FLAG_100MS_A)) {
+				Flag &= ~_BV(FLAG_100MS_A); //reset flag
 
-			Display(DISP_STATUSBAR);
+			if (!MenuIsVisible) {
+
+				Display(DISP_STATUSBAR);
+
+				if (0==PlotWaitState--) {
+					PlotWaitState = PlotInterval;
+					PlotRefresh();
+				}
+			}
 
 			//BUTTONS
 			switch_status = ( SW1_PIN & (_BV(SW1)|_BV(SW3)|_BV(SW4))) | ( SW2_PIN & _BV(SW2));
@@ -529,17 +549,27 @@ DDRB = _BV(PB0)|_BV(PB1);
 						repeat--; //do not increment more to avoid overflow
 					}
 				}
+
+				if (!MenuIsVisible) {
+					MenuIsVisible = 1;
+					goto SKIP;
+				}
 				/* button ->  task mapping */
+				if (bit_is_clear(switch_status, SW3) && bit_is_set(prev_switch_status, SW3)) {
+					if (Menu_isNotSelected()) {
+						MenuIsVisible = 0;
+						PlotInit();
+						goto SKIP;
+					}
+					Menu_Process(KEY_LEFT);
+					BuzzerStart(BUZZER_TIME);
+				}
 				if (bit_is_clear(switch_status, SW1)) { // && bit_is_set(prev_switch_status, SW1)) {
 					Menu_Process(KEY_UP|repeated_flag);
 					BuzzerStart(BUZZER_TIME);
 				}
 				if (bit_is_clear(switch_status, SW2)) { // && bit_is_set(prev_switch_status, SW2)) {
 					Menu_Process(KEY_DOWN|repeated_flag);
-					BuzzerStart(BUZZER_TIME);
-				}
-				if (bit_is_clear(switch_status, SW3) && bit_is_set(prev_switch_status, SW3)) {
-					Menu_Process(KEY_LEFT);
 					BuzzerStart(BUZZER_TIME);
 				}
 				if (bit_is_clear(switch_status, SW4)&& bit_is_set(prev_switch_status, SW4)) {
@@ -557,7 +587,8 @@ SKIP:
 			prev_switch_status = switch_status;
 
 			OCR2 = controller_param.lcd_brightness;
-		} // end every 0.1s section
+
+		} // end every 0.1s section - 2nd run
 
 		//refresh watchdog timer
 		wdt_reset();

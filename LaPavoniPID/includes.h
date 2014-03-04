@@ -22,5 +22,6 @@
 #include "PID.h"
 #include "main.h"
 #include "menu.h"
+#include "plot.h"
 
 //#endif /*INCLUDES_H_*/
