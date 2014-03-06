@@ -85,7 +85,7 @@
 					<folderInfo id="de.innot.avreclipse.configuration.app.release.1576862987." name="/" resourcePath="">
 						<toolChain id="de.innot.avreclipse.toolchain.winavr.app.release.1016533477" name="AVR-GCC Toolchain" superClass="de.innot.avreclipse.toolchain.winavr.app.release">
 							<targetPlatform id="de.innot.avreclipse.targetplatform.winavr.app.release.2072431318" name="AVR Cross-Target" superClass="de.innot.avreclipse.targetplatform.winavr.app.release"/>
-							<builder buildPath="${workspace_loc:/LaPavoniPID/Release}" id="de.innot.avreclipse.target.builder.winavr.app.release.952379454" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="AVR GNU Make Builder" superClass="de.innot.avreclipse.target.builder.winavr.app.release"/>
+							<builder buildPath="${workspace_loc:/LaPavoniPID/Release}" id="de.innot.avreclipse.target.builder.winavr.app.release.952379454" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="AVR GNU Make Builder" parallelBuildOn="true" parallelizationNumber="optimal" superClass="de.innot.avreclipse.target.builder.winavr.app.release"/>
 							<tool id="de.innot.avreclipse.tool.assembler.winavr.app.release.159256626" name="AVR Assembler" superClass="de.innot.avreclipse.tool.assembler.winavr.app.release">
 								<option id="de.innot.avreclipse.assembler.option.debug.level.384904542" name="Generate Debugging Info" superClass="de.innot.avreclipse.assembler.option.debug.level" value="de.innot.avreclipse.assembler.option.debug.level.none" valueType="enumerated"/>
 								<inputType id="de.innot.avreclipse.tool.assembler.input.1293098150" superClass="de.innot.avreclipse.tool.assembler.input"/>
@@ -119,6 +119,15 @@
 							<tool id="de.innot.avreclipse.tool.avrdude.app.release.1802564855" name="AVRDude" superClass="de.innot.avreclipse.tool.avrdude.app.release"/>
 						</toolChain>
 					</folderInfo>
+					<fileInfo id="de.innot.avreclipse.configuration.app.release.1576862987.1922402990" name="main.c" rcbsApplicability="disable" resourcePath="main.c" toolsToInvoke="de.innot.avreclipse.tool.compiler.winavr.app.release.518713263.338170759">
+						<tool id="de.innot.avreclipse.tool.compiler.winavr.app.release.518713263.338170759" name="AVR Compiler" superClass="de.innot.avreclipse.tool.compiler.winavr.app.release.518713263"/>
+						<tool customBuildStep="true" id="org.eclipse.cdt.managedbuilder.ui.rcbs.471861343" name="Resource Custom Build Step">
+							<inputType id="org.eclipse.cdt.managedbuilder.ui.rcbs.inputtype.1128486093" name="Resource Custom Build Step Input Type">
+								<additionalInput kind="additionalinputdependency"/>
+							</inputType>
+							<outputType id="org.eclipse.cdt.managedbuilder.ui.rcbs.outputtype.621852976" name="Resource Custom Build Step Output Type"/>
+						</tool>
+					</fileInfo>
 					<sourceEntries>
 						<entry excluding="ds1307.h|delay.h|i2cmaster.h|crc8.h|TWI_Master.h|ds1307.c|i2cmaster.S|TWI_Master.c|delay.c|crc8.c|spi.c|testTWI.c|twi.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>

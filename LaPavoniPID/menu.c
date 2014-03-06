@@ -27,50 +27,54 @@ FuncPtr CallbackFunction;
  * @{
  */
 
+#ifndef __FLASH
+  #error "What am I doing using such an out-dated compiler?"
+
+#endif
 // menu strings
-const char menu_entry_0[] __attribute__ ((progmem)) = "PID Settings" ;
-const char menu_entry_0_0[] __attribute__ ((progmem)) = "SP[oC]: " ;
-const char menu_entry_0_1[] __attribute__ ((progmem)) = "Gain[]: " ;
-const char menu_entry_0_2[] __attribute__ ((progmem)) = "T_d[/s]: " ;
-const char menu_entry_0_3[] __attribute__ ((progmem)) = "T_i[s]: " ;
-const char menu_entry_0_4[] __attribute__ ((progmem)) = "Windup: " ;
-/*const char menu_entry_0_5[] __attribute__ ((progmem)) = "Deadband: " ;*/
+const __flash  uint8_t menu_entry_0[]  = "PID Settings" ;
+const __flash  uint8_t menu_entry_0_0[] = "SP[oC]: " ;
+const __flash  uint8_t menu_entry_0_1[] = "Gain[]: " ;
+const __flash  uint8_t menu_entry_0_2[] = "T_d[/s]: " ;
+const __flash  uint8_t menu_entry_0_3[] = "T_i[s]: " ;
+const __flash  uint8_t menu_entry_0_4[] = "Windup: " ;
+/*const __flash  uint8_t menu_entry_0_5[] = "Deadband: " ;*/
 
-const char menu_entry_1[] __attribute__ ((progmem)) = "I/O " ;
-const char menu_entry_1_0[] __attribute__ ((progmem)) = "Buzzer: " ;
-const char menu_entry_1_1[] __attribute__ ((progmem)) = "Output1: " ;
-const char menu_entry_1_2[] __attribute__ ((progmem)) = "Output2: " ;
-const char menu_entry_1_3[] __attribute__ ((progmem)) = "Output3: " ;
-const char menu_entry_1_4[] __attribute__ ((progmem)) = "Input: " ;
+const __flash  uint8_t menu_entry_1[] = "I/O " ;
+const __flash  uint8_t menu_entry_1_0[] = "Buzzer: " ;
+const __flash  uint8_t menu_entry_1_1[] = "Output1: " ;
+const __flash  uint8_t menu_entry_1_2[] = "Output2: " ;
+const __flash  uint8_t menu_entry_1_3[] = "Output3: " ;
+const __flash  uint8_t menu_entry_1_4[] = "Input: " ;
 
-const char menu_entry_2[] __attribute__ ((progmem)) = "Status " ;
-const char menu_entry_2_0[] __attribute__ ((progmem)) = "UART debug: " ;
-const char menu_entry_2_1[] __attribute__ ((progmem)) = "Save settings " ;
-const char menu_entry_2_2[] __attribute__ ((progmem)) = "Backlight " ;
-const char menu_entry_2_3[] __attribute__ ((progmem)) = "Alpha: " ;
+const __flash  uint8_t menu_entry_2[] = "Status " ;
+const __flash  uint8_t menu_entry_2_0[] = "UART debug: " ;
+const __flash  uint8_t menu_entry_2_1[] = "Save settings " ;
+const __flash  uint8_t menu_entry_2_2[] = "Backlight " ;
+const __flash  uint8_t menu_entry_2_3[] = "Alpha: " ;
 
-const char menu_entry_3[] __attribute__ ((progmem)) = "Pre-infusion " ;
-const char menu_entry_3_0[] __attribute__ ((progmem)) = "Time x0.1:" ;
-const char menu_entry_3_1[] __attribute__ ((progmem)) = "Duty cycle:";
-const char menu_entry_3_2[] __attribute__ ((progmem)) = "Valve off dly:";
+const __flash  uint8_t menu_entry_3[] = "Pre-infusion " ;
+const __flash  uint8_t menu_entry_3_0[] = "Time x0.1:" ;
+const __flash  uint8_t menu_entry_3_1[] = "Duty cycle:";
+const __flash  uint8_t menu_entry_3_2[] = "Valve off dly:";
 
 
-const char *menu_first_level[] __attribute__ ((progmem)) = {
-	menu_entry_0,
-	menu_entry_1,
-	menu_entry_2,
-	menu_entry_3
+const __flash uint8_t* const __flash menu_first_level[] = {
+		menu_entry_0,
+		menu_entry_1,
+		menu_entry_2,
+		menu_entry_3
 };
 
-const char  *menu_second_level[] __attribute__ ((progmem)) =  {
-	menu_entry_0_0, menu_entry_0_1, menu_entry_0_2, menu_entry_0_3, menu_entry_0_4, /*menu_entry_0_5,*/
+const __flash uint8_t * const __flash menu_second_level[] =  {
+	menu_entry_0_0, menu_entry_0_1, menu_entry_0_2, menu_entry_0_3, menu_entry_0_4,
 	menu_entry_1_0, menu_entry_1_1, menu_entry_1_2, menu_entry_1_3, menu_entry_1_4,
 	menu_entry_2_0, menu_entry_2_1, menu_entry_2_2, menu_entry_2_3,
 	menu_entry_3_0, menu_entry_3_1, menu_entry_3_2
 };
 
 ///array of pointers on callback functions
-const FuncPtr functions[] __attribute__ ((progmem)) = {
+const FuncPtr functions[]  = {
 	(void*)&setDouble, (void*)&setDouble, (void*)&setDouble, (void*)&setDouble, (void*)&setDouble, /*(void*)&setDouble,*/
 	(void*)&setBoolean, (void*)&setBoolean, (void*)&setBoolean, (void*)&setBoolean, (void*)&setInteger,
 	(void*)&setBoolean, (void*)&callAfterConfirm, (void*)&setInteger, (void*)&setDouble,
@@ -267,12 +271,12 @@ void Menu_Process(TKey key) {
 	if (NOT_SELECTED == menu_position.second_level) {
 		//dispay first level menulist
 		for (uint8_t i = 0; i<(sizeof(menu_first_level)/sizeof(menu_first_level[0])); i++) {
-			LCD_PutStr_P((char *)pgm_read_word(&(menu_first_level[i])), MENU_X_POS-i*8, 2, 0, MENUCOLOR_TEXT, (i==menu_position.first_level)?MENUCOLOR_CURSOR:MENUCOLOR_BACKGROUND);
+			LCD_PutStr_P((char *)(menu_first_level[i]), MENU_X_POS-i*8, 2, 0, MENUCOLOR_TEXT, (i==menu_position.first_level)?MENUCOLOR_CURSOR:MENUCOLOR_BACKGROUND);
 		}
 
 	} else {
 		// submenu
-		LCD_PutStr_P((char *)pgm_read_word(&(menu_first_level[menu_position.first_level])), MENU_X_POS, 2, 0, MENUCOLOR_HEADER, MENUCOLOR_BACKGROUND);
+		LCD_PutStr_P((char *)(menu_first_level[menu_position.first_level]), MENU_X_POS, 2, 0, MENUCOLOR_HEADER, MENUCOLOR_BACKGROUND);
 //		n = submenu_entries_count[menu_position.first_level]);
 //		if (n > MENU_ROWS) {
 //			n = MENU_ROWS;
@@ -284,12 +288,12 @@ void Menu_Process(TKey key) {
 				continue;
 			}
 			//print entry description
-			LCD_PutStr_P((char *)pgm_read_word(&(menu_second_level[Menu_ObjectIndex(menu_position.first_level, i+1)])),
+			LCD_PutStr_P((char *)(menu_second_level[Menu_ObjectIndex(menu_position.first_level, i+1)]),
 					MENU_X_POS-8-i*8, 10, 0,
 					MENUCOLOR_TEXT, (i==menu_position.second_level-1)?MENUCOLOR_CURSOR:MENUCOLOR_BACKGROUND);
 
 			//acquire pointer to callback function
-			CallbackFunction=(FuncPtr)pgm_read_word(&functions[Menu_ObjectIndex(menu_position.first_level, i+1)]);
+			CallbackFunction=(FuncPtr)functions[Menu_ObjectIndex(menu_position.first_level, i+1)];
 			//execute if not null
 			if (CallbackFunction!=0) {
 				CallbackFunction((menu_position.entry_selected && menu_position.second_level==i+1)?key:0,

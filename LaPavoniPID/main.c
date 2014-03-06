@@ -263,7 +263,7 @@ void DebugSerial(void) {
 }
 
 
-void __attribute__ ((noreturn)) main()   {
+int __attribute__ ((noreturn)) main()   {
 	// TC ADC read status
 	uint8_t status = 0xff, prevstatus = 0;
 
