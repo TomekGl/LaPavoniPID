@@ -58,19 +58,26 @@ const __flash  uint8_t menu_entry_3_0[] = "Time x0.1:" ;
 const __flash  uint8_t menu_entry_3_1[] = "Duty cycle:";
 const __flash  uint8_t menu_entry_3_2[] = "Valve off dly:";
 
+const __flash  uint8_t menu_entry_4[] = "Flow correction " ;
+const __flash  uint8_t menu_entry_4_0[] = "k[imp/ml]:" ;
+const __flash  uint8_t menu_entry_4_1[] = "P_heater[W]:";
 
 const __flash uint8_t* const __flash menu_first_level[] = {
 		menu_entry_0,
 		menu_entry_1,
 		menu_entry_2,
-		menu_entry_3
+		menu_entry_3,
+		menu_entry_4
+
 };
 
 const __flash uint8_t * const __flash menu_second_level[] =  {
 	menu_entry_0_0, menu_entry_0_1, menu_entry_0_2, menu_entry_0_3, menu_entry_0_4,
 	menu_entry_1_0, menu_entry_1_1, menu_entry_1_2, menu_entry_1_3, menu_entry_1_4,
 	menu_entry_2_0, menu_entry_2_1, menu_entry_2_2, menu_entry_2_3,
-	menu_entry_3_0, menu_entry_3_1, menu_entry_3_2
+	menu_entry_3_0, menu_entry_3_1, menu_entry_3_2,
+	menu_entry_4_0, menu_entry_4_1
+
 };
 
 ///array of pointers on callback functions
@@ -78,7 +85,8 @@ const FuncPtr functions[]  = {
 	(void*)&setDouble, (void*)&setDouble, (void*)&setDouble, (void*)&setDouble, (void*)&setDouble, /*(void*)&setDouble,*/
 	(void*)&setBoolean, (void*)&setBoolean, (void*)&setBoolean, (void*)&setBoolean, (void*)&setInteger,
 	(void*)&setBoolean, (void*)&callAfterConfirm, (void*)&setInteger, (void*)&setDouble,
-	(void*)&setInteger, (void*)&setInteger, (void*)&setInteger
+	(void*)&setInteger, (void*)&setInteger, (void*)&setInteger,
+	(void*)&setDouble, (void*)&setDouble
 };
 
 ///array of pointers on variables connected with item
@@ -86,11 +94,12 @@ const void * variables[] = {
 	(void *)&(controller_param.SV), (void *)&(controller_param.k_r), (void *)&(controller_param.T_d), (void *)&(controller_param.T_i), (void *)&(controller_param.windup), /*(void *)&(controller_param.dead),*/
 	(void *)&(controller_param.buzzer_enabled), (void *)&tmp_out1,(void *)&tmp_out2, (void *)&tmp_out3, (void *)&output,
 	(void *)&(controller_param.serial_debug), (void*)&PID_SaveSettings, (void *)&(controller_param.lcd_brightness), 	(void *)&(controller_param.alpha),
-	(void *)&(controller_param.preinfusion_time), (void*)&(controller_param.preinfusion_duty_cycle), (void *)&(controller_param.preinfusion_valve_off_delay)
+	(void *)&(controller_param.preinfusion_time), (void*)&(controller_param.preinfusion_duty_cycle), (void *)&(controller_param.preinfusion_valve_off_delay),
+	(void *)&(controller_param.flowratefactor), (void *)&(controller_param.heater_power)
 };
 
 ///map of menu structure
-const uint8_t submenu_entries_count[] = { 5,5,4,3 };
+const uint8_t submenu_entries_count[] = { 5,5,4,3,2 };
 
 /**@}*/
 

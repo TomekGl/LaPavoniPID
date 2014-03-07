@@ -57,7 +57,8 @@ void PID_Reset(void) {
 	controller_param.preinfusion_duty_cycle = 4;
 	controller_param.preinfusion_time = 40;
 	controller_param.preinfusion_valve_off_delay = 30;
-	controller_param.flowratefactor = 10.69; //4.380; [pulses/100ml]
+	controller_param.flowratefactor = 10.69; //4.380; [pulses/ml]
+	controller_param.heater_power = 1000; // [W]
 
 }
 

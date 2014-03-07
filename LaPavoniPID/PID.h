@@ -19,7 +19,7 @@
 #define PID_EEPROM_ADDRESS 0
 
 ///current version of data structure
-#define PID_EEPROM_VERSION 13
+#define PID_EEPROM_VERSION 14
 
 ///controller presets kept in RAM & EEPROM - structure definition
 struct Tcontroller_param_tag {
@@ -45,6 +45,7 @@ struct Tcontroller_param_tag {
 	uint8_t  lcd_brightness; ///< LCD brightness
 	uint8_t  serial_debug; ///< print process variables over USART
 	double flowratefactor; ///< flow rate factor, for 1milliliter
+	double heater_power; ///< power of heater in Watts
 };
 
 ///internal runtime variables of controller structure definition
