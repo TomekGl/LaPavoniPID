@@ -45,7 +45,7 @@ inline uint8_t ScaleTemp(double temp) {
 
 void PlotRefresh() {
 	TemperatureHistory[x] = ScaleTemp(Temperature);
-	FlowHistory[x] = (uint8_t)(controller.flow*50.0);
+	FlowHistory[x] = (uint8_t)(controller.flow*10.0);
 	SetPointHistory[x] = ScaleTemp(controller_param.SV);
 	LCD_Rectangle(PLOT_Y, x, FlowHistory[x], 1, BLACK);
 	LCD_Rectangle(PLOT_Y+SetPointHistory[x], x, 1, 2, GRAY);

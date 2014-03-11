@@ -39,8 +39,6 @@ volatile uint8_t Flag;
 //microseconds to disable buzzer
 volatile uint8_t BuzzerTimeout;
 
-//
-struct MAX31855Temp TemperatureRaw;
 
 /// System clock control routine
 volatile uint8_t microticks = 9, microticks2 = 9;
@@ -159,7 +157,7 @@ void Display(TDisplayTask phase) {
 		LCD_PutStr_P(PSTR(" Vol:"), 89, 5, 0, BLUE, WHITE);
 		LCD_PutDouble(controller.volume, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE, WHITE);
 		LCD_PutStr_P(PSTR("ml Flow:"), LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE, WHITE);
-		LCD_PutDouble(controller.flow, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE, WHITE);
+		LCD_PutDouble(controller.flow_1s, LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE, WHITE);
 		LCD_PutStr_P(PSTR("ml/s  "), LCD_AUTOINCREMENT, LCD_AUTOINCREMENT, 0, BLUE, WHITE);
 		break;
 	case DISP_PIDVARS:
@@ -233,7 +231,7 @@ void DebugSerial(void) {
 	USART_Put(',');
 	USART_TransmitDouble(Temperature);
 	USART_Put(',');
-	USART_TransmitDouble(controller_param.k_r);
+/*	USART_TransmitDouble(controller_param.k_r);
 	USART_Put(',');
 	USART_TransmitDouble(controller_param.T_i);
 	USART_Put(',');
@@ -245,6 +243,7 @@ void DebugSerial(void) {
 	USART_Put(',');
 	USART_TransmitDouble(controller.derivative);
 	USART_Put(',');
+*/
 	USART_Put(tmp_out1?'1':'0');
 	USART_Put(',');
 	USART_Put(tmp_out2?'1':'0');
@@ -256,6 +255,13 @@ void DebugSerial(void) {
 	USART_TransmitDecimal(output);
 	USART_Put(',');
 	USART_TransmitDecimal(FlowMeterPulses);
+	USART_Put(',');
+	USART_TransmitDouble(controller.volume);
+	USART_Put(',');
+	USART_TransmitDouble(controller.flow);
+	USART_Put(',');
+	USART_TransmitDouble(controller.flow_1s);
+
 	USART_Put('\r');
 	USART_Put('\n');
 
@@ -412,15 +418,20 @@ int __attribute__ ((noreturn)) main()   {
 		if (Flag & _BV(FLAG_1S)) {
 			Flag &= ~_BV(FLAG_1S);
 
+			//FIXME Optimize FP computations
+			/* compute flow rate */
+			controller.flow_1s = (FlowMeterPulses-FlowMeterPulsesPrev1s)/controller_param.flow_rate_factor;
+			controller.volume = FlowMeterPulses/controller_param.flow_rate_factor;
+			FlowMeterPulsesPrev1s=FlowMeterPulses;
+
+
 			// no error from termocouple converter
 			if (0 == status) {
 				if (controller_param.k_r>0) {
 					//process PID controller
 					// 0.7 * 256 = 179
 					output = (uint8_t)PID_Process(Temperature);
-					if (pump_timer > controller_param.preinfusion_time && tmp_out1) {
-						output = (output>255-179)?255:output+179;
-					}
+					output += PID_FlowCorrection(255-output);
 				} else if (-1 == controller_param.k_r) {
 					//helper for step response acquisition
 					output = (uint8_t)controller.y;
@@ -438,13 +449,6 @@ int __attribute__ ((noreturn)) main()   {
 		if (Flag & _BV(FLAG_100MS)) {
 			Flag &= ~_BV(FLAG_100MS); //reset flag
 
-			//FIXME Optimize FP computations
-			/* compute flow rate */
-			controller.flow = ((FlowMeterPulses-FlowMeterPulsesPrev)*10.0)/controller_param.flowratefactor +
-					(controller_param.alpha * (controller.flow-(FlowMeterPulses-FlowMeterPulsesPrev)*10.0)/controller_param.flowratefactor);
-
-			controller.volume = FlowMeterPulses/controller_param.flowratefactor;
-			FlowMeterPulsesPrev=FlowMeterPulses;
 
 			/* read TC data */
 			if (TC_READOK == (status=TC_PerformRead(&TemperatureRaw))) {
@@ -523,9 +527,15 @@ int __attribute__ ((noreturn)) main()   {
 		if (Flag & _BV(FLAG_100MS_A)) {
 				Flag &= ~_BV(FLAG_100MS_A); //reset flag
 
+			controller.flow = ((FlowMeterPulses-FlowMeterPulsesPrev)*10.0)/controller_param.flow_rate_factor +
+					(controller_param.alpha * (controller.flow-(FlowMeterPulses-FlowMeterPulsesPrev)*10.0)/controller_param.flow_rate_factor);
+			FlowMeterPulsesPrev = FlowMeterPulses;
+
+			Display(DISP_STATUSBAR);
+
+
 			if (!MenuIsVisible) {
 
-				Display(DISP_STATUSBAR);
 
 				if (0==PlotWaitState--) {
 					PlotWaitState = PlotInterval;

@@ -44,7 +44,8 @@ struct Tcontroller_param_tag {
 	uint8_t  buzzer_enabled; ///< buzzer enabled
 	uint8_t  lcd_brightness; ///< LCD brightness
 	uint8_t  serial_debug; ///< print process variables over USART
-	double flowratefactor; ///< flow rate factor, for 1milliliter
+	double flow_rate_factor; ///< flow rate factor, for 1milliliter
+	double flow_alpha; ///< Flowmeter filter coefficient
 	double heater_power; ///< power of heater in Watts
 };
 
@@ -62,6 +63,7 @@ struct Tcontroller_tag {
 	double integral; ///< present value of integral term
 	double derivative; ///< present value of derivative term
 	double flow; ///< present flow rate
+	double flow_1s; ///< present flow rate, 1second avg
 	double volume; ///< Volume of used water in current extraction
 	uint8_t firstpass; ///< whether first pass
 };

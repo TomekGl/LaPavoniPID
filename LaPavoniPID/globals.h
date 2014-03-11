@@ -18,7 +18,8 @@ extern uint8_t timer0;
 extern volatile uint8_t output;
 extern volatile uint8_t pwm;
 extern double Temperature;
-extern volatile int16_t FlowMeterPulses, FlowMeterPulsesPrev;
+extern struct MAX31855Temp TemperatureRaw;
+extern volatile int16_t FlowMeterPulses, FlowMeterPulsesPrev, FlowMeterPulsesPrev1s;
 
 
 #endif				/*GLOBALS_H_ */
