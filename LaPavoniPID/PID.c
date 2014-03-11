@@ -69,6 +69,44 @@ void PID_SaveSettings(void) {
 }
 
 
+/// Compute Flowrate-based correction
+int8_t PID_FlowCorrection(uint8_t limit) {
+	static uint16_t underregulation_integral = 0;
+	///ro*V_dot*cp*(SP-T_i)/P
+	double power;
+	uint16_t ret;
+
+	// power in Watts
+	power = 4190.0*0.001*controller.flow_1s*(controller_param.SV-TemperatureRaw.Internal.deg);
+	if (power < 0) {
+		//technically possible, when SV is set very low
+		return 0;
+	}
+//	USART_TransmitDouble(power);
+//	USART_Put(',');
+	//scale output to relative scale 0-256
+	ret =  (uint16_t)(power*256.0/controller_param.heater_power);
+//	USART_TransmitDecimal(underregulation_integral);
+//	USART_Put(',');
+
+	//limit
+	if (ret > limit) {
+		underregulation_integral += ret - limit;
+		ret = limit;
+	} else if (limit > ret && underregulation_integral > 0) {
+		if ((limit-ret) > underregulation_integral) {
+			ret += underregulation_integral;
+			underregulation_integral = 0;
+		} else {
+			underregulation_integral -= limit-ret;
+			ret = limit;
+		}
+	}
+
+	return (uint8_t)ret;
+
+}
+
 /// Positional PID Algorithm
 int16_t PID_Process(double processValue) {
 	/**

@@ -98,6 +98,14 @@ void PID_SaveSettings(void);
  */
 int16_t PID_Process(double processValue);
 
+
+/**
+ * Compute flow-based correction.
+ * @param limit Maximum available value
+ */
+int8_t PID_FlowCorrection(uint8_t limit);
+
+
 int16_t PID_Process_2(int16_t processValue);
 
 /** @} */
