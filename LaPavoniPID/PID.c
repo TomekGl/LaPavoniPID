@@ -41,7 +41,7 @@ void PID_Init(void) {
 void PID_Reset(void) {
 	controller_param.version = PID_EEPROM_VERSION;
 	controller_param.SV = 93.5;
-	controller_param.k_r = 3.5;
+	controller_param.k_r = 1.35;
 	controller_param.T_d = 0;
 	controller_param.T_i  = 1;
 	controller_param.windup = 10;
@@ -57,7 +57,8 @@ void PID_Reset(void) {
 	controller_param.preinfusion_duty_cycle = 4;
 	controller_param.preinfusion_time = 40;
 	controller_param.preinfusion_valve_off_delay = 30;
-	controller_param.flowratefactor = 10.69; //4.380; [pulses/ml]
+	controller_param.flow_rate_factor = 10.69; //4.380; [ml/pulse]
+	controller_param.flow_alpha = 0.60;
 	controller_param.heater_power = 1000; // [W]
 
 }
@@ -114,7 +115,7 @@ int16_t PID_Process(double processValue) {
 
 	} //first
 
-	controller.y *= controller_param.k_r;
+	controller.y *= controller_param.k_r*2.56;
 	//controller.y /= 10;
 
 	if (controller.y>controller_param.limit_top) controller.y=controller_param.limit_top;
